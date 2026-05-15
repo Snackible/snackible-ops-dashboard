@@ -16,9 +16,16 @@
     <div class="max-w-7xl mx-auto">
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow">
             <h1 class="text-3xl font-bold text-gray-800">🚀 Snackible Operations Live</h1>
-            <div class="mt-4 md:mt-0 text-sm font-semibold text-gray-600 bg-gray-100 px-4 py-2 rounded-full flex items-center shadow-inner">
-                <span id="status-dot" class="h-3 w-3 rounded-full bg-yellow-400 mr-2 animate-pulse"></span>
-                <span id="status-text">Connecting to Google Sheets API...</span>
+            
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <select id="weekFilter" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 hidden cursor-pointer font-semibold shadow-sm">
+                    <option value="All">All-Time Data</option>
+                </select>
+
+                <div class="text-sm font-semibold text-gray-600 bg-gray-100 px-4 py-2 rounded-full flex items-center shadow-inner">
+                    <span id="status-dot" class="h-3 w-3 rounded-full bg-yellow-400 mr-2 animate-pulse"></span>
+                    <span id="status-text">Connecting to API...</span>
+                </div>
             </div>
         </div>
 
@@ -34,22 +41,22 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Weekly GMV (₹)</h3>
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">GMV Trend (All-Time)</h3>
                     <div class="relative h-64"><canvas id="gmvChart"></canvas></div>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Lifetime Order Statuses</h3>
+                    <h3 id="statusTitle" class="text-lg font-bold mb-4 text-gray-700 text-center">Order Statuses</h3>
                     <div class="relative h-64"><canvas id="statusChart"></canvas></div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-500">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Total GMV by Channel</h3>
+                    <h3 id="channelTitle" class="text-lg font-bold mb-4 text-gray-700 text-center">GMV by Channel</h3>
                     <div class="relative h-64"><canvas id="channelChart"></canvas></div>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-orange-500">
-                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Avg Courier TAT (Days)</h3>
+                    <h3 id="courierTitle" class="text-lg font-bold mb-4 text-gray-700 text-center">Avg Courier TAT (Days)</h3>
                     <div class="relative h-64"><canvas id="courierChart"></canvas></div>
                 </div>
             </div>
@@ -57,7 +64,7 @@
     </div>
 
     <script>
-        // YOUR LIVE API LINK IS HERE
+        // YOUR API URL
         const API_URL = "https://script.google.com/macros/s/AKfycbzre4BMyXYa9M71QNWKe5qFHSOfPnLaaz7P5pjqpMxPFtZo6lDjcDisaGVQuV7HCK0/exec";
         
         const COLORS = {
@@ -67,45 +74,77 @@
         };
 
         let chartInstances = {};
+        let GLOBAL_DATA = {}; // Stores fetched data
 
-        // The Engine: Fetches the data asynchronously on load
         async function fetchLiveData() {
             try {
                 const response = await fetch(API_URL);
-                const RAW = await response.json();
-                
-                if (RAW.error) throw new Error(RAW.error);
+                GLOBAL_DATA = await response.json();
+                if (GLOBAL_DATA.error) throw new Error(GLOBAL_DATA.error);
                 
                 // Hide loader, show dashboard
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('dashboard-content').classList.remove('hidden');
+                document.getElementById('weekFilter').classList.remove('hidden');
                 
                 // Update status indicator
                 document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-green-500');
                 document.getElementById('status-dot').classList.remove('animate-pulse');
                 document.getElementById('status-text').innerText = "Live Data Synced";
 
-                renderDashboard(RAW);
+                populateDropdown();
+                renderGMVTrend(); // Draw all-time trend once
+                renderDashboard('All'); // Initial render
             } catch (error) {
                 console.error(error);
                 document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-red-500');
                 document.getElementById('status-text').innerText = "Sync Failed";
-                document.getElementById('loading-screen').innerHTML = `<p class="text-red-600 text-xl font-bold bg-red-100 p-4 rounded border border-red-300 shadow">Error connecting to Google Sheets. Ensure your Apps Script URL is correct and deployed to "Anyone".</p>`;
             }
         }
 
-        function renderDashboard(data) {
-            const weeks = Object.keys(data).sort();
-            if(weeks.length === 0) return;
+        function populateDropdown() {
+            const select = document.getElementById('weekFilter');
+            const weeks = Object.keys(GLOBAL_DATA).sort().reverse(); // Newest weeks at the top
+            
+            weeks.forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w;
+                opt.innerText = "Week of " + w;
+                select.appendChild(opt);
+            });
 
+            // Listen for changes
+            select.addEventListener('change', (e) => {
+                renderDashboard(e.target.value);
+            });
+        }
+
+        function renderGMVTrend() {
+            const weeks = Object.keys(GLOBAL_DATA).sort();
+            createChart('gmvChart', 'line', {
+                labels: weeks,
+                datasets: [{
+                    label: 'GMV Generated',
+                    data: weeks.map(w => GLOBAL_DATA[w].gmv),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            });
+        }
+
+        function renderDashboard(selectedWeek) {
             let totalGMV = 0, totalOrders = 0;
             let totalFillRate = 0, fillRateCount = 0;
             let totalTAT = 0, tatCount = 0;
             let statuses = {}, channels = {}, couriers = {};
 
-            // Calculate aggregations
-            weeks.forEach(w => {
-                let weekData = data[w];
+            const weeksToProcess = selectedWeek === 'All' ? Object.keys(GLOBAL_DATA) : [selectedWeek];
+
+            // Calculate aggregations based on filter
+            weeksToProcess.forEach(w => {
+                let weekData = GLOBAL_DATA[w];
                 totalGMV += weekData.gmv;
                 totalOrders += weekData.orders;
                 
@@ -135,11 +174,11 @@
 
             // Inject KPIs
             const kpis = [
-                { label: "Total GMV Generated", value: "₹" + totalGMV.toLocaleString('en-IN') },
-                { label: "Total Orders Processed", value: totalOrders.toLocaleString('en-IN') },
-                { label: "Average Fill Rate", value: avgFill + "%" },
-                { label: "Average Delivery TAT", value: avgTatTotal + " Days" },
-                { label: "Overall RTO Rate", value: rtoPct + "%" }
+                { label: "GMV Generated", value: "₹" + totalGMV.toLocaleString('en-IN') },
+                { label: "Orders Processed", value: totalOrders.toLocaleString('en-IN') },
+                { label: "Avg Fill Rate", value: avgFill + "%" },
+                { label: "Avg Delivery TAT", value: avgTatTotal + " Days" },
+                { label: "RTO Rate", value: rtoPct + "%" }
             ];
 
             document.getElementById('kpi-container').innerHTML = kpis.map(k => `
@@ -149,24 +188,18 @@
                 </div>
             `).join('');
 
-            // Draw Charts
-            createChart('gmvChart', 'line', {
-                labels: weeks,
-                datasets: [{
-                    label: 'GMV Generated',
-                    data: weeks.map(w => data[w].gmv),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            });
+            // Update Chart Titles based on filter
+            const titleSuffix = selectedWeek === 'All' ? '(All-Time)' : `(${selectedWeek})`;
+            document.getElementById('statusTitle').innerText = `Order Statuses ${titleSuffix}`;
+            document.getElementById('channelTitle').innerText = `GMV by Channel ${titleSuffix}`;
+            document.getElementById('courierTitle').innerText = `Avg Courier TAT ${titleSuffix}`;
 
+            // Draw Filtered Charts
             createChart('statusChart', 'doughnut', {
                 labels: Object.keys(statuses),
                 datasets: [{
                     data: Object.values(statuses),
-                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280', '#3b82f6', '#8b5cf6']
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280', '#3b82f6', '#8b5cf6', '#eab308', '#ec4899', '#06b6d4']
                 }]
             });
 
@@ -219,7 +252,6 @@
             });
         }
 
-        // Trigger the magic when the page loads
         window.onload = fetchLiveData;
     </script>
 </body>
