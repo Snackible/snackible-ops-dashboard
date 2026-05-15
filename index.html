@@ -407,15 +407,44 @@ function buildKPIs(wk){
   fb.textContent=d.avg_fill>=95?'✓ Healthy':d.avg_fill>=85?'⚠ Moderate':'⚠ Below Target';
   fb.className='kpi-badge '+(d.avg_fill>=95?'badge-up':'badge-warn');
 
-  // TAT
-  document.getElementById('kTAT').textContent=d.avg_tat>0?d.avg_tat+'d':'—';
-  const tb=document.getElementById('kTATb');
-  tb.textContent=d.avg_tat===0?'Pending data':d.avg_tat<=8?'✓ Within SLA':'⚠ Above SLA';
-  tb.className='kpi-badge '+(d.avg_tat>0&&d.avg_tat<=8?'badge-up':'badge-warn');
-  document.getElementById('tatBig').textContent=d.avg_tat>0?d.avg_tat:'—';
-  const tatBadge=document.getElementById('tatBadge');
-  tatBadge.textContent=d.avg_tat>0?(d.avg_tat<=8?'✓ Good':'⚠ Slow'):'No data';
-  tatBadge.className='kpi-badge '+(d.avg_tat>0&&d.avg_tat<=8?'badge-up':'badge-warn');
+  // --- THE NEW 3-PART TAT UI ---
+  const tatCard = document.getElementById('kTAT').parentElement;
+  if (d.avg_total_tat > 0) {
+    tatCard.innerHTML = `
+      <div class="kpi-label">Average TAT (Days)</div>
+      <div id="kTAT" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+          <div style="text-align:left;">
+              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">Total</div>
+              <div style="font-family:'Raleway',sans-serif; font-size:22px; font-weight:800; line-height:1; color:var(--text);">${d.avg_total_tat}</div>
+          </div>
+          <div style="text-align:center;">
+              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">PO→Disp</div>
+              <div style="font-family:'Raleway',sans-serif; font-size:16px; font-weight:800; line-height:1; color:var(--text);">${d.avg_proc_tat}</div>
+          </div>
+          <div style="text-align:right;">
+              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">Disp→Del</div>
+              <div style="font-family:'Raleway',sans-serif; font-size:16px; font-weight:800; line-height:1; color:var(--text);">${d.avg_tran_tat}</div>
+          </div>
+      </div>
+      <span class="kpi-badge ${d.avg_total_tat <= 10 ? 'badge-up' : 'badge-warn'}">PO → Delivery Tracker</span>
+    `;
+  } else {
+    tatCard.innerHTML = `
+      <div class="kpi-label">Average TAT (Days)</div>
+      <div class="kpi-value" id="kTAT">—</div>
+      <div class="kpi-sub">Pending Data</div>
+      <span class="kpi-badge badge-warn">Waiting for Deliveries</span>
+    `;
+  }
+
+  // Bottom Courier TAT Card Fix
+  const tatBig = document.getElementById('tatBig');
+  if (tatBig) tatBig.textContent = d.avg_total_tat > 0 ? d.avg_total_tat : '—';
+  const tatBadge = document.getElementById('tatBadge');
+  if (tatBadge) {
+      tatBadge.textContent = d.avg_total_tat > 0 ? (d.avg_total_tat <= 10 ? '✓ Good' : '⚠ Slow') : 'No data';
+      tatBadge.className = 'kpi-badge ' + (d.avg_total_tat > 0 && d.avg_total_tat <= 10 ? 'badge-up' : 'badge-warn');
+  }
 
   // RTO
   document.getElementById('kRTO').textContent=d.rto_pct+'%';
@@ -429,7 +458,6 @@ function buildKPIs(wk){
   db.textContent=d.dn_value===0?'No discrepancies':d.dn_value<50000?'Low exposure':'⚠ Review needed';
   db.className='kpi-badge '+(d.dn_value===0?'badge-up':d.dn_value<50000?'badge-warn':'badge-down');
 }
-
 // ─── CHANNEL CHART ───
 function buildChannelChart(wk){
   if(!RAW[wk]) return;
