@@ -1,600 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snackible B2B — Weekly Ops Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800;900&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-:root{
-  --green:#2D6A4F;--green-light:#52B788;--green-pale:#E8F5EF;
-  --amber:#FBAE25;--amber-dark:#E08A00;--amber-pale:#FFF8E1;
-  --bg:#F4F1EC;--card:#FFFFFF;--dark:#1A1A2E;--text:#2C2C3E;
-  --muted:#7A7A8C;--border:#E8E4DC;
-  --red:#E63946;--red-pale:#FDECEA;
-  --blue:#457B9D;--purple:#6A4C93;--teal:#1D8A99;--hot:#E07B39;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-.header{background:var(--dark);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--amber);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
-.logo-area{display:flex;align-items:center;gap:12px;}
-.logo-badge{width:40px;height:40px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Raleway',sans-serif;font-weight:900;font-size:18px;color:var(--dark);}
-.header-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.3px;}
-.header-sub{font-size:11px;color:var(--amber);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
-.week-selector{display:flex;align-items:center;gap:10px;}
-.week-selector label{font-size:11px;color:#aaa;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
-.week-selector select{background:#2A2A40;color:#fff;border:1.5px solid #3A3A55;border-radius:8px;padding:7px 14px;font-family:'Mulish',sans-serif;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:border-color .2s;}
-.week-selector select:focus{border-color:var(--amber);}
-
-.container{max-width:1480px;margin:0 auto;padding:24px 28px;}
-.section-label{font-family:'Raleway',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* ALERT */
-.alert-banner{border-radius:12px;padding:14px 20px;display:flex;align-items:flex-start;gap:12px;margin-bottom:24px;border:1.5px solid;}
-.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
-.alert-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:13px;margin-bottom:4px;}
-.alert-text{font-size:12px;font-weight:500;line-height:1.5;}
-.alert-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
-.alert-chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
-
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px;}
-.kpi-card{background:var(--card);border-radius:14px;padding:18px 18px 16px;border:1.5px solid var(--border);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
-.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.1);}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--green-light));border-radius:14px 14px 0 0;}
-.kpi-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
-.kpi-value{font-family:'Raleway',sans-serif;font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:5px;}
-.kpi-sub{font-size:11px;color:var(--muted);font-weight:500;}
-.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:6px;}
-.badge-up{background:var(--green-pale);color:var(--green);}
-.badge-down{background:var(--red-pale);color:#C0392B;}
-.badge-warn{background:#FFF3CD;color:#856404;}
-
-/* CHARTS */
-.charts-row{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-bottom:24px;}
-.chart-card,.full-card{background:var(--card);border-radius:14px;padding:22px 24px;border:1.5px solid var(--border);}
-.full-card{margin-bottom:24px;}
-.card-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:14px;color:var(--text);margin-bottom:3px;}
-.card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;}
-.chart-wrap{position:relative;height:220px;}
-.full-chart-wrap{position:relative;height:200px;margin-top:14px;}
-
-/* BOTTOM */
-.bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:24px;}
-
-/* FILL TABLE */
-.data-table{width:100%;border-collapse:collapse;font-size:12px;}
-.data-table th{text-align:left;padding:7px 8px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--border);}
-.data-table td{padding:9px 8px;border-bottom:1px solid #F0EDE8;font-weight:600;vertical-align:middle;}
-.data-table tr:last-child td{border-bottom:none;}
-.data-table tr:hover td{background:#FAFAF8;}
-.ch-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
-.bar-wrap{display:flex;align-items:center;gap:7px;}
-.bar-bg{flex:1;height:6px;background:#EEE;border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .8s ease;}
-
-/* STATUS */
-.status-list{list-style:none;}
-.status-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0EDE8;}
-.status-item:last-child{border-bottom:none;}
-.status-left{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;}
-.s-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.s-count{font-family:'Raleway',sans-serif;font-size:17px;font-weight:800;}
-
-/* COURIER */
-.courier-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0EDE8;font-size:12px;gap:6px;}
-.courier-row:last-child{border-bottom:none;}
-.c-name{font-weight:700;color:var(--text);min-width:85px;font-size:12px;}
-.tat-pill{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
-.tat-g{background:var(--green-pale);color:var(--green);}
-.tat-m{background:#FFF3CD;color:#856404;}
-.tat-b{background:var(--red-pale);color:#C0392B;}
-
-/* TREND TABS */
-.trend-tabs{display:flex;gap:5px;}
-.t-tab{padding:4px 11px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;}
-.t-tab.active{background:var(--dark);color:var(--amber);border-color:var(--dark);}
-
-/* LEGEND */
-.legend{display:flex;gap:12px;flex-wrap:wrap;}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);}
-.leg-dot{width:9px;height:9px;border-radius:50%;}
-
-/* SUMMARY STRIP */
-.sum-strip{background:var(--dark);border-radius:10px;padding:12px 16px;margin-top:14px;}
-.ss-label{font-size:10px;font-weight:700;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-
-/* DELIVERY RATE BAR */
-.dr-bar-bg{height:8px;background:#EEE;border-radius:4px;margin-top:6px;overflow:hidden;}
-.dr-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.kpi-card,.chart-card,.full-card,.alert-banner{animation:fadeUp .4s ease both;}
-.kpi-card:nth-child(1){animation-delay:.04s;}.kpi-card:nth-child(2){animation-delay:.08s;}
-.kpi-card:nth-child(3){animation-delay:.12s;}.kpi-card:nth-child(4){animation-delay:.16s;}
-.kpi-card:nth-child(5){animation-delay:.20s;}.kpi-card:nth-child(6){animation-delay:.24s;}
-
-@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr);}.charts-row{grid-template-columns:1fr;}.bottom-grid{grid-template-columns:1fr 1fr;}}
-@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.bottom-grid{grid-template-columns:1fr;}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snackible Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f3f4f6; }
+        .loader { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow">
+            <h1 class="text-3xl font-bold text-gray-800">🚀 Snackible Operations Live</h1>
+            <div class="mt-4 md:mt-0 text-sm font-semibold text-gray-600 bg-gray-100 px-4 py-2 rounded-full flex items-center shadow-inner">
+                <span id="status-dot" class="h-3 w-3 rounded-full bg-yellow-400 mr-2 animate-pulse"></span>
+                <span id="status-text">Connecting to Google Sheets API...</span>
+            </div>
+        </div>
 
-<div class="header">
-  <div class="logo-area">
-    <div class="logo-badge">S</div>
-    <div>
-      <div class="header-title">Snackible B2B</div>
-      <div class="header-sub">Weekly Ops Dashboard</div>
-    </div>
-  </div>
-  <div class="week-selector">
-    <label>WEEK</label>
-    <select id="weekSelect" onchange="updateDashboard()">
-      <option value="2026-05-11">May 11 – May 17, 2026 ⚠ Partial</option>
-      <option value="2026-05-04" selected>May 04 – May 10, 2026 ← Latest</option>
-      <option value="2026-04-27">Apr 27 – May 03, 2026</option>
-      <option value="2026-04-20">Apr 20 – Apr 26, 2026</option>
-      <option value="2026-04-13">Apr 13 – Apr 19, 2026</option>
-      <option value="2026-04-06">Apr 06 – Apr 12, 2026</option>
-      <option value="2026-03-30">Mar 30 – Apr 05, 2026</option>
-      <option value="2026-03-23">Mar 23 – Mar 29, 2026</option>
-      <option value="2026-03-16">Mar 16 – Mar 22, 2026</option>
-      <option value="2026-03-09">Mar 09 – Mar 15, 2026</option>
-      <option value="2026-03-02">Mar 02 – Mar 08, 2026</option>
-      <option value="2026-02-23">Feb 23 – Mar 01, 2026</option>
-      <option value="2026-02-16">Feb 16 – Feb 22, 2026</option>
-      <option value="2026-02-09">Feb 09 – Feb 15, 2026</option>
-      <option value="2026-02-02">Feb 02 – Feb 08, 2026</option>
-      <option value="2026-01-26">Jan 26 – Feb 01, 2026</option>
-      <option value="2026-01-19">Jan 19 – Jan 25, 2026</option>
-      <option value="2026-01-12">Jan 12 – Jan 18, 2026</option>
-      <option value="2026-01-05">Jan 05 – Jan 11, 2026</option>
-      <option value="2025-12-29">Dec 29 – Jan 04, 2026</option>
-    </select>
-  </div>
-</div>
+        <div id="loading-screen" class="flex flex-col items-center justify-center py-32">
+            <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24 mb-6"></div>
+            <h2 class="text-2xl font-semibold text-gray-700">Crunching the latest numbers...</h2>
+            <p class="text-gray-500 mt-2">Fetching live data directly from the 2026 Ecom Sheet.</p>
+        </div>
 
-<div class="container">
+        <div id="dashboard-content" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8" id="kpi-container">
+                </div>
 
-  <div class="alert-banner" id="alertBanner">
-    <div class="alert-icon" id="alertIcon">⚠️</div>
-    <div style="flex:1">
-      <div class="alert-title" id="alertTitle">Loading…</div>
-      <div class="alert-text" id="alertText"></div>
-      <div class="alert-chips" id="alertChips"></div>
-    </div>
-  </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Weekly GMV (₹)</h3>
+                    <div class="relative h-64"><canvas id="gmvChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Lifetime Order Statuses</h3>
+                    <div class="relative h-64"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
 
-  <div class="section-label">Key Performance Indicators</div>
-  <div class="kpi-grid">
-    <div class="kpi-card" style="--accent:var(--green-light)">
-      <div class="kpi-label">Total GMV</div>
-      <div class="kpi-value" id="kGMV">—</div>
-      <div class="kpi-sub">Invoice Value</div>
-      <span class="kpi-badge" id="kGMVb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--amber)">
-      <div class="kpi-label">Total Orders</div>
-      <div class="kpi-value" id="kOrders">—</div>
-      <div class="kpi-sub">Excl. Duplicates</div>
-      <span class="kpi-badge" id="kOrdersb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--hot)">
-      <div class="kpi-label">Fill Rate</div>
-      <div class="kpi-value" id="kFill">—</div>
-      <div class="kpi-sub">Avg across channels</div>
-      <span class="kpi-badge" id="kFillb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--teal)">
-      <div class="kpi-label">Avg TAT</div>
-      <div class="kpi-value" id="kTAT">—</div>
-      <div class="kpi-sub">Dispatch → Delivery</div>
-      <span class="kpi-badge" id="kTATb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--red)">
-      <div class="kpi-label">RTO %</div>
-      <div class="kpi-value" id="kRTO">—</div>
-      <div class="kpi-sub">of non-dup orders</div>
-      <span class="kpi-badge" id="kRTOb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--purple)">
-      <div class="kpi-label">DN / Discrepancy</div>
-      <div class="kpi-value" id="kDN">—</div>
-      <div class="kpi-sub">Weekly DN Value</div>
-      <span class="kpi-badge" id="kDNb">—</span>
-    </div>
-  </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-500">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Total GMV by Channel</h3>
+                    <div class="relative h-64"><canvas id="channelChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-orange-500">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 text-center">Avg Courier TAT (Days)</h3>
+                    <div class="relative h-64"><canvas id="courierChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <div class="charts-row">
-    <div class="chart-card">
-      <div class="card-title">GMV by Channel</div>
-      <div class="card-sub" id="channelSub">—</div>
-      <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div>
-          <div class="card-title">GMV Trend</div>
-          <div class="card-sub" style="margin-bottom:0" id="trendSub">Weekly GMV</div>
-        </div>
-        <div class="trend-tabs">
-          <button class="t-tab" onclick="setTrend(4)" id="t4">4W</button>
-          <button class="t-tab active" onclick="setTrend(8)" id="t8">8W</button>
-          <button class="t-tab" onclick="setTrend(99)" id="tall">All</button>
-        </div>
-      </div>
-      <div class="chart-wrap" style="height:195px;"><canvas id="trendChart"></canvas></div>
-    </div>
-  </div>
+    <script>
+        // YOUR LIVE API LINK IS HERE
+        const API_URL = "https://script.google.com/macros/s/AKfycbzre4BMyXYa9M71QNWKe5qFHSOfPnLaaz7P5pjqpMxPFtZo6lDjcDisaGVQuV7HCK0/exec";
+        
+        const COLORS = {
+            Hot: '#E07B39', KK: '#6A4C93', Scootsy: '#1D8A99', Amazon: '#FBAE25', 
+            BB: '#457B9D', B2B: '#2D6A4F', GT: '#52B788', MT: '#9B59B6', 
+            FC: '#E17055', Others: '#95A5A6', Unknown: '#CBD5E1'
+        };
 
-  <div class="full-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div>
-        <div class="card-title">Daily Dispatched Quantities — Channel Breakdown</div>
-        <div class="card-sub" id="dailySub">Dispatch date · Invoice qty by channel</div>
-      </div>
-      <div class="legend" id="dailyLegend"></div>
-    </div>
-    <div class="full-chart-wrap"><canvas id="dailyChart"></canvas></div>
-  </div>
+        let chartInstances = {};
 
-  <div class="bottom-grid">
-    <div class="chart-card">
-      <div class="card-title">Fill Rate by Channel</div>
-      <div class="card-sub" id="fillSub">PO vs Invoice Quantities</div>
-      <table class="data-table">
-        <thead><tr><th>Channel</th><th>PO Qty</th><th style="min-width:110px">Fill Rate</th><th>Short</th></tr></thead>
-        <tbody id="fillBody"></tbody>
-      </table>
-    </div>
+        // The Engine: Fetches the data asynchronously on load
+        async function fetchLiveData() {
+            try {
+                const response = await fetch(API_URL);
+                const RAW = await response.json();
+                
+                if (RAW.error) throw new Error(RAW.error);
+                
+                // Hide loader, show dashboard
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('dashboard-content').classList.remove('hidden');
+                
+                // Update status indicator
+                document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-green-500');
+                document.getElementById('status-dot').classList.remove('animate-pulse');
+                document.getElementById('status-text').innerText = "Live Data Synced";
 
-    <div class="chart-card">
-      <div class="card-title">Order Status</div>
-      <div class="card-sub" id="statusSub">All orders this week</div>
-      <ul class="status-list" id="statusList"></ul>
-      <div style="margin-top:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Delivery Rate</span>
-          <span style="font-family:'Raleway',sans-serif;font-size:22px;font-weight:900;" id="delRate">—</span>
-        </div>
-        <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
-      </div>
-    </div>
+                renderDashboard(RAW);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-red-500');
+                document.getElementById('status-text').innerText = "Sync Failed";
+                document.getElementById('loading-screen').innerHTML = `<p class="text-red-600 text-xl font-bold bg-red-100 p-4 rounded border border-red-300 shadow">Error connecting to Google Sheets. Ensure your Apps Script URL is correct and deployed to "Anyone".</p>`;
+            }
+        }
 
-    <div class="chart-card">
-      <div class="card-title">Courier Performance</div>
-      <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
-      <div id="courierList"></div>
-      <div class="sum-strip">
-        <div class="ss-label">Week Avg TAT</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-          <span style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:900;color:var(--amber);" id="tatBig">—</span>
-          <span style="font-size:13px;font-weight:600;color:#aaa;">days</span>
-          <span class="kpi-badge" id="tatBadge" style="margin-left:4px;"></span>
-        </div>
-      </div>
-    </div>
-  </div>
+        function renderDashboard(data) {
+            const weeks = Object.keys(data).sort();
+            if(weeks.length === 0) return;
 
-</div>
+            let totalGMV = 0, totalOrders = 0;
+            let totalFillRate = 0, fillRateCount = 0;
+            let totalTAT = 0, tatCount = 0;
+            let statuses = {}, channels = {}, couriers = {};
 
-<script>
-const RAW = {"2025-12-29":{"gmv":1874830,"orders":89,"statuses":{"Duplicate":13,"Delivered":81,"Cancelled":8},"avg_tat":8.3,"avg_fill":78.8,"dn_value":13039.218,"rto_pct":0,"channels":{"Scootsy":1002563,"Hot":755223,"B2B":63460,"GT":6760,"MT":10452,"KK":36372},"channel_fill":{"Scootsy":{"po":31829,"inv":31815,"short":14,"rate":1},"Hot":{"po":21746,"inv":21584,"short":162,"rate":0.993},"B2B":{"po":0,"inv":600,"short":0,"rate":1},"MT":{"po":312,"inv":0,"short":312,"rate":0},"KK":{"po":788,"inv":748,"short":40,"rate":0.949}},"couriers":{"Safexpress":{"orders":61,"avg_tat":9,"delivery_rate":100},"Bluedart":{"orders":5,"avg_tat":4.4,"delivery_rate":100},"BUS":{"orders":1,"avg_tat":1,"delivery_rate":100},"Dtex logistics":{"orders":14,"avg_tat":7.2,"delivery_rate":100}},"daily_inv":{"2026-01-02":{"Scootsy":16286,"Hot":2760},"2026-01-03":{"B2B":600,"Scootsy":1198,"Hot":10968,"KK":748},"2026-01-05":{"Scootsy":14331,"Hot":7856}}},"2026-01-05":{"gmv":3838507,"orders":151,"statuses":{"Delivered":129,"Duplicate":13,"Cancelled":22},"avg_tat":7.3,"avg_fill":94.4,"dn_value":19575.649,"rto_pct":0,"channels":{"GT":116718,"BB":54975,"Amazon":77642,"Hot":1109821,"KK":329189,"B2B":1781989,"Scootsy":361661,"MT":6512},"channel_fill":{"BB":{"po":1764,"inv":1763,"short":1,"rate":0.999},"Hot":{"po":32904,"inv":31759,"short":1145,"rate":0.965},"KK":{"po":8766,"inv":7490,"short":1276,"rate":0.854},"B2B":{"po":0,"inv":2540,"short":0,"rate":1},"Scootsy":{"po":14584,"inv":12333,"short":2251,"rate":0.846},"GT":{"po":0,"inv":352,"short":0,"rate":1},"MT":{"po":216,"inv":192,"short":24,"rate":0.889},"Amazon":{"po":0,"inv":1380,"short":0,"rate":1}},"couriers":{"Bluedart":{"orders":24,"avg_tat":7.1,"delivery_rate":100},"Safexpress":{"orders":71,"avg_tat":7.9,"delivery_rate":100},"Warehouse Vehicle":{"orders":1,"avg_tat":0,"delivery_rate":100},"Dtex logistics":{"orders":29,"avg_tat":6.2,"delivery_rate":100},"Movin-A":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-01-06":{"Hot":5420,"KK":948},"2026-01-05":{"B2B":40},"2026-01-07":{"Scootsy":3952,"Hot":5482,"B2B":500},"2026-01-08":{"Hot":12033,"KK":5446,"Scootsy":5171},"2026-01-09":{"Hot":284,"GT":300},"2026-01-12":{"BB":184,"KK":1096,"Scootsy":204,"Amazon":644,"Hot":8540},"2026-01-13":{"Amazon":420,"B2B":2000}}},"2026-01-12":{"gmv":3667405,"orders":184,"statuses":{"Delivered":159,"Cancelled":17,"Duplicate":16,"In-Transit":7,"RTO":1},"avg_tat":8.4,"avg_fill":98.5,"dn_value":28848.549000000003,"rto_pct":0.5,"channels":{"KK":398041,"Amazon":197851,"Scootsy":1016010,"BB":31368,"Hot":1820187,"MT":20743,"B2B":126486,"GT":56719},"channel_fill":{"KK":{"po":10374,"inv":10104,"short":270,"rate":0.974},"Amazon":{"po":0,"inv":2193,"short":0,"rate":1},"Scootsy":{"po":30443,"inv":29166,"short":1277,"rate":0.958},"BB":{"po":546,"inv":546,"short":0,"rate":1},"Hot":{"po":48302,"inv":46484,"short":1818,"rate":0.962},"MT":{"po":0,"inv":588,"short":0,"rate":1},"B2B":{"po":0,"inv":600,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":99,"avg_tat":8.6,"delivery_rate":100},"Dtex logistics":{"orders":39,"avg_tat":8.6,"delivery_rate":97.4},"Bluedart":{"orders":23,"avg_tat":5.3,"delivery_rate":69.6},"Private Vehicle":{"orders":1,"avg_tat":0,"delivery_rate":100},"Delhivery":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-01-12":{"KK":2326,"Amazon":300,"Scootsy":4336,"BB":284},"2026-01-13":{"Amazon":600,"Hot":15880,"KK":1814},"2026-01-14":{"BB":172},"2026-01-15":{"Scootsy":11945,"BB":90,"Hot":6490,"KK":5964},"2026-01-16":{"Scootsy":10644,"Hot":5248},"2026-01-17":{"Hot":18866}}},"2026-01-19":{"gmv":4235858.1899999995,"orders":194,"statuses":{"Delivered":168,"Cancelled":11,"In-Transit":12,"Duplicate":4,"RTO":3},"avg_tat":8.9,"avg_fill":98.1,"dn_value":28182.692999999996,"rto_pct":1.5,"channels":{"Scootsy":1497976.19,"GT":22547,"KK":1016700,"B2B":53455,"Hot":1450829,"BB":49670,"Amazon":139897,"MT":4784},"channel_fill":{"Scootsy":{"po":41029,"inv":40284,"short":745,"rate":0.982},"KK":{"po":27831,"inv":27433,"short":398,"rate":0.986},"Hot":{"po":44716,"inv":43096,"short":1620,"rate":0.964},"BB":{"po":1434,"inv":1421,"short":13,"rate":0.991}},"couriers":{"Dtex logistics":{"orders":49,"avg_tat":7,"delivery_rate":91.8},"Safexpress":{"orders":112,"avg_tat":9.7,"delivery_rate":100},"Bluedart":{"orders":12,"avg_tat":8,"delivery_rate":33.3},"Private Vehicle":{"orders":2,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-01-20":{"Scootsy":12740,"KK":10076,"Hot":9236},"2026-01-23":{"Hot":13970,"Scootsy":721},"2026-01-21":{"Scootsy":11805,"Hot":270},"2026-01-22":{"KK":4002},"2026-01-24":{"Scootsy":14519,"Hot":16830,"KK":444}}},"2026-01-26":{"gmv":5937065.88,"orders":250,"statuses":{"In-Transit":3,"Delivered":209,"Cancelled":34,"Duplicate":9,"Pending":3,"RTO":1},"avg_tat":9.1,"avg_fill":86.4,"dn_value":54855.634999999995,"rto_pct":0.4,"channels":{"B2B":84551,"BB":39433,"Scootsy":1647929,"Hot":1575955.88,"MT":511123,"GT":25033,"Amazon":209337,"KK":1843704},"channel_fill":{"BB":{"po":1094,"inv":1094,"short":0,"rate":1},"Scootsy":{"po":51677,"inv":50424,"short":1253,"rate":0.976},"Hot":{"po":58444,"inv":44812,"short":13632,"rate":0.767},"MT":{"po":27150,"inv":12867,"short":14283,"rate":0.474},"Amazon":{"po":0,"inv":1017,"short":0,"rate":1},"KK":{"po":41549,"inv":40139,"short":1410,"rate":0.966}},"couriers":{"Bluedart":{"orders":11,"avg_tat":0,"delivery_rate":72.7},"Safexpress":{"orders":140,"avg_tat":10.1,"delivery_rate":100},"Dtex logistics":{"orders":58,"avg_tat":6.6,"delivery_rate":98.3},"Porter":{"orders":1,"avg_tat":0,"delivery_rate":100},"Delhivery":{"orders":1,"avg_tat":0,"delivery_rate":100},"Private Vehicle":{"orders":1,"avg_tat":0,"delivery_rate":100},"BUS":{"orders":1,"avg_tat":0,"delivery_rate":0}},"daily_inv":{"2026-01-27":{"BB":1094,"Scootsy":19314},"2026-01-29":{"Hot":16298},"2026-01-30":{"MT":2697,"Scootsy":14787,"KK":20107,"Hot":8806},"2026-01-31":{"Amazon":848,"KK":3116,"Scootsy":5820,"Hot":9004},"2026-01-28":{"KK":13566},"2026-02-10":{"Scootsy":1560,"KK":1260},"2026-02-02":{"KK":1670,"Scootsy":7407,"Hot":10704},"2026-02-06":{"Scootsy":1536}}},"2026-02-02":{"gmv":4446176,"orders":208,"statuses":{"Delivered":198,"Duplicate":11,"Pending":2,"Cancelled":7,"RTO":1},"avg_tat":9.5,"avg_fill":97.5,"dn_value":26032.33,"rto_pct":0.5,"channels":{"KK":1192419,"Scootsy":944220,"Hot":2256031,"BB":42182,"Amazon":11324},"channel_fill":{"KK":{"po":30636,"inv":30426,"short":210,"rate":0.993},"Scootsy":{"po":31512,"inv":28977,"short":2535,"rate":0.92},"Hot":{"po":68060,"inv":66742,"short":1318,"rate":0.981},"BB":{"po":1322,"inv":1297,"short":25,"rate":0.981},"Amazon":{"po":0,"inv":212,"short":0,"rate":1}},"couriers":{"Bluedart":{"orders":23,"avg_tat":8.4,"delivery_rate":100},"Safexpress":{"orders":120,"avg_tat":9.9,"delivery_rate":99.2},"Dtex logistics":{"orders":53,"avg_tat":8.6,"delivery_rate":98.1},"movin":{"orders":2,"avg_tat":0,"delivery_rate":100},"Porter":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-02-03":{"KK":9884,"Scootsy":586,"Hot":14174,"BB":997},"2026-02-04":{"Scootsy":12127,"Hot":7016},"2026-02-05":{"KK":10642,"Scootsy":398,"Hot":7498},"2026-02-06":{"BB":300,"KK":9900,"Scootsy":9623,"Hot":16236},"2026-02-07":{"Scootsy":2670,"Hot":8486},"2026-02-09":{"Amazon":90,"Scootsy":3573,"Hot":13332},"2026-02-10":{"Amazon":122}}},"2026-02-09":{"gmv":4568701.29,"orders":199,"statuses":{"Delivered":179,"Duplicate":14,"RTO":1,"Cancelled":18,"Pending":1},"avg_tat":10,"avg_fill":98.8,"dn_value":34324.897999999994,"rto_pct":0.5,"channels":{"BB":15912,"KK":1624711,"Scootsy":1200891.29,"Hot":1497162,"MT":64119,"Amazon":165906},"channel_fill":{"BB":{"po":478,"inv":478,"short":0,"rate":1},"KK":{"po":43940,"inv":42740,"short":1200,"rate":0.973},"Scootsy":{"po":37117,"inv":35965,"short":1152,"rate":0.969},"Hot":{"po":43910,"inv":43314,"short":596,"rate":0.986},"MT":{"po":0,"inv":1982,"short":0,"rate":1},"Amazon":{"po":0,"inv":342,"short":0,"rate":1}},"couriers":{"Dtex logistics":{"orders":54,"avg_tat":8.7,"delivery_rate":98.1},"Safexpress":{"orders":94,"avg_tat":10.9,"delivery_rate":100},"Bluedart":{"orders":24,"avg_tat":9,"delivery_rate":100},"Movin":{"orders":1,"avg_tat":0,"delivery_rate":100},"Porter":{"orders":3,"avg_tat":0,"delivery_rate":100},"Delhivery (B2C)":{"orders":1,"avg_tat":0,"delivery_rate":100},"we fast":{"orders":1,"avg_tat":0,"delivery_rate":100},"BUS":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-02-10":{"BB":126,"KK":13230,"Scootsy":2855,"Hot":18452},"2026-02-28":{"Hot":268},"2026-02-11":{"Scootsy":12648,"KK":3836,"BB":352},"2026-02-21":{"KK":2014},"2026-02-20":{"KK":480},"2026-02-18":{"KK":3656,"Hot":260},"2026-02-12":{"KK":8168,"Hot":9414,"Scootsy":2409},"2026-02-13":{"Amazon":342},"2026-01-12":{"KK":4350},"2026-02-14":{"KK":7006,"Hot":10058,"Scootsy":13206},"2026-02-16":{"Scootsy":4847,"Hot":4652},"2026-02-19":{"Hot":210}}},"2026-02-16":{"gmv":6414525.21,"orders":244,"statuses":{"Delivered":223,"Duplicate":20,"Cancelled":20,"RTO":1},"avg_tat":7.8,"avg_fill":98.6,"dn_value":36169.44200000001,"rto_pct":0.4,"channels":{"BB":36682,"Scootsy":1509965,"KK":2935570,"Amazon":86974,"Hot":1838902.21,"MT":6432},"channel_fill":{"BB":{"po":1180,"inv":1167,"short":13,"rate":0.989},"Scootsy":{"po":45658,"inv":45146,"short":512,"rate":0.989},"KK":{"po":62234,"inv":59841,"short":2393,"rate":0.962},"Hot":{"po":52630,"inv":52199,"short":431,"rate":0.992},"MT":{"po":0,"inv":168,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":122,"avg_tat":8.7,"delivery_rate":100},"Bluedart":{"orders":22,"avg_tat":5.3,"delivery_rate":100},"Dtex logistics":{"orders":58,"avg_tat":6.2,"delivery_rate":98.3},"Warehouse Vehicle":{"orders":1,"avg_tat":0,"delivery_rate":100},"we fast":{"orders":3,"avg_tat":0,"delivery_rate":100},"Delhivery":{"orders":15,"avg_tat":8.5,"delivery_rate":100},"Delhivery (B2C)":{"orders":2,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-02-17":{"BB":767,"KK":14670,"Hot":12320},"2026-02-16":{"Scootsy":9561},"2026-02-18":{"KK":4770,"Scootsy":15079,"Hot":2230,"BB":258},"2026-02-20":{"BB":142,"MT":168,"KK":22552,"Scootsy":2506,"Hot":3836},"2026-02-19":{"KK":17849,"Scootsy":4271,"Hot":6508},"2026-02-21":{"Scootsy":5208,"Hot":16455},"2026-02-23":{"Scootsy":4428,"Hot":10850}}},"2026-02-23":{"gmv":4505380,"orders":181,"statuses":{"Delivered":169,"Cancelled":7,"Pending":1,"Duplicate":7,"In-Transit":1,"RTO":3},"avg_tat":7.5,"avg_fill":99.1,"dn_value":39097.134000000005,"rto_pct":1.7,"channels":{"KK":820868,"BB":41887,"Scootsy":967593,"Hot":1783111,"MT":628015,"Amazon":263906},"channel_fill":{"KK":{"po":21874,"inv":21158,"short":716,"rate":0.967},"BB":{"po":1164,"inv":1164,"short":0,"rate":1},"Scootsy":{"po":29040,"inv":28695,"short":345,"rate":0.988},"Hot":{"po":49666,"inv":49310,"short":356,"rate":0.993},"MT":{"po":0,"inv":16099,"short":0,"rate":1},"Amazon":{"po":0,"inv":335,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":82,"avg_tat":8.1,"delivery_rate":100},"Dtex logistics":{"orders":55,"avg_tat":5.7,"delivery_rate":96.4},"Bluedart":{"orders":20,"avg_tat":9.8,"delivery_rate":90},"Delhivery":{"orders":13,"avg_tat":8.9,"delivery_rate":100},"Private Vehicle":{"orders":1,"avg_tat":0,"delivery_rate":100},"BUS":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-02-24":{"KK":6672,"BB":414,"Scootsy":3666,"Hot":15166,"MT":121},"2026-02-25":{"BB":750,"Scootsy":11137,"Hot":6898},"2026-02-26":{"KK":6184,"Hot":7436},"2026-03-02":{"MT":1784,"KK":140},"2026-02-28":{"MT":14194},"2026-02-27":{"KK":2726,"Hot":7836,"Scootsy":1932},"2026-03-04":{"KK":4264,"Hot":6036},"2026-03-05":{"Hot":540}}},"2026-03-02":{"gmv":5354056,"orders":230,"statuses":{"Delivered":216,"RTO":8,"Cancelled":4,"Duplicate":13,"Pending":2},"avg_tat":7.3,"avg_fill":97.7,"dn_value":87168.104,"rto_pct":3.5,"channels":{"KK":1171341,"Scootsy":1659103,"Hot":2418030,"BB":77102,"Amazon":28480},"channel_fill":{"KK":{"po":32042,"inv":31302,"short":740,"rate":0.977},"Scootsy":{"po":48929,"inv":45715,"short":3214,"rate":0.934},"Hot":{"po":69710,"inv":69562,"short":148,"rate":0.998},"BB":{"po":2302,"inv":2302,"short":0,"rate":1}},"couriers":{"Dtex logistics":{"orders":96,"avg_tat":6.3,"delivery_rate":94.8},"Safexpress":{"orders":53,"avg_tat":8,"delivery_rate":100},"Delhivery":{"orders":3,"avg_tat":6.5,"delivery_rate":100},"Bluedart":{"orders":69,"avg_tat":8,"delivery_rate":94.2},"Porter":{"orders":2,"avg_tat":0,"delivery_rate":100},"we fast":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-03-06":{"KK":16332,"Hot":11460},"2026-03-04":{"KK":6342,"Scootsy":4108},"2026-03-05":{"KK":1440,"Scootsy":2479,"Hot":15862,"BB":702},"2026-03-07":{"KK":3060,"Hot":23976,"Scootsy":15449,"BB":1600},"2026-02-27":{"Scootsy":1327},"2026-03-09":{"Scootsy":20957,"KK":4128,"Hot":11480},"2026-03-10":{"Hot":6784}}},"2026-03-09":{"gmv":5284598,"orders":185,"statuses":{"Delivered":157,"RTO":8,"Cancelled":5,"Pending":15,"Duplicate":5},"avg_tat":8.8,"avg_fill":98.8,"dn_value":30306.975,"rto_pct":4.3,"channels":{"BB":24609,"KK":2333782,"Scootsy":1295843,"Hot":1484163,"MT":21228,"Amazon":124973},"channel_fill":{"BB":{"po":564,"inv":564,"short":0,"rate":1},"KK":{"po":64477,"inv":61393,"short":3084,"rate":0.952},"Scootsy":{"po":39786,"inv":39264,"short":522,"rate":0.987},"Hot":{"po":41890,"inv":41516,"short":374,"rate":0.991},"MT":{"po":0,"inv":576.102,"short":0,"rate":1},"Amazon":{"po":0,"inv":1544,"short":0,"rate":1}},"couriers":{"Bluedart":{"orders":37,"avg_tat":8.5,"delivery_rate":91.9},"Dtex logistics":{"orders":81,"avg_tat":8.3,"delivery_rate":92.6},"Safexpress":{"orders":48,"avg_tat":9.9,"delivery_rate":97.9},"Delhivery (B2C)":{"orders":1,"avg_tat":0,"delivery_rate":0},"Dtex Logistics-Z":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-03-10":{"BB":120,"KK":25656,"Scootsy":2679,"Hot":11124},"2026-03-11":{"BB":88,"Scootsy":13900,"KK":2046,"Hot":8490},"2026-03-12":{"Scootsy":10788,"BB":356,"Hot":5474,"KK":19745},"2026-03-14":{"MT":192.082,"Scootsy":11897,"KK":11542,"Hot":16188,"Amazon":1459},"2026-03-13":{"MT":384.02},"2026-03-23":{"KK":2404,"Hot":240}}},"2026-03-16":{"gmv":4804537,"orders":196,"statuses":{"Pending":13,"Delivered":167,"Cancelled":14,"Duplicate":3,"RTO":2},"avg_tat":9.2,"avg_fill":96.8,"dn_value":29231.444000000003,"rto_pct":1,"channels":{"BB":46216,"KK":951792,"Hot":2546255,"Amazon":141579,"Scootsy":1118695},"channel_fill":{"BB":{"po":1238,"inv":1238,"short":0,"rate":1},"KK":{"po":26488,"inv":25440,"short":1048,"rate":0.96},"Hot":{"po":74232,"inv":71508,"short":2724,"rate":0.963},"Scootsy":{"po":37617,"inv":34493,"short":3124,"rate":0.917},"Amazon":{"po":0,"inv":1256,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":121,"avg_tat":9.6,"delivery_rate":100},"Dtex logistics":{"orders":47,"avg_tat":8.3,"delivery_rate":95.7},"Dtex Logistics-Z":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-03-17":{"BB":472,"KK":7251,"Hot":27302,"Scootsy":1110},"2026-03-18":{"Scootsy":20858,"Hot":10458,"BB":594},"2026-03-20":{"KK":438,"Scootsy":812,"BB":172,"Hot":12932},"2026-03-21":{"KK":17751,"Amazon":175,"Hot":5218,"Scootsy":9163},"2026-04-04":{"Hot":690},"2026-03-23":{"Scootsy":2550,"Hot":14908}}},"2026-03-23":{"gmv":5359000,"orders":206,"statuses":{"Pending":15,"Delivered":174,"Duplicate":11,"Cancelled":13,"RTO":4},"avg_tat":8,"avg_fill":214.1,"dn_value":50300.25899999999,"rto_pct":1.9,"channels":{"Scootsy":1738871,"Amazon":129333,"Hot":1601044,"MT":92728,"BB":43173,"KK":1736270,"FC":17581},"channel_fill":{"Scootsy":{"po":56717,"inv":54247,"short":2470,"rate":0.956},"Hot":{"po":48588,"inv":46116,"short":2472,"rate":0.949},"MT":{"po":294,"inv":2673,"short":0,"rate":9.092},"BB":{"po":1338,"inv":1338,"short":0,"rate":1},"KK":{"po":47168,"inv":46562,"short":606,"rate":0.987},"Amazon":{"po":0,"inv":655,"short":0,"rate":1},"FC":{"po":352,"inv":352,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":125,"avg_tat":8.5,"delivery_rate":96},"Dtex logistics":{"orders":35,"avg_tat":7,"delivery_rate":100},"Dtex Logistics-Z":{"orders":1,"avg_tat":0,"delivery_rate":100},"Bluedart":{"orders":5,"avg_tat":4,"delivery_rate":100},"Pickrr":{"orders":12,"avg_tat":7.2,"delivery_rate":100}},"daily_inv":{"2026-03-23":{"Scootsy":6533},"2026-03-25":{"Hot":18634,"BB":190,"KK":18276},"2026-03-24":{"Hot":862,"MT":399},"2026-03-26":{"MT":1914,"Hot":13722,"Scootsy":8070,"BB":1148},"2026-04-05":{"KK":6258,"Hot":1676,"Scootsy":16029},"2026-03-28":{"KK":868,"Hot":8282,"MT":360},"2026-04-04":{"Scootsy":8655,"KK":13068},"2026-04-03":{"Scootsy":9426,"KK":7588,"Hot":708},"2026-03-27":{"Scootsy":4680,"KK":504,"Hot":2232},"2026-04-06":{"Scootsy":854},"2026-04-28":{"FC":352}}},"2026-03-30":{"gmv":4736549,"orders":195,"statuses":{"Duplicate":5,"Cancelled":19,"Pending":14,"Delivered":158,"RTO":4},"avg_tat":7.4,"avg_fill":79.4,"dn_value":52460.25000000001,"rto_pct":2.1,"channels":{"Hot":2637620,"KK":349082,"Amazon":194044,"Scootsy":1550733,"BB":5070},"channel_fill":{"Hot":{"po":78532,"inv":76264,"short":2268,"rate":0.971},"KK":{"po":9631,"inv":9547,"short":84,"rate":0.991},"Amazon":{"po":0,"inv":890,"short":0,"rate":1},"Scootsy":{"po":55412,"inv":52226,"short":3186,"rate":0.943},"BB":{"po":2130,"inv":136,"short":1994,"rate":0.064}},"couriers":{"Safexpress":{"orders":94,"avg_tat":8.6,"delivery_rate":100},"Pickrr":{"orders":42,"avg_tat":5.4,"delivery_rate":92.9},"Dtex logistics":{"orders":5,"avg_tat":4,"delivery_rate":100},"Private Vehicle":{"orders":3,"avg_tat":0,"delivery_rate":100},"Delhivery":{"orders":18,"avg_tat":7.7,"delivery_rate":94.4}},"daily_inv":{"2026-04-01":{"Hot":14444},"2026-04-06":{"Hot":18406},"2026-04-05":{"KK":9547,"Hot":220},"2026-04-04":{"Amazon":753,"Scootsy":4731},"2026-04-19":{"Amazon":137},"2026-04-02":{"Hot":5016},"2026-04-07":{"Scootsy":8477,"Hot":26708},"2026-04-03":{"Scootsy":5718,"Hot":11470},"2026-04-10":{"BB":136},"2026-04-09":{"Scootsy":33300}}},"2026-04-06":{"gmv":3549163,"orders":139,"statuses":{"Pending":15,"Duplicate":15,"Delivered":111,"Cancelled":10,"RTO":2,"In-Transit":1},"avg_tat":8.1,"avg_fill":83.5,"dn_value":66998.89999999998,"rto_pct":1.4,"channels":{"Hot":2638824,"Scootsy":394553,"BB":11232,"Amazon":107896,"KK":396658},"channel_fill":{"Hot":{"po":75026,"inv":74734,"short":292,"rate":0.996},"BB":{"po":1540,"inv":316,"short":1224,"rate":0.205},"Scootsy":{"po":12888,"inv":12885,"short":3,"rate":1},"Amazon":{"po":0,"inv":1112,"short":0,"rate":1},"KK":{"po":10456,"inv":10192,"short":264,"rate":0.975}},"couriers":{"Delhivery":{"orders":17,"avg_tat":6.6,"delivery_rate":100},"Pickrr":{"orders":39,"avg_tat":7.2,"delivery_rate":92.3},"Safexpress":{"orders":58,"avg_tat":9.1,"delivery_rate":96.6},"Private Vehicle":{"orders":2,"avg_tat":1,"delivery_rate":100}},"daily_inv":{"2026-04-09":{"Hot":21802,"Scootsy":4848},"2026-04-10":{"Hot":28604,"BB":316,"Scootsy":1290},"2026-04-11":{"Scootsy":4612,"Hot":18028,"KK":2238},"2026-04-13":{"Hot":6300,"Scootsy":2135}}},"2026-04-13":{"gmv":5569062,"orders":214,"statuses":{"Pending":17,"Delivered":163,"In-Transit":4,"Cancelled":11,"RTO":9,"Duplicate":8,"Kunafa":10},"avg_tat":8.1,"avg_fill":81.9,"dn_value":28808.450000000015,"rto_pct":4.2,"channels":{"Scootsy":1238103,"KK":1911419,"Hot":2311122,"Amazon":98367,"MT":10051},"channel_fill":{"Scootsy":{"po":44082,"inv":42375,"short":1707,"rate":0.961},"KK":{"po":44045,"inv":42588,"short":1457,"rate":0.967},"Hot":{"po":67592,"inv":66524,"short":1068,"rate":0.984},"BB":{"po":1014,"inv":0,"short":1014,"rate":0},"Amazon":{"po":0,"inv":1909,"short":0,"rate":1},"MT":{"po":0,"inv":252,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":104,"avg_tat":9.5,"delivery_rate":94.2},"Pickrr":{"orders":56,"avg_tat":6.9,"delivery_rate":91.1},"Delhivery":{"orders":9,"avg_tat":9.9,"delivery_rate":100},"Private Vehicle":{"orders":2,"avg_tat":0.5,"delivery_rate":100},"Bluedart":{"orders":5,"avg_tat":5.5,"delivery_rate":60}},"daily_inv":{"2026-04-18":{"Scootsy":8020,"KK":4138,"Hot":12306},"2026-04-16":{"Scootsy":7857,"KK":19769,"Hot":11418},"2026-04-15":{"KK":8292,"Hot":4222},"2026-04-17":{"Scootsy":9667,"Hot":2716},"2026-04-25":{"Amazon":1291},"2026-04-19":{"Amazon":618},"2026-04-28":{"KK":336}}},"2026-04-20":{"gmv":4535144,"orders":172,"statuses":{"Delivered":146,"In-Transit":9,"Pending":11,"Cancelled":2,"RTO":4,"Duplicate":5},"avg_tat":7.2,"avg_fill":97.8,"dn_value":32718.800000000003,"rto_pct":2.3,"channels":{"KK":764300,"Hot":3151062,"Scootsy":215748,"Amazon":404034},"channel_fill":{"KK":{"po":20591,"inv":19788,"short":803,"rate":0.961},"Hot":{"po":86220,"inv":84624,"short":1596,"rate":0.981},"Scootsy":{"po":7375,"inv":7142,"short":233,"rate":0.968},"Amazon":{"po":0,"inv":5028,"short":0,"rate":1}},"couriers":{"Pickrr":{"orders":45,"avg_tat":5.2,"delivery_rate":95.6},"Safexpress":{"orders":107,"avg_tat":7.9,"delivery_rate":91.6},"Bluedart":{"orders":2,"avg_tat":1,"delivery_rate":50},"Porter":{"orders":1,"avg_tat":0,"delivery_rate":100},"Private Vehicle":{"orders":2,"avg_tat":0,"delivery_rate":100},"Safeexpress":{"orders":2,"avg_tat":9,"delivery_rate":50}},"daily_inv":{"2026-04-27":{"KK":8477,"Amazon":80,"Hot":4854},"2026-04-22":{"KK":2027,"Hot":12122,"Scootsy":2809},"2026-04-28":{"KK":2606,"Hot":9810},"2026-04-30":{"Amazon":898,"Hot":16},"2026-05-13":{"Amazon":982},"2026-05-12":{"Amazon":258},"2026-04-24":{"Hot":1992},"2026-05-07":{"Amazon":1094},"2026-04-25":{"KK":3174,"Hot":16558},"2026-04-29":{"Hot":10940,"Scootsy":3354}}},"2026-04-27":{"gmv":5520178,"orders":195,"statuses":{"Delivered":129,"In-Transit":35,"RTO":8,"Pending":18,"Cancelled":5,"Duplicate":1},"avg_tat":7.4,"avg_fill":97.9,"dn_value":42391.39,"rto_pct":4.1,"channels":{"KK":1596322,"MT":31999,"Hot":2573050,"Scootsy":1151934,"Amazon":154135,"B2B":3197,"FC":9541},"channel_fill":{"KK":{"po":46627,"inv":44743,"short":1884,"rate":0.96},"MT":{"po":0,"inv":828,"short":0,"rate":1},"Hot":{"po":75566,"inv":73626,"short":1940,"rate":0.974},"Scootsy":{"po":42139,"inv":40728,"short":1411,"rate":0.967},"Amazon":{"po":0,"inv":80,"short":0,"rate":1},"B2B":{"po":0,"inv":4,"short":0,"rate":1},"FC":{"po":160,"inv":152,"short":8,"rate":0.95}},"couriers":{"Delhivery":{"orders":6,"avg_tat":11,"delivery_rate":50},"Pickrr":{"orders":46,"avg_tat":7.3,"delivery_rate":82.6},"Bluedart":{"orders":2,"avg_tat":0,"delivery_rate":50},"PORTER":{"orders":1,"avg_tat":0,"delivery_rate":100},"Safexpress":{"orders":114,"avg_tat":7.9,"delivery_rate":71.9},"Private Vehicle":{"orders":1,"avg_tat":1,"delivery_rate":100},"Priavte Vehicle":{"orders":3,"avg_tat":0.7,"delivery_rate":100}},"daily_inv":{"2026-04-30":{"KK":5081,"MT":264,"Hot":26460,"Scootsy":7724},"2026-05-06":{"MT":264,"Hot":684},"2026-04-29":{"Hot":2196},"2026-05-02":{"Scootsy":9261,"KK":6566,"Hot":15272,"FC":152},"2026-05-04":{"Hot":6318,"KK":8038,"Scootsy":6380},"2026-05-07":{"KK":4878,"Scootsy":1979},"2026-05-05":{"KK":3700,"Hot":4824,"Scootsy":8684},"2026-05-11":{"KK":2710},"2026-05-09":{"KK":3690}}},"2026-05-04":{"gmv":4741837,"orders":173,"statuses":{"Delivered":37,"In-Transit":123,"Pending":10,"Cancelled":3,"Duplicate":2},"avg_tat":5.2,"avg_fill":97.7,"dn_value":4616.209999999999,"rto_pct":0,"channels":{"Hot":1952139,"Scootsy":1602030,"KK":1130513,"MT":8643,"B2B":35942,"GT":12570},"channel_fill":{"Hot":{"po":55324,"inv":53082,"short":2242,"rate":0.959},"Scootsy":{"po":59780,"inv":56509,"short":3271,"rate":0.945},"KK":{"po":31506,"inv":30128,"short":1378,"rate":0.956},"MT":{"po":0,"inv":253,"short":0,"rate":1},"B2B":{"po":0,"inv":868,"short":0,"rate":1},"GT":{"po":0,"inv":378,"short":0,"rate":1}},"couriers":{"Safexpress":{"orders":113,"avg_tat":5.5,"delivery_rate":20.4},"Pickr":{"orders":17,"avg_tat":3.3,"delivery_rate":23.5},"Pickrr":{"orders":22,"avg_tat":5,"delivery_rate":27.3},"pickrr":{"orders":2,"avg_tat":6,"delivery_rate":100},"Movin -A":{"orders":1,"avg_tat":3,"delivery_rate":100},"Bluedart":{"orders":4,"avg_tat":0,"delivery_rate":0},"Bus":{"orders":1,"avg_tat":0,"delivery_rate":0},"Porter":{"orders":1,"avg_tat":0,"delivery_rate":100}},"daily_inv":{"2026-05-07":{"Hot":14610,"Scootsy":5024,"KK":8642},"2026-05-11":{"KK":5184,"Scootsy":4092,"Hot":6964},"2026-05-09":{"KK":2980,"Scootsy":8342,"B2B":500,"GT":378},"2026-05-08":{"Scootsy":10940,"Hot":8792,"B2B":368},"2026-05-13":{"Scootsy":18573,"KK":4146,"Hot":8122},"2026-05-10":{"Hot":12396}}},"2026-05-11":{"gmv":1677211,"orders":180,"statuses":{"In-Transit":11,"wed":41,"Pending":59,"Thur":43,"Duplicate":1,"Fri":26},"avg_tat":0,"avg_fill":49.1,"dn_value":0,"rto_pct":0,"channels":{"Scootsy":334311,"KK":494459,"Hot":848441},"channel_fill":{"Scootsy":{"po":39569,"inv":12050,"short":27519,"rate":0.305},"KK":{"po":18713,"inv":13212,"short":5501,"rate":0.706},"Hot":{"po":50648,"inv":23382,"short":27266,"rate":0.462}},"couriers":{"Pickrr":{"orders":36,"avg_tat":0,"delivery_rate":0},"safex":{"orders":25,"avg_tat":0,"delivery_rate":0},"Safex":{"orders":25,"avg_tat":0,"delivery_rate":0},"Safexpress":{"orders":9,"avg_tat":0,"delivery_rate":0}},"daily_inv":{"2026-05-13":{"Scootsy":1965,"Hot":4932}}},"2026-12-21":{"gmv":0,"orders":430,"statuses":{"Pending":430},"avg_tat":0,"avg_fill":0,"dn_value":0,"rto_pct":0,"channels":{},"channel_fill":{},"couriers":{},"daily_inv":{}}}
-const COLORS={Hot:'#E07B39',KK:'#6A4C93',Scootsy:'#1D8A99',Amazon:'#FBAE25',BB:'#457B9D',B2B:'#2D6A4F',GT:'#52B788',MT:'#9B59B6',FC:'#E17055',Others:'#95A5A6'};
-const CH_ORDER=['Hot','KK','Scootsy','Amazon','BB','B2B','GT','MT','FC'];
-const STATUS_META={
-  Delivered:{icon:'✅',bg:'#E8F5EF'},
-  'In-Transit':{icon:'🚚',bg:'#E3F2FD'},
-  Pending:{icon:'⏳',bg:'#FFF3E0'},
-  Hold:{icon:'🔁',bg:'#FFF3CD'},
-  Cancelled:{icon:'❌',bg:'#FDECEA'},
-  RTO:{icon:'↩️',bg:'#FDECEA'},
-  Kunafa:{icon:'🍃',bg:'#F3E5F5'},
-  Other:{icon:'📦',bg:'#F5F5F5'},
-};
+            // Calculate aggregations
+            weeks.forEach(w => {
+                let weekData = data[w];
+                totalGMV += weekData.gmv;
+                totalOrders += weekData.orders;
+                
+                if(weekData.avg_fill > 0) { totalFillRate += weekData.avg_fill; fillRateCount++; }
+                if(weekData.avg_tat > 0) { totalTAT += weekData.avg_tat; tatCount++; }
 
-let ccInst,tcInst,dcInst,trendWindow=8;
-const WEEKS=Object.keys(RAW).sort().reverse();
+                for (let [s, count] of Object.entries(weekData.statuses)) {
+                    statuses[s] = (statuses[s] || 0) + count;
+                }
+                for (let [c, val] of Object.entries(weekData.channels)) {
+                    channels[c] = (channels[c] || 0) + val;
+                }
+                for (let [c, cData] of Object.entries(weekData.couriers)) {
+                    if(!couriers[c]) couriers[c] = { orders: 0, _tatSum: 0, _tatCount: 0 };
+                    couriers[c].orders += cData.orders;
+                    if(cData.avg_tat > 0) {
+                        couriers[c]._tatSum += cData.avg_tat * cData.orders; 
+                        couriers[c]._tatCount += cData.orders;
+                    }
+                }
+            });
 
-function fmtL(v){
-  if(v>=10000000)return'₹'+(v/10000000).toFixed(2)+'Cr';
-  if(v>=100000)return'₹'+(v/100000).toFixed(1)+'L';
-  if(v>=1000)return'₹'+(v/1000).toFixed(0)+'K';
-  return'₹'+v;
-}
-function pct(v){return(v*100).toFixed(1)+'%';}
-function wkLabel(wk){
-  const d=new Date(wk+'T00:00:00');
-  const e=new Date(d);e.setDate(e.getDate()+6);
-  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return M[d.getMonth()]+' '+d.getDate()+' – '+M[e.getMonth()]+' '+e.getDate();
-}
-function dayLabel(dt){
-  const d=new Date(dt+'T00:00:00');
-  return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate();
-}
+            // Format final KPI values
+            let avgFill = fillRateCount > 0 ? (totalFillRate / fillRateCount).toFixed(1) : 0;
+            let avgTatTotal = tatCount > 0 ? (totalTAT / tatCount).toFixed(1) : 0;
+            let rtoPct = totalOrders > 0 ? (((statuses["RTO"] || 0) / totalOrders) * 100).toFixed(1) : 0;
 
-// ─── ALERT ───
-function buildAlert(wk){
-  const d=RAW[wk];
-  const bad=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0&&v.rate<0.9);
-  const bn=document.getElementById('alertBanner');
-  const isPartial=wk==='2026-05-11';
+            // Inject KPIs
+            const kpis = [
+                { label: "Total GMV Generated", value: "₹" + totalGMV.toLocaleString('en-IN') },
+                { label: "Total Orders Processed", value: totalOrders.toLocaleString('en-IN') },
+                { label: "Average Fill Rate", value: avgFill + "%" },
+                { label: "Average Delivery TAT", value: avgTatTotal + " Days" },
+                { label: "Overall RTO Rate", value: rtoPct + "%" }
+            ];
 
-  if(isPartial){
-    bn.style.cssText='background:linear-gradient(135deg,#E3F2FD,#F0F8FF);border-color:#457B9D;';
-    document.getElementById('alertIcon').textContent='ℹ️';
-    document.getElementById('alertTitle').style.color='#1565C0';
-    document.getElementById('alertTitle').textContent='Partial Week — Data Incomplete';
-    document.getElementById('alertText').textContent='Current open week (May 11–). Orders still being fulfilled.';
-    document.getElementById('alertChips').innerHTML='';
-  }else if(bad.length===0){
-    bn.style.cssText='background:linear-gradient(135deg,#E8F5EF,#F0FAF5);border-color:#52B788;';
-    document.getElementById('alertIcon').textContent='✅';
-    document.getElementById('alertTitle').style.color='#2D6A4F';
-    document.getElementById('alertTitle').textContent='All channels performing well this week';
-    document.getElementById('alertText').textContent='Fill rates above 90% across all active channels.';
-    document.getElementById('alertChips').innerHTML='';
-  }else{
-    bn.style.cssText='background:linear-gradient(135deg,#FFF3CD,#FFF8E7);border-color:#FBAE25;';
-    document.getElementById('alertIcon').textContent='⚠️';
-    document.getElementById('alertTitle').style.color='#856404';
-    document.getElementById('alertTitle').textContent='Short Supply Alert — Attention Needed';
-    document.getElementById('alertText').textContent=bad.sort((a,b)=>a[1].rate-b[1].rate).map(([ch,v])=>`${ch} at ${pct(v.rate)} fill rate`).join(', ')+'.';
-    document.getElementById('alertChips').innerHTML=bad.map(([ch,v])=>`<span class="alert-chip" style="background:rgba(251,174,37,.2);color:#6B5000;">${ch}: ${v.short.toLocaleString('en-IN')} units short</span>`).join('');
-  }
-}
+            document.getElementById('kpi-container').innerHTML = kpis.map(k => `
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                    <p class="text-xs tracking-wider text-gray-500 uppercase font-semibold mb-1">${k.label}</p>
+                    <p class="text-2xl font-black text-gray-800">${k.value}</p>
+                </div>
+            `).join('');
 
-// ─── KPIs ───
-function buildKPIs(wk){
-  const d=RAW[wk];
-  const idx=WEEKS.indexOf(wk);
-  const prev=idx<WEEKS.length-1?RAW[WEEKS[idx+1]]:null;
+            // Draw Charts
+            createChart('gmvChart', 'line', {
+                labels: weeks,
+                datasets: [{
+                    label: 'GMV Generated',
+                    data: weeks.map(w => data[w].gmv),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            });
 
-  // GMV
-  const gmvChg=prev?((d.gmv-prev.gmv)/prev.gmv*100):0;
-  const gmvUp=d.gmv>=(prev?.gmv||0);
-  document.getElementById('kGMV').textContent=fmtL(d.gmv);
-  const kb=document.getElementById('kGMVb');
-  kb.textContent=prev?(gmvUp?'↑ ':'↓ ')+Math.abs(gmvChg).toFixed(1)+'% WoW':'First week';
-  kb.className='kpi-badge '+(prev?(gmvUp?'badge-up':'badge-down'):'badge-warn');
+            createChart('statusChart', 'doughnut', {
+                labels: Object.keys(statuses),
+                datasets: [{
+                    data: Object.values(statuses),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280', '#3b82f6', '#8b5cf6']
+                }]
+            });
 
-  // Orders
-  document.getElementById('kOrders').textContent=d.orders;
-  const dup=d.statuses?.Duplicate||0;
-  document.getElementById('kOrdersb').textContent=dup>0?`${dup} duplicates excl.`:'No duplicates';
-  document.getElementById('kOrdersb').className='kpi-badge badge-warn';
+            createChart('channelChart', 'bar', {
+                labels: Object.keys(channels),
+                datasets: [{
+                    label: 'Total GMV',
+                    data: Object.values(channels),
+                    backgroundColor: Object.keys(channels).map(c => COLORS[c] || COLORS.Others),
+                    borderRadius: 4
+                }]
+            });
 
-  // Fill
-  document.getElementById('kFill').textContent=d.avg_fill+'%';
-  const fb=document.getElementById('kFillb');
-  fb.textContent=d.avg_fill>=95?'✓ Healthy':d.avg_fill>=85?'⚠ Moderate':'⚠ Below Target';
-  fb.className='kpi-badge '+(d.avg_fill>=95?'badge-up':'badge-warn');
+            let courierLabels = [];
+            let courierTatData = [];
+            for(let c in couriers) {
+                if(couriers[c]._tatCount > 0) {
+                    courierLabels.push(c);
+                    courierTatData.push((couriers[c]._tatSum / couriers[c]._tatCount).toFixed(1));
+                }
+            }
 
-  // TAT
-  document.getElementById('kTAT').textContent=d.avg_tat>0?d.avg_tat+'d':'—';
-  const tb=document.getElementById('kTATb');
-  tb.textContent=d.avg_tat===0?'Pending data':d.avg_tat<=8?'✓ Within SLA':'⚠ Above SLA';
-  tb.className='kpi-badge '+(d.avg_tat>0&&d.avg_tat<=8?'badge-up':'badge-warn');
-  document.getElementById('tatBig').textContent=d.avg_tat>0?d.avg_tat:'—';
-  const tatBadge=document.getElementById('tatBadge');
-  tatBadge.textContent=d.avg_tat>0?(d.avg_tat<=8?'✓ Good':'⚠ Slow'):'No data';
-  tatBadge.className='kpi-badge '+(d.avg_tat>0&&d.avg_tat<=8?'badge-up':'badge-warn');
+            createChart('courierChart', 'bar', {
+                labels: courierLabels,
+                datasets: [{
+                    label: 'Average TAT (Days)',
+                    data: courierTatData,
+                    backgroundColor: '#f97316',
+                    borderRadius: 4
+                }]
+            });
+        }
 
-  // RTO
-  document.getElementById('kRTO').textContent=d.rto_pct+'%';
-  const rb=document.getElementById('kRTOb');
-  rb.textContent=d.rto_pct===0?'No RTOs':d.rto_pct<=3?'✓ Acceptable':'⚠ High RTO';
-  rb.className='kpi-badge '+(d.rto_pct<=3?'badge-up':d.rto_pct<=5?'badge-warn':'badge-down');
+        // Chart.js helper
+        function createChart(canvasId, type, data) {
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: type,
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: type === 'doughnut' ? 'right' : 'top' }
+                    }
+                }
+            });
+        }
 
-  // DN
-  document.getElementById('kDN').textContent=fmtL(d.dn_value);
-  const db=document.getElementById('kDNb');
-  db.textContent=d.dn_value===0?'No discrepancies':d.dn_value<50000?'Low exposure':'⚠ Review needed';
-  db.className='kpi-badge '+(d.dn_value===0?'badge-up':d.dn_value<50000?'badge-warn':'badge-down');
-}
-
-// ─── CHANNEL CHART ───
-function buildChannelChart(wk){
-  const d=RAW[wk];
-  const entries=Object.entries(d.channels||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  const labels=entries.map(([k])=>k);
-  const vals=entries.map(([,v])=>v);
-  const clrs=labels.map(k=>COLORS[k]||COLORS.Others);
-
-  const ctx=document.getElementById('channelChart').getContext('2d');
-  if(ccInst)ccInst.destroy();
-  ccInst=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[{data:vals,backgroundColor:clrs.map(c=>c+'CC'),borderColor:clrs,borderWidth:2,borderRadius:8}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
-      scales:{
-        x:{grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:11}}},
-        y:{grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>fmtL(v)}}
-      }
-    }
-  });
-  document.getElementById('channelSub').textContent=wkLabel(wk)+' — Invoice Value (₹)';
-}
-
-// ─── TREND CHART ───
-function setTrend(n){
-  trendWindow=n;
-  ['t4','t8','tall'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(n===4?'t4':n===8?'t8':'tall').classList.add('active');
-  buildTrendChart(document.getElementById('weekSelect').value);
-}
-
-function buildTrendChart(selWk){
-  const allWks=Object.keys(RAW).sort();
-  const selIdx=allWks.indexOf(selWk);
-  const end=selIdx+1;
-  const start=trendWindow===99?0:Math.max(0,end-trendWindow);
-  const slice=allWks.slice(start,end);
-
-  const ctx=document.getElementById('trendChart').getContext('2d');
-  if(tcInst)tcInst.destroy();
-  tcInst=new Chart(ctx,{
-    type:'line',
-    data:{labels:slice.map(wkLabel),datasets:[{
-      label:'GMV',data:slice.map(w=>RAW[w].gmv),
-      borderColor:'#2D6A4F',backgroundColor:'rgba(82,183,136,0.1)',
-      fill:true,tension:.4,borderWidth:2.5,
-      pointBackgroundColor:slice.map(w=>w===selWk?'#FBAE25':'#2D6A4F'),
-      pointRadius:slice.map(w=>w===selWk?7:4),pointHoverRadius:7,
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
-      scales:{
-        x:{grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:9},maxRotation:45}},
-        y:{grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>fmtL(v)}}
-      }
-    }
-  });
-  document.getElementById('trendSub').textContent=`Last ${trendWindow===99?'all':trendWindow} weeks · Selected week highlighted`;
-}
-
-// ─── DAILY CHART ───
-function buildDailyChart(wk){
-  const d=RAW[wk];
-  const inv=d.daily_inv||{};
-  const allDays=Object.keys(inv).sort();
-
-  // Update legend
-  const activeChannels=[...new Set(allDays.flatMap(day=>Object.keys(inv[day]||{})))].filter(ch=>CH_ORDER.includes(ch)).sort((a,b)=>CH_ORDER.indexOf(a)-CH_ORDER.indexOf(b));
-  document.getElementById('dailyLegend').innerHTML=activeChannels.map(ch=>`<div class="leg-item"><div class="leg-dot" style="background:${COLORS[ch]||COLORS.Others}"></div>${ch}</div>`).join('');
-
-  if(allDays.length===0){
-    const ctx=document.getElementById('dailyChart').getContext('2d');
-    if(dcInst)dcInst.destroy();
-    dcInst=new Chart(ctx,{
-      type:'bar',data:{labels:['No dispatch data'],datasets:[{data:[0],backgroundColor:'#EEE'}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{display:false}}}
-    });
-    document.getElementById('dailySub').textContent=wkLabel(wk)+' · No dispatch data recorded yet';
-    return;
-  }
-
-  const datasets=CH_ORDER.map(ch=>({
-    label:ch,
-    data:allDays.map(day=>inv[day]?.[ch]||0),
-    backgroundColor:(COLORS[ch]||COLORS.Others)+'CC',
-    borderColor:COLORS[ch]||COLORS.Others,
-    borderWidth:1.5,
-    borderRadius:{topLeft:4,topRight:4},
-    stack:'s'
-  })).filter(ds=>ds.data.some(v=>v>0));
-
-  const ctx=document.getElementById('dailyChart').getContext('2d');
-  if(dcInst)dcInst.destroy();
-  dcInst=new Chart(ctx,{
-    type:'bar',
-    data:{labels:allDays.map(dayLabel),datasets},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
-      scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:10}}},
-        y:{stacked:true,grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>v.toLocaleString('en-IN')}}
-      }
-    }
-  });
-  document.getElementById('dailySub').textContent=wkLabel(wk)+' · Dispatch date · Invoice quantities by channel';
-}
-
-// ─── FILL TABLE ───
-function buildFillTable(wk){
-  const d=RAW[wk];
-  const tbody=document.getElementById('fillBody');
-  tbody.innerHTML='';
-  document.getElementById('fillSub').textContent=wkLabel(wk)+' — PO vs Invoice Qty';
-
-  const rows=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0||v.inv>0).sort((a,b)=>b[1].inv-a[1].inv);
-  rows.forEach(([ch,r])=>{
-    const rate=r.rate;
-    const barBg=rate>=0.95?'var(--green-light)':rate>=0.85?'var(--amber)':'var(--red)';
-    const valColor=rate>=0.95?'var(--green)':rate>=0.85?'#856404':'var(--red)';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="ch-dot" style="background:${COLORS[ch]||'#999'}"></span>${ch}</td>
-      <td style="color:var(--muted);font-size:11px">${r.po>0?r.po.toLocaleString('en-IN'):'—'}</td>
-      <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(rate*100,100)}%;background:${barBg}"></div></div>
-        <span style="font-size:11px;font-weight:700;color:${valColor}">${pct(rate)}</span></div></td>
-      <td style="color:var(--red);font-size:11px;font-weight:700">${r.short>0?r.short.toLocaleString('en-IN'):'—'}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// ─── STATUS ───
-function buildStatus(wk){
-  const d=RAW[wk];
-  const ul=document.getElementById('statusList');
-  ul.innerHTML='';
-  const total=Object.values(d.statuses||{}).reduce((a,b)=>a+b,0);
-  const delivered=d.statuses?.Delivered||0;
-  const dr=total>0?delivered/total:0;
-  document.getElementById('statusSub').textContent=wkLabel(wk)+` · ${total} total`;
-
-  const ORDER=['Delivered','In-Transit','Pending','Hold','Cancelled','RTO','Kunafa','Duplicate','Other'];
-  ORDER.forEach(st=>{
-    const cnt=d.statuses?.[st]||0;
-    if(!cnt)return;
-    const meta=STATUS_META[st]||{icon:'📦',bg:'#F5F5F5'};
-    const li=document.createElement('li');
-    li.className='status-item';
-    li.innerHTML=`<div class="status-left"><div class="s-icon" style="background:${meta.bg}">${meta.icon}</div>${st}</div>
-      <div style="text-align:right"><div class="s-count">${cnt}</div><div style="font-size:10px;color:var(--muted)">${(cnt/total*100).toFixed(1)}%</div></div>`;
-    ul.appendChild(li);
-  });
-
-  document.getElementById('delRate').textContent=(dr*100).toFixed(1)+'%';
-  const bar=document.getElementById('drBar');
-  bar.style.width=(dr*100)+'%';
-  bar.style.background=dr>=0.8?'var(--green-light)':dr>=0.6?'var(--amber)':'var(--red)';
-}
-
-// ─── COURIERS ───
-function buildCourier(wk){
-  const d=RAW[wk];
-  const el=document.getElementById('courierList');
-  el.innerHTML='';
-  document.getElementById('courierSub').textContent=wkLabel(wk);
-
-  const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
-  if(!entries.length){
-    el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px 0;">No courier data yet</div>';
-    return;
-  }
-  entries.forEach(([name,c])=>{
-    const tatCls=c.avg_tat===0?'tat-g':c.avg_tat<=7?'tat-g':c.avg_tat<=10?'tat-m':'tat-b';
-    const drColor=c.delivery_rate>=90?'var(--green)':c.delivery_rate>=70?'#856404':'var(--red)';
-    const row=document.createElement('div');
-    row.className='courier-row';
-    row.innerHTML=`<div class="c-name">${name}</div>
-      <div style="font-size:11px;color:var(--muted)">${c.orders} orders</div>
-      <div class="tat-pill ${tatCls}">${c.avg_tat>0?c.avg_tat+'d TAT':'—'}</div>
-      <div style="font-size:11px;font-weight:700;color:${drColor}">${c.delivery_rate}%</div>`;
-    el.appendChild(row);
-  });
-}
-
-// ─── MAIN ───
-function updateDashboard(){
-  const wk=document.getElementById('weekSelect').value;
-  buildAlert(wk);
-  buildKPIs(wk);
-  buildChannelChart(wk);
-  buildTrendChart(wk);
-  buildDailyChart(wk);
-  buildFillTable(wk);
-  buildStatus(wk);
-  buildCourier(wk);
-}
-
-updateDashboard();
-</script>
+        // Trigger the magic when the page loads
+        window.onload = fetchLiveData;
+    </script>
 </body>
-</html> . this is the code for the dashboard which will help you in understanding the workings of the dashboard. 
+</html>
