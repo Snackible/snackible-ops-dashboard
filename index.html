@@ -4,17 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snackible — Weekly Ops Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800;900&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{
-  --green:#2D6A4F;--green-light:#52B788;--green-pale:#E8F5EF;
-  --amber:#FBAE25;--amber-dark:#E08A00;--amber-pale:#FFF8E1;
-  --bg:#F4F1EC;--card:#FFFFFF;--dark:#1A1A2E;--text:#2C2C3E;
-  --muted:#7A7A8C;--border:#E8E4DC;
-  --red:#E63946;--red-pale:#FDECEA;
-  --blue:#457B9D;--purple:#6A4C93;--teal:#1D8A99;--hot:#E07B39;
+:root {
+  /* SNACKIBLE BRAND COLORS */
+  --dark: #02514F;         /* Hero Dark Green */
+  --text: #02514F;         /* Hero Dark Green for all typography */
+  --amber: #FBAE25;        /* Primary Yellow */
+  --green: #3ABCA2;        /* Primary Mint */
+  --green-light: #9CBFB7;  /* Primary Pale Mint */
+  --green-pale: #E6F2EF;   /* Light tint for success badges */
+  --orange: #E35C25;       /* Primary Orange */
+  --blue: #4C94D0;         /* Primary Blue */
+  --purple: #6566AE;       /* Primary Purple */
+  --navy: #262D67;         /* Primary Navy */
+  --red: #E73744;          /* Primary Red */
+  --red-pale: #FDECEA;     /* Light tint for error badges */
+  
+  /* DASHBOARD STRUCTURAL COLORS */
+  --bg: #F4F6F6;           /* Very light cool grey to make white cards pop */
+  --card: #FFFFFF;
+  --muted: #6B7B7A;        /* Green-tinted grey for subtitles */
+  --border: #DDE4E3;       /* Soft green-tinted border */
 }
+
+/* GLOBAL FONT OVERRIDE */
+* { font-family: 'Poppins', sans-serif !important; }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
@@ -273,7 +289,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzre4BMyXYa9M71QNWKe5qF
 let RAW = {};
 let WEEKS = [];
 
-const COLORS={Hot:'#E07B39',KK:'#6A4C93',Scootsy:'#1D8A99',Amazon:'#FBAE25',BB:'#457B9D',B2B:'#2D6A4F',GT:'#52B788',MT:'#9B59B6',FC:'#E17055',Others:'#95A5A6'};
+const COLORS={Hot:'#E35C25',KK:'#6566AE',Scootsy:'#3ABCA2',Amazon:'#FBAE25',BB:'#4C94D0',B2B:'#02514F',GT:'#9CBFB7',MT:'#262D67',FC:'#E73744',Others:'#95A5A6'};
 const CH_ORDER=['Hot','KK','Scootsy','Amazon','BB','B2B','GT','MT','FC'];
 const STATUS_META={
   Delivered:{icon:'✅',bg:'#E8F5EF'},
