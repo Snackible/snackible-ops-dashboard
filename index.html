@@ -131,13 +131,16 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="header-sub">Weekly Ops Dashboard</div>
     </div>
   </div>
-  <div class="week-selector">
-    <label>WEEK</label>
+ <div class="week-selector">
+    <select id="modeSelect" onchange="switchView(this.value)" style="background:var(--amber); color:var(--dark); border:none; border-radius:8px; padding:7px 14px; font-family:'Mulish',sans-serif; font-size:12px; font-weight:800; cursor:pointer; outline:none; text-transform:uppercase; letter-spacing:0.5px;">
+      <option value="daily">Daily View</option>
+      <option value="weekly" selected>Weekly View</option>
+      <option value="monthly">Monthly View</option>
+    </select>
     <select id="weekSelect" onchange="updateDashboard()">
       <option value="loading">Loading Live Data...</option>
     </select>
   </div>
-</div>
 
 <div class="container">
 
@@ -303,6 +306,40 @@ function dayLabel(dt){
   return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate();
 }
 
+let TIME_DATA = {}; // NEW: Holds the master package from Apps Script
+let currentMode = 'weekly';
+
+// ─── THE NEW VIEW SWITCHER ───
+function switchView(mode) {
+  if (!TIME_DATA[mode]) return;
+  currentMode = mode;
+  RAW = TIME_DATA[mode]; // Swap the active dataset
+
+  // Filter out empty rows and sort newest to oldest
+  WEEKS = Object.keys(RAW).filter(k => RAW[k].orders > 0).sort().reverse();
+
+  const select = document.getElementById('weekSelect');
+  select.innerHTML = ''; // Clear old dropdown options
+  
+  // Populate dropdown based on the mode selected
+  WEEKS.forEach((k, idx) => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    
+    if (mode === 'weekly') {
+      opt.textContent = wkLabel(k) + (idx === 0 ? " ← Latest" : "");
+    } else if (mode === 'daily') {
+      let d = new Date(k);
+      opt.textContent = d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + (idx === 0 ? " ← Latest" : "");
+    } else { // monthly
+      opt.textContent = k + (idx === 0 ? " ← Latest" : "");
+    }
+    select.appendChild(opt);
+  });
+  
+  if (WEEKS.length > 0) updateDashboard(); // Instantly refresh the charts
+}
+
 // ─── LIVE FETCH ENGINE ───
 async function initDashboard() {
   const bn = document.getElementById('alertBanner');
@@ -318,23 +355,11 @@ async function initDashboard() {
 
   try {
     const response = await fetch(API_URL);
-    RAW = await response.json();
-    if(RAW.error) throw new Error(RAW.error);
+    TIME_DATA = await response.json(); // Catch the 3-part master package
+    if(TIME_DATA.error) throw new Error(TIME_DATA.error);
 
-    // Filter out completely empty future weeks if they exist
-    WEEKS = Object.keys(RAW).filter(w => RAW[w].orders > 0).sort().reverse();
-    
-    // Populate Dropdown
-    const select = document.getElementById('weekSelect');
-    select.innerHTML = '';
-    WEEKS.forEach((wk, idx) => {
-      const opt = document.createElement('option');
-      opt.value = wk;
-      opt.textContent = wkLabel(wk) + (idx === 0 ? " ← Latest" : "");
-      select.appendChild(opt);
-    });
-
-    updateDashboard();
+    // Boot up the dashboard in Weekly view by default
+    switchView('weekly');
 
   } catch (error) {
     bn.style.cssText = 'background:linear-gradient(135deg,#FDECEA,#FFF5F5);border-color:#E63946;';
