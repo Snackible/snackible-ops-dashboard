@@ -390,12 +390,22 @@ function fmtL(v){
   return'₹'+v;
 }
 function pct(v){return(v*100).toFixed(1)+'%';}
-function wkLabel(wk){
-  const d=new Date(wk+'T00:00:00');
-  const e=new Date(d);e.setDate(e.getDate()+6);
-  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return M[d.getMonth()]+' '+d.getDate()+' – '+M[e.getMonth()]+' '+e.getDate();
+
+// NEW: Smart Time Labeler that won't crash on Monthly views
+function timeLabel(k) {
+  if (currentMode === 'monthly') return k;
+  if (currentMode === 'daily') {
+    const d = new Date(k + 'T00:00:00');
+    if (isNaN(d)) return k;
+    return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  }
+  const d = new Date(k + 'T00:00:00');
+  if (isNaN(d)) return k;
+  const e = new Date(d); e.setDate(e.getDate() + 6);
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return M[d.getMonth()] + ' ' + d.getDate() + ' – ' + M[e.getMonth()] + ' ' + e.getDate();
 }
+
 function dayLabel(dt){
   const d=new Date(dt+'T00:00:00');
   return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate();
@@ -415,15 +425,7 @@ function switchView(mode) {
   WEEKS.forEach((k, idx) => {
     const opt = document.createElement('option');
     opt.value = k;
-    
-    if (mode === 'weekly') {
-      opt.textContent = wkLabel(k) + (idx === 0 ? " ← Latest" : "");
-    } else if (mode === 'daily') {
-      let d = new Date(k);
-      opt.textContent = d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + (idx === 0 ? " ← Latest" : "");
-    } else { 
-      opt.textContent = k + (idx === 0 ? " ← Latest" : "");
-    }
+    opt.textContent = timeLabel(k) + (idx === 0 ? " ← Latest" : "");
     select.appendChild(opt);
   });
   
@@ -470,13 +472,13 @@ function buildAlert(wk){
   if(isPartial){
     bn.style.cssText='background:rgba(76,148,208,0.15);border-color:var(--brand-blue);';
     document.getElementById('alertIcon').textContent='ℹ️';
-    document.getElementById('alertTitle').textContent='Partial Week — Data Incomplete';
-    document.getElementById('alertText').textContent='Current open week. Orders are still being fulfilled.';
+    document.getElementById('alertTitle').textContent='Partial Period — Data Incomplete';
+    document.getElementById('alertText').textContent='Current open period. Orders are still being fulfilled.';
     document.getElementById('alertChips').innerHTML='';
   }else if(bad.length===0){
     bn.style.cssText='background:rgba(58,188,162,0.15);border-color:var(--brand-green-mid);';
     document.getElementById('alertIcon').textContent='✅';
-    document.getElementById('alertTitle').textContent='All channels performing well this week';
+    document.getElementById('alertTitle').textContent='All channels performing well';
     document.getElementById('alertText').textContent='Fill rates above 90% across all active channels.';
     document.getElementById('alertChips').innerHTML='';
   }else{
@@ -500,7 +502,7 @@ function buildKPIs(wk){
   const gmvUp=d.gmv>=(prev?.gmv||0);
   document.getElementById('kGMV').textContent=fmtL(d.gmv);
   const kb=document.getElementById('kGMVb');
-  kb.textContent=prev?(gmvUp?'▲ ':'▼ ')+Math.abs(gmvChg).toFixed(1)+'% WoW':'First week';
+  kb.textContent=prev?(gmvUp?'▲ ':'▼ ')+Math.abs(gmvChg).toFixed(1)+'% vs Prior':'First period';
   kb.className='kpi-badge '+(prev?(gmvUp?'badge-up':'badge-down'):'badge-warn');
 
   // Orders
@@ -589,7 +591,7 @@ function buildChannelChart(wk){
       }
     }
   });
-  document.getElementById('channelSub').textContent=wkLabel(wk)+' — Invoice Value (₹)';
+  document.getElementById('channelSub').textContent=timeLabel(wk)+' — Invoice Value (₹)';
 }
 
 // ─── TREND CHART ───
@@ -611,7 +613,7 @@ function buildTrendChart(selWk){
   if(tcInst)tcInst.destroy();
   tcInst=new Chart(ctx,{
     type:'line',
-    data:{labels:slice.map(wkLabel),datasets:[{
+    data:{labels:slice.map(timeLabel),datasets:[{
       label:'GMV',data:slice.map(w=>RAW[w].gmv),
       borderColor:'#3ABCA2',backgroundColor:'rgba(58, 188, 162, 0.1)',
       fill:true,tension:.4,borderWidth:2.5,
@@ -626,7 +628,7 @@ function buildTrendChart(selWk){
       }
     }
   });
-  document.getElementById('trendSub').textContent=`Last ${trendWindow===99?'all':trendWindow} weeks · Selected week highlighted`;
+  document.getElementById('trendSub').textContent=`Last ${trendWindow===99?'all':trendWindow} periods · Selected highlighted`;
 }
 
 // ─── DAILY CHART ───
@@ -646,7 +648,7 @@ function buildDailyChart(wk){
       type:'bar',data:{labels:['No dispatch data'],datasets:[{data:[0],backgroundColor:'rgba(255,255,255,0.05)'}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{display:false}}}
     });
-    document.getElementById('dailySub').textContent=wkLabel(wk)+' · No dispatch data recorded yet';
+    document.getElementById('dailySub').textContent=timeLabel(wk)+' · No dispatch data recorded yet';
     return;
   }
 
@@ -673,7 +675,7 @@ function buildDailyChart(wk){
       }
     }
   });
-  document.getElementById('dailySub').textContent=wkLabel(wk)+' · Dispatch date · Invoice quantities by channel';
+  document.getElementById('dailySub').textContent=timeLabel(wk)+' · Dispatch date · Invoice quantities by channel';
 }
 
 // ─── FILL TABLE ───
@@ -682,7 +684,7 @@ function buildFillTable(wk){
   const d=RAW[wk];
   const tbody=document.getElementById('fillBody');
   tbody.innerHTML='';
-  document.getElementById('fillSub').textContent=wkLabel(wk)+' — PO vs Invoice Qty';
+  document.getElementById('fillSub').textContent=timeLabel(wk)+' — PO vs Invoice Qty';
 
   const rows=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0||v.inv>0).sort((a,b)=>b[1].inv-a[1].inv);
   rows.forEach(([ch,r])=>{
@@ -708,7 +710,7 @@ function buildStatus(wk){
   const total=Object.values(d.statuses||{}).reduce((a,b)=>a+b,0);
   const delivered=d.statuses?.Delivered||0;
   const dr=total>0?delivered/total:0;
-  document.getElementById('statusSub').textContent=wkLabel(wk)+` · ${total} total`;
+  document.getElementById('statusSub').textContent=timeLabel(wk)+` · ${total} total`;
 
   const ORDER=['Delivered','In-Transit','Pending','Hold','Cancelled','RTO','Kunafa','Duplicate','Other'];
   ORDER.forEach(st=>{
@@ -734,7 +736,7 @@ function buildCourier(wk){
   const d=RAW[wk];
   const el=document.getElementById('courierList');
   el.innerHTML='';
-  document.getElementById('courierSub').textContent=wkLabel(wk);
+  document.getElementById('courierSub').textContent=timeLabel(wk);
 
   const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
   if(!entries.length){
@@ -769,5 +771,3 @@ function updateDashboard(){
 
 window.onload = initDashboard;
 </script>
-</body>
-</html>
