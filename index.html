@@ -4,134 +4,209 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snackible — Weekly Ops Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  /* SNACKIBLE BRAND COLORS */
-  --dark: #02514F;         /* Hero Dark Green */
-  --text: #02514F;         /* Hero Dark Green for all typography */
-  --amber: #FBAE25;        /* Primary Yellow */
-  --green: #3ABCA2;        /* Primary Mint */
-  --green-light: #9CBFB7;  /* Primary Pale Mint */
-  --green-pale: #E6F2EF;   /* Light tint for success badges */
-  --orange: #E35C25;       /* Primary Orange */
-  --blue: #4C94D0;         /* Primary Blue */
-  --purple: #6566AE;       /* Primary Purple */
-  --navy: #262D67;         /* Primary Navy */
-  --red: #E73744;          /* Primary Red */
-  --red-pale: #FDECEA;     /* Light tint for error badges */
+  /* SNACKIBLE BRAND COLOURS */
+  --brand-green-deep: #02514F;
+  --brand-green-mid: #3ABCA2;
+  --brand-amber: #FBAE25;
+  --brand-orange: #E35C25;
+  --brand-blue: #4C94D0;
+  --brand-purple: #6566AE;
+  --brand-navy: #262D67;
+  --brand-red: #E73744;
+
+  /* BACKGROUND SYSTEM */
+  --bg: #0E1A1A;
+  --card: #132020;
+  --border: rgba(58, 188, 162, 0.12);
+  --divider: rgba(58, 188, 162, 0.08);
   
-  /* DASHBOARD STRUCTURAL COLORS */
-  --bg: #F4F6F6;           /* Very light cool grey to make white cards pop */
-  --card: #FFFFFF;
-  --muted: #6B7B7A;        /* Green-tinted grey for subtitles */
-  --border: #DDE4E3;       /* Soft green-tinted border */
+  /* TYPOGRAPHY COLOURS */
+  --text: #FFFFFF;
+  --muted: #8AA8A6;
+  
+  /* FALLBACK MAPS FOR JS COMPATIBILITY */
+  --green: var(--brand-green-mid);
+  --green-light: var(--brand-green-mid);
+  --green-pale: rgba(58, 188, 162, 0.15);
+  --amber: var(--brand-amber);
+  --amber-pale: rgba(251, 174, 37, 0.15);
+  --red: var(--brand-orange); /* Redirecting old red to brand orange for alerts */
+  --red-pale: rgba(227, 92, 37, 0.15);
+  --hot: var(--brand-orange);
+  --teal: var(--brand-green-mid);
+  --purple: var(--brand-purple);
 }
 
-/* GLOBAL FONT OVERRIDE */
-* { font-family: 'Poppins', sans-serif !important; }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  font-family: 'Poppins', sans-serif !important; 
+}
 
-.header{background:var(--dark);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--amber);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
-.logo-area{display:flex;align-items:center;gap:12px;}
-.logo-badge{width:40px;height:40px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Raleway',sans-serif;font-weight:900;font-size:18px;color:var(--dark);}
-.header-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.3px;}
-.header-sub{font-size:11px;color:var(--amber);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
-.week-selector{display:flex;align-items:center;gap:10px;}
-.week-selector label{font-size:11px;color:#aaa;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
-.week-selector select{background:#2A2A40;color:#fff;border:1.5px solid #3A3A55;border-radius:8px;padding:7px 14px;font-family:'Mulish',sans-serif;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:border-color .2s;}
-.week-selector select:focus{border-color:var(--amber);}
+body { 
+  background: var(--bg); 
+  color: var(--text); 
+  min-height: 100vh; 
+}
 
-.container{max-width:1480px;margin:0 auto;padding:24px 28px;}
-.section-label{font-family:'Raleway',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+/* HEADER */
+.header { 
+  background: var(--brand-green-deep); 
+  padding: 16px 28px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  border-bottom: 1px solid var(--border); 
+  position: sticky; 
+  top: 0; 
+  z-index: 100; 
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4); 
+}
+.logo-area { display: flex; align-items: center; gap: 12px; }
+.logo-badge { 
+  width: 40px; height: 40px; 
+  background: var(--brand-amber); 
+  border-radius: 10px; 
+  display: flex; align-items: center; justify-content: center; 
+  font-weight: 700; font-size: 18px; color: var(--brand-green-deep); 
+}
+.header-title { font-weight: 600; font-size: 19px; color: #fff; letter-spacing: 0.5px; }
+.header-sub { font-size: 11px; color: var(--brand-amber); font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
 
-/* ALERT */
-.alert-banner{border-radius:12px;padding:14px 20px;display:flex;align-items:flex-start;gap:12px;margin-bottom:24px;border:1.5px solid;}
-.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
-.alert-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:13px;margin-bottom:4px;}
-.alert-text{font-size:12px;font-weight:500;line-height:1.5;}
-.alert-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
-.alert-chip{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;}
+.week-selector { display: flex; align-items: center; gap: 10px; }
+.week-selector select { 
+  background: var(--card); 
+  color: #fff; 
+  border: 1px solid var(--border); 
+  border-radius: 8px; 
+  padding: 8px 14px; 
+  font-size: 12px; 
+  font-weight: 500; 
+  cursor: pointer; 
+  outline: none; 
+}
+.week-selector select:focus { border-color: var(--brand-green-mid); }
 
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px;}
-.kpi-card{background:var(--card);border-radius:14px;padding:18px 18px 16px;border:1.5px solid var(--border);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
-.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.1);}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--green-light));border-radius:14px 14px 0 0;}
-.kpi-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
-.kpi-value{font-family:'Raleway',sans-serif;font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:5px;}
-.kpi-sub{font-size:11px;color:var(--muted);font-weight:500;}
-.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:6px;}
-.badge-up{background:var(--green-pale);color:var(--green);}
-.badge-down{background:var(--red-pale);color:#C0392B;}
-.badge-warn{background:#FFF3CD;color:#856404;}
+.container { max-width: 1480px; margin: 0 auto; padding: 28px 28px; }
+.section-label { 
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em; 
+  text-transform: uppercase; color: var(--muted); 
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px; 
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* CHARTS */
-.charts-row{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-bottom:24px;}
-.chart-card,.full-card{background:var(--card);border-radius:14px;padding:22px 24px;border:1.5px solid var(--border);}
-.full-card{margin-bottom:24px;}
-.card-title{font-family:'Raleway',sans-serif;font-weight:800;font-size:14px;color:var(--text);margin-bottom:3px;}
-.card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;}
-.chart-wrap{position:relative;height:220px;}
-.full-chart-wrap{position:relative;height:200px;margin-top:14px;}
+/* ALERTS */
+.alert-banner { 
+  border-radius: 12px; padding: 16px 24px; display: flex; align-items: flex-start; 
+  gap: 12px; margin-bottom: 28px; border: 1px solid var(--border); background: var(--card); 
+}
+.alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.alert-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+.alert-text { font-size: 12px; font-weight: 400; color: var(--muted); line-height: 1.5; }
+.alert-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.alert-chip { border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 500; }
 
-/* BOTTOM */
-.bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:24px;}
+/* KPI GRID */
+.kpi-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+  gap: 16px; 
+  margin-bottom: 28px; 
+}
+.kpi-card { 
+  background: var(--card); 
+  border-radius: 12px; 
+  padding: 20px 24px; 
+  border: 1px solid var(--border); 
+  border-top: 3px solid var(--accent, var(--brand-green-mid)); 
+}
+.kpi-label { 
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em; 
+  text-transform: uppercase; color: var(--muted); margin-bottom: 10px; 
+}
+.kpi-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; margin-bottom: 5px; }
+.kpi-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
 
-/* FILL TABLE */
-.data-table{width:100%;border-collapse:collapse;font-size:12px;}
-.data-table th{text-align:left;padding:7px 8px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--border);}
-.data-table td{padding:9px 8px;border-bottom:1px solid #F0EDE8;font-weight:600;vertical-align:middle;}
-.data-table tr:last-child td{border-bottom:none;}
-.data-table tr:hover td{background:#FAFAF8;}
-.ch-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
-.bar-wrap{display:flex;align-items:center;gap:7px;}
-.bar-bg{flex:1;height:6px;background:#EEE;border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+/* BADGES */
+.kpi-badge { 
+  display: inline-flex; align-items: center; gap: 4px; 
+  font-size: 10px; font-weight: 600; padding: 4px 8px; 
+  border-radius: 20px; margin-top: 6px; letter-spacing: 0.03em;
+}
+.badge-up { background: rgba(58,188,162,0.15); color: var(--brand-green-mid); }
+.badge-down { background: rgba(227,92,37,0.15); color: var(--brand-orange); }
+.badge-warn { background: rgba(251,174,37,0.15); color: var(--brand-amber); }
 
-/* STATUS */
-.status-list{list-style:none;}
-.status-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0EDE8;}
-.status-item:last-child{border-bottom:none;}
-.status-left{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;}
-.s-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.s-count{font-family:'Raleway',sans-serif;font-size:17px;font-weight:800;}
+/* CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 28px; }
+.chart-card, .full-card { 
+  background: var(--card); border-radius: 12px; 
+  padding: 24px; border: 1px solid var(--border); 
+}
+.full-card { margin-bottom: 28px; }
+.card-title { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+.card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; font-weight: 400; }
+.chart-wrap { position: relative; height: 220px; }
+.full-chart-wrap { position: relative; height: 200px; margin-top: 14px; }
+
+/* BOTTOM GRID */
+.bottom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 28px; }
+
+/* DATA TABLES */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { 
+  text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 500; 
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); 
+  border-bottom: 1px solid var(--border); height: 44px; 
+}
+.data-table td { 
+  padding: 12px 16px; border-bottom: 1px solid var(--divider); 
+  font-weight: 400; vertical-align: middle; height: 44px; 
+}
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.ch-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.bar-wrap { display: flex; align-items: center; gap: 8px; }
+.bar-bg { flex: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+/* STATUS LIST */
+.status-list { list-style: none; }
+.status-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--divider); }
+.status-item:last-child { border-bottom: none; }
+.status-left { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 500; }
+.s-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.s-count { font-size: 16px; font-weight: 600; }
 
 /* COURIER */
-.courier-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0EDE8;font-size:12px;gap:6px;}
-.courier-row:last-child{border-bottom:none;}
-.c-name{font-weight:700;color:var(--text);min-width:85px;font-size:12px;}
-.tat-pill{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
-.tat-g{background:var(--green-pale);color:var(--green);}
-.tat-m{background:#FFF3CD;color:#856404;}
-.tat-b{background:var(--red-pale);color:#C0392B;}
+.courier-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--divider); font-size: 12px; gap: 8px; }
+.courier-row:last-child { border-bottom: none; }
+.c-name { font-weight: 500; color: var(--text); min-width: 85px; }
+.tat-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
 
 /* TREND TABS */
-.trend-tabs{display:flex;gap:5px;}
-.t-tab{padding:4px 11px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;}
-.t-tab.active{background:var(--dark);color:var(--amber);border-color:var(--dark);}
+.trend-tabs { display: flex; gap: 6px; }
+.t-tab { 
+  padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; 
+  border: 1px solid var(--border); background: transparent; color: var(--muted); 
+}
+.t-tab.active { background: var(--brand-green-mid); color: #0E1A1A; border-color: var(--brand-green-mid); }
 
 /* LEGEND */
-.legend{display:flex;gap:12px;flex-wrap:wrap;}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);}
-.leg-dot{width:9px;height:9px;border-radius:50%;}
+.legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; }
 
 /* SUMMARY STRIP */
-.sum-strip{background:var(--dark);border-radius:10px;padding:12px 16px;margin-top:14px;}
-.ss-label{font-size:10px;font-weight:700;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-
-/* DELIVERY RATE BAR */
-.dr-bar-bg{height:8px;background:#EEE;border-radius:4px;margin-top:6px;overflow:hidden;}
-.dr-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.kpi-card,.chart-card,.full-card,.alert-banner{animation:fadeUp .4s ease both;}
-.kpi-card:nth-child(1){animation-delay:.04s;}.kpi-card:nth-child(2){animation-delay:.08s;}
-.kpi-card:nth-child(3){animation-delay:.12s;}.kpi-card:nth-child(4){animation-delay:.16s;}
-.kpi-card:nth-child(5){animation-delay:.20s;}.kpi-card:nth-child(6){animation-delay:.24s;}
+.sum-strip { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px 18px; margin-top: 16px; border: 1px solid var(--divider); }
+.ss-label { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.dr-bar-bg { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+.dr-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 
 @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr);}.charts-row{grid-template-columns:1fr;}.bottom-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.bottom-grid{grid-template-columns:1fr;}}
@@ -147,8 +222,8 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="header-sub">Weekly Ops Dashboard</div>
     </div>
   </div>
- <div class="week-selector">
-    <select id="modeSelect" onchange="switchView(this.value)" style="background:var(--amber); color:var(--dark); border:none; border-radius:8px; padding:7px 14px; font-family:'Mulish',sans-serif; font-size:12px; font-weight:800; cursor:pointer; outline:none; text-transform:uppercase; letter-spacing:0.5px;">
+  <div class="week-selector">
+    <select id="modeSelect" onchange="switchView(this.value)" style="background:var(--brand-amber); color:var(--brand-green-deep); border:none; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">
       <option value="daily">Daily View</option>
       <option value="weekly" selected>Weekly View</option>
       <option value="monthly">Monthly View</option>
@@ -157,6 +232,7 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
       <option value="loading">Loading Live Data...</option>
     </select>
   </div>
+</div>
 
 <div class="container">
 
@@ -171,37 +247,37 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
 
   <div class="section-label">Key Performance Indicators</div>
   <div class="kpi-grid">
-    <div class="kpi-card" style="--accent:var(--green-light)">
+    <div class="kpi-card" style="--accent:var(--brand-green-mid)">
       <div class="kpi-label">Total GMV</div>
       <div class="kpi-value" id="kGMV">—</div>
       <div class="kpi-sub">Invoice Value</div>
       <span class="kpi-badge" id="kGMVb">—</span>
     </div>
-    <div class="kpi-card" style="--accent:var(--amber)">
+    <div class="kpi-card" style="--accent:var(--brand-amber)">
       <div class="kpi-label">Total Orders</div>
       <div class="kpi-value" id="kOrders">—</div>
       <div class="kpi-sub">Excl. Duplicates</div>
       <span class="kpi-badge" id="kOrdersb">—</span>
     </div>
-    <div class="kpi-card" style="--accent:var(--hot)">
+    <div class="kpi-card" style="--accent:var(--brand-orange)">
       <div class="kpi-label">Fill Rate</div>
       <div class="kpi-value" id="kFill">—</div>
       <div class="kpi-sub">Avg across channels</div>
       <span class="kpi-badge" id="kFillb">—</span>
     </div>
-    <div class="kpi-card" style="--accent:var(--teal)">
+    <div class="kpi-card" style="--accent:var(--brand-blue)">
       <div class="kpi-label">Avg TAT</div>
       <div class="kpi-value" id="kTAT">—</div>
       <div class="kpi-sub">Dispatch → Delivery</div>
       <span class="kpi-badge" id="kTATb">—</span>
     </div>
-    <div class="kpi-card" style="--accent:var(--red)">
+    <div class="kpi-card" style="--accent:var(--brand-orange)">
       <div class="kpi-label">RTO %</div>
       <div class="kpi-value" id="kRTO">—</div>
       <div class="kpi-sub">of non-dup orders</div>
       <span class="kpi-badge" id="kRTOb">—</span>
     </div>
-    <div class="kpi-card" style="--accent:var(--purple)">
+    <div class="kpi-card" style="--accent:var(--brand-purple)">
       <div class="kpi-label">DN / Discrepancy</div>
       <div class="kpi-value" id="kDN">—</div>
       <div class="kpi-sub">Weekly DN Value</div>
@@ -256,10 +332,10 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="card-title">Order Status</div>
       <div class="card-sub" id="statusSub">All orders this week</div>
       <ul class="status-list" id="statusList"></ul>
-      <div style="margin-top:14px;">
+      <div style="margin-top:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Delivery Rate</span>
-          <span style="font-family:'Raleway',sans-serif;font-size:22px;font-weight:900;" id="delRate">—</span>
+          <span style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Delivery Rate</span>
+          <span style="font-size:22px;font-weight:600;" id="delRate">—</span>
         </div>
         <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
       </div>
@@ -271,10 +347,10 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
       <div id="courierList"></div>
       <div class="sum-strip">
         <div class="ss-label">Week Avg TAT</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-          <span style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:900;color:var(--amber);" id="tatBig">—</span>
-          <span style="font-size:13px;font-weight:600;color:#aaa;">days</span>
-          <span class="kpi-badge" id="tatBadge" style="margin-left:4px;"></span>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:26px;font-weight:600;color:var(--brand-amber);" id="tatBig">—</span>
+          <span style="font-size:12px;font-weight:500;color:var(--muted);">days</span>
+          <span class="kpi-badge" id="tatBadge"></span>
         </div>
       </div>
     </div>
@@ -286,20 +362,23 @@ body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-
 // LIVE API INJECTION
 const API_URL = "https://script.google.com/macros/s/AKfycbzre4BMyXYa9M71QNWKe5qFHSOfPnLaaz7P5pjqpMxPFtZo6lDjcDisaGVQuV7HCK0/exec";
 
+let TIME_DATA = {}; 
+let currentMode = 'weekly';
 let RAW = {};
 let WEEKS = [];
 
-const COLORS={Hot:'#E35C25',KK:'#6566AE',Scootsy:'#3ABCA2',Amazon:'#FBAE25',BB:'#4C94D0',B2B:'#02514F',GT:'#9CBFB7',MT:'#262D67',FC:'#E73744',Others:'#95A5A6'};
+// SNACKIBLE BRAND TOKENS FOR CHARTS
+const COLORS={Hot:'#E35C25',KK:'#6566AE',Scootsy:'#3ABCA2',Amazon:'#FBAE25',BB:'#4C94D0',B2B:'#02514F',GT:'#3ABCA2',MT:'#262D67',FC:'#E73744',Others:'#6566AE'};
 const CH_ORDER=['Hot','KK','Scootsy','Amazon','BB','B2B','GT','MT','FC'];
 const STATUS_META={
-  Delivered:{icon:'✅',bg:'#E8F5EF'},
-  'In-Transit':{icon:'🚚',bg:'#E3F2FD'},
-  Pending:{icon:'⏳',bg:'#FFF3E0'},
-  Hold:{icon:'🔁',bg:'#FFF3CD'},
-  Cancelled:{icon:'❌',bg:'#FDECEA'},
-  RTO:{icon:'↩️',bg:'#FDECEA'},
-  Kunafa:{icon:'🍃',bg:'#F3E5F5'},
-  Other:{icon:'📦',bg:'#F5F5F5'},
+  Delivered:{icon:'✅',bg:'rgba(58,188,162,0.15)'},
+  'In-Transit':{icon:'🚚',bg:'rgba(76,148,208,0.15)'},
+  Pending:{icon:'⏳',bg:'rgba(251,174,37,0.15)'},
+  Hold:{icon:'🔁',bg:'rgba(251,174,37,0.15)'},
+  Cancelled:{icon:'❌',bg:'rgba(227,92,37,0.15)'},
+  RTO:{icon:'↩️',bg:'rgba(227,92,37,0.15)'},
+  Kunafa:{icon:'🍃',bg:'rgba(58,188,162,0.15)'},
+  Other:{icon:'📦',bg:'rgba(255,255,255,0.05)'},
 };
 
 let ccInst,tcInst,dcInst,trendWindow=8;
@@ -322,22 +401,17 @@ function dayLabel(dt){
   return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate();
 }
 
-let TIME_DATA = {}; // NEW: Holds the master package from Apps Script
-let currentMode = 'weekly';
-
 // ─── THE NEW VIEW SWITCHER ───
 function switchView(mode) {
   if (!TIME_DATA[mode]) return;
   currentMode = mode;
-  RAW = TIME_DATA[mode]; // Swap the active dataset
+  RAW = TIME_DATA[mode]; 
 
-  // Filter out empty rows and sort newest to oldest
   WEEKS = Object.keys(RAW).filter(k => RAW[k].orders > 0).sort().reverse();
 
   const select = document.getElementById('weekSelect');
-  select.innerHTML = ''; // Clear old dropdown options
+  select.innerHTML = ''; 
   
-  // Populate dropdown based on the mode selected
   WEEKS.forEach((k, idx) => {
     const opt = document.createElement('option');
     opt.value = k;
@@ -347,13 +421,13 @@ function switchView(mode) {
     } else if (mode === 'daily') {
       let d = new Date(k);
       opt.textContent = d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + (idx === 0 ? " ← Latest" : "");
-    } else { // monthly
+    } else { 
       opt.textContent = k + (idx === 0 ? " ← Latest" : "");
     }
     select.appendChild(opt);
   });
   
-  if (WEEKS.length > 0) updateDashboard(); // Instantly refresh the charts
+  if (WEEKS.length > 0) updateDashboard(); 
 }
 
 // ─── LIVE FETCH ENGINE ───
@@ -363,24 +437,21 @@ async function initDashboard() {
   const alertTitle = document.getElementById('alertTitle');
   const alertText = document.getElementById('alertText');
 
-  bn.style.cssText = 'background:linear-gradient(135deg,#E3F2FD,#F0F8FF);border-color:#457B9D;';
+  bn.style.cssText = 'background:rgba(76,148,208,0.15);border-color:var(--brand-blue);';
   alertIcon.textContent = '🔄';
-  alertTitle.style.color = '#1565C0';
   alertTitle.textContent = 'Fetching Live Data...';
   alertText.textContent = 'Crunching numbers directly from Google Sheets. This takes about 2-4 seconds.';
 
   try {
     const response = await fetch(API_URL);
-    TIME_DATA = await response.json(); // Catch the 3-part master package
+    TIME_DATA = await response.json(); 
     if(TIME_DATA.error) throw new Error(TIME_DATA.error);
 
-    // Boot up the dashboard in Weekly view by default
     switchView('weekly');
 
   } catch (error) {
-    bn.style.cssText = 'background:linear-gradient(135deg,#FDECEA,#FFF5F5);border-color:#E63946;';
+    bn.style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
     alertIcon.textContent = '❌';
-    alertTitle.style.color = '#C0392B';
     alertTitle.textContent = 'Data Sync Failed';
     alertText.textContent = 'Could not fetch data from Google Sheets. Ensure your Apps Script is running.';
     console.error(error);
@@ -394,30 +465,26 @@ function buildAlert(wk){
   const bad=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0&&v.rate<0.9);
   const bn=document.getElementById('alertBanner');
   
-  // Checking if latest week has very few orders (partial week)
   const isPartial = wk === WEEKS[0] && d.orders < 50;
 
   if(isPartial){
-    bn.style.cssText='background:linear-gradient(135deg,#E3F2FD,#F0F8FF);border-color:#457B9D;';
+    bn.style.cssText='background:rgba(76,148,208,0.15);border-color:var(--brand-blue);';
     document.getElementById('alertIcon').textContent='ℹ️';
-    document.getElementById('alertTitle').style.color='#1565C0';
     document.getElementById('alertTitle').textContent='Partial Week — Data Incomplete';
     document.getElementById('alertText').textContent='Current open week. Orders are still being fulfilled.';
     document.getElementById('alertChips').innerHTML='';
   }else if(bad.length===0){
-    bn.style.cssText='background:linear-gradient(135deg,#E8F5EF,#F0FAF5);border-color:#52B788;';
+    bn.style.cssText='background:rgba(58,188,162,0.15);border-color:var(--brand-green-mid);';
     document.getElementById('alertIcon').textContent='✅';
-    document.getElementById('alertTitle').style.color='#2D6A4F';
     document.getElementById('alertTitle').textContent='All channels performing well this week';
     document.getElementById('alertText').textContent='Fill rates above 90% across all active channels.';
     document.getElementById('alertChips').innerHTML='';
   }else{
-    bn.style.cssText='background:linear-gradient(135deg,#FFF3CD,#FFF8E7);border-color:#FBAE25;';
+    bn.style.cssText='background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
     document.getElementById('alertIcon').textContent='⚠️';
-    document.getElementById('alertTitle').style.color='#856404';
     document.getElementById('alertTitle').textContent='Short Supply Alert — Attention Needed';
     document.getElementById('alertText').textContent=bad.sort((a,b)=>a[1].rate-b[1].rate).map(([ch,v])=>`${ch} at ${pct(v.rate)} fill rate`).join(', ')+'.';
-    document.getElementById('alertChips').innerHTML=bad.map(([ch,v])=>`<span class="alert-chip" style="background:rgba(251,174,37,.2);color:#6B5000;">${ch}: ${v.short.toLocaleString('en-IN')} units short</span>`).join('');
+    document.getElementById('alertChips').innerHTML=bad.map(([ch,v])=>`<span class="alert-chip" style="background:rgba(227,92,37,0.2);color:var(--brand-orange);">${ch}: ${v.short.toLocaleString('en-IN')} units short</span>`).join('');
   }
 }
 
@@ -433,7 +500,7 @@ function buildKPIs(wk){
   const gmvUp=d.gmv>=(prev?.gmv||0);
   document.getElementById('kGMV').textContent=fmtL(d.gmv);
   const kb=document.getElementById('kGMVb');
-  kb.textContent=prev?(gmvUp?'↑ ':'↓ ')+Math.abs(gmvChg).toFixed(1)+'% WoW':'First week';
+  kb.textContent=prev?(gmvUp?'▲ ':'▼ ')+Math.abs(gmvChg).toFixed(1)+'% WoW':'First week';
   kb.className='kpi-badge '+(prev?(gmvUp?'badge-up':'badge-down'):'badge-warn');
 
   // Orders
@@ -448,23 +515,23 @@ function buildKPIs(wk){
   fb.textContent=d.avg_fill>=95?'✓ Healthy':d.avg_fill>=85?'⚠ Moderate':'⚠ Below Target';
   fb.className='kpi-badge '+(d.avg_fill>=95?'badge-up':'badge-warn');
 
-  // --- THE NEW 3-PART TAT UI ---
+  // TAT
   const tatCard = document.getElementById('kTAT').parentElement;
   if (d.avg_total_tat > 0) {
     tatCard.innerHTML = `
       <div class="kpi-label">Average TAT (Days)</div>
       <div id="kTAT" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
           <div style="text-align:left;">
-              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">Total</div>
-              <div style="font-family:'Raleway',sans-serif; font-size:22px; font-weight:800; line-height:1; color:var(--text);">${d.avg_total_tat}</div>
+              <div style="font-size:9px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">Total</div>
+              <div style="font-size:22px; font-weight:600; line-height:1; color:var(--text);">${d.avg_total_tat}</div>
           </div>
           <div style="text-align:center;">
-              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">PO→Disp</div>
-              <div style="font-family:'Raleway',sans-serif; font-size:16px; font-weight:800; line-height:1; color:var(--text);">${d.avg_proc_tat}</div>
+              <div style="font-size:9px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">PO→Disp</div>
+              <div style="font-size:16px; font-weight:600; line-height:1; color:var(--text);">${d.avg_proc_tat}</div>
           </div>
           <div style="text-align:right;">
-              <div style="font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;">Disp→Del</div>
-              <div style="font-family:'Raleway',sans-serif; font-size:16px; font-weight:800; line-height:1; color:var(--text);">${d.avg_tran_tat}</div>
+              <div style="font-size:9px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;">Disp→Del</div>
+              <div style="font-size:16px; font-weight:600; line-height:1; color:var(--text);">${d.avg_tran_tat}</div>
           </div>
       </div>
       <span class="kpi-badge ${d.avg_total_tat <= 10 ? 'badge-up' : 'badge-warn'}">PO → Delivery Tracker</span>
@@ -478,7 +545,7 @@ function buildKPIs(wk){
     `;
   }
 
-  // Bottom Courier TAT Card Fix
+  // Courier TAT Badge
   const tatBig = document.getElementById('tatBig');
   if (tatBig) tatBig.textContent = d.avg_total_tat > 0 ? d.avg_total_tat : '—';
   const tatBadge = document.getElementById('tatBadge');
@@ -499,6 +566,7 @@ function buildKPIs(wk){
   db.textContent=d.dn_value===0?'No discrepancies':d.dn_value<50000?'Low exposure':'⚠ Review needed';
   db.className='kpi-badge '+(d.dn_value===0?'badge-up':d.dn_value<50000?'badge-warn':'badge-down');
 }
+
 // ─── CHANNEL CHART ───
 function buildChannelChart(wk){
   if(!RAW[wk]) return;
@@ -516,8 +584,8 @@ function buildChannelChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:11}}},
-        y:{grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>fmtL(v)}}
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
       }
     }
   });
@@ -533,7 +601,7 @@ function setTrend(n){
 }
 
 function buildTrendChart(selWk){
-  const allWks=WEEKS.slice().reverse(); // Sort chronologically
+  const allWks=WEEKS.slice().reverse(); 
   const selIdx=allWks.indexOf(selWk);
   const end=selIdx+1;
   const start=trendWindow===99?0:Math.max(0,end-trendWindow);
@@ -545,16 +613,16 @@ function buildTrendChart(selWk){
     type:'line',
     data:{labels:slice.map(wkLabel),datasets:[{
       label:'GMV',data:slice.map(w=>RAW[w].gmv),
-      borderColor:'#2D6A4F',backgroundColor:'rgba(82,183,136,0.1)',
+      borderColor:'#3ABCA2',backgroundColor:'rgba(58, 188, 162, 0.1)',
       fill:true,tension:.4,borderWidth:2.5,
-      pointBackgroundColor:slice.map(w=>w===selWk?'#FBAE25':'#2D6A4F'),
+      pointBackgroundColor:slice.map(w=>w===selWk?'#FBAE25':'#3ABCA2'),
       pointRadius:slice.map(w=>w===selWk?7:4),pointHoverRadius:7,
     }]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:9},maxRotation:45}},
-        y:{grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>fmtL(v)}}
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9},maxRotation:45}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
       }
     }
   });
@@ -575,7 +643,7 @@ function buildDailyChart(wk){
     const ctx=document.getElementById('dailyChart').getContext('2d');
     if(dcInst)dcInst.destroy();
     dcInst=new Chart(ctx,{
-      type:'bar',data:{labels:['No dispatch data'],datasets:[{data:[0],backgroundColor:'#EEE'}]},
+      type:'bar',data:{labels:['No dispatch data'],datasets:[{data:[0],backgroundColor:'rgba(255,255,255,0.05)'}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{display:false}}}
     });
     document.getElementById('dailySub').textContent=wkLabel(wk)+' · No dispatch data recorded yet';
@@ -600,8 +668,8 @@ function buildDailyChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Mulish',weight:'700',size:10}}},
-        y:{stacked:true,grid:{color:'#F0EDE8'},ticks:{font:{family:'Mulish',size:10},callback:v=>v.toLocaleString('en-IN')}}
+        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:10}}},
+        y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>v.toLocaleString('en-IN')}}
       }
     }
   });
@@ -619,14 +687,14 @@ function buildFillTable(wk){
   const rows=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0||v.inv>0).sort((a,b)=>b[1].inv-a[1].inv);
   rows.forEach(([ch,r])=>{
     const rate=r.rate;
-    const barBg=rate>=0.95?'var(--green-light)':rate>=0.85?'var(--amber)':'var(--red)';
-    const valColor=rate>=0.95?'var(--green)':rate>=0.85?'#856404':'var(--red)';
+    const barBg=rate>=0.95?'var(--brand-green-mid)':rate>=0.85?'var(--brand-amber)':'var(--brand-orange)';
+    const valColor=rate>=0.95?'var(--brand-green-mid)':rate>=0.85?'var(--brand-amber)':'var(--brand-orange)';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><span class="ch-dot" style="background:${COLORS[ch]||'#999'}"></span>${ch}</td>
-      <td style="color:var(--muted);font-size:11px">${r.po>0?r.po.toLocaleString('en-IN'):'—'}</td>
+      <td style="color:var(--muted);">${r.po>0?r.po.toLocaleString('en-IN'):'—'}</td>
       <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(rate*100,100)}%;background:${barBg}"></div></div>
-        <span style="font-size:11px;font-weight:700;color:${valColor}">${pct(rate)}</span></div></td>
-      <td style="color:var(--red);font-size:11px;font-weight:700">${r.short>0?r.short.toLocaleString('en-IN'):'—'}</td>`;
+        <span style="font-size:11px;font-weight:600;color:${valColor}">${pct(rate)}</span></div></td>
+      <td style="color:var(--brand-orange);font-weight:600">${r.short>0?r.short.toLocaleString('en-IN'):'—'}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -646,7 +714,7 @@ function buildStatus(wk){
   ORDER.forEach(st=>{
     const cnt=d.statuses?.[st]||0;
     if(!cnt)return;
-    const meta=STATUS_META[st]||{icon:'📦',bg:'#F5F5F5'};
+    const meta=STATUS_META[st]||{icon:'📦',bg:'rgba(255,255,255,0.05)'};
     const li=document.createElement('li');
     li.className='status-item';
     li.innerHTML=`<div class="status-left"><div class="s-icon" style="background:${meta.bg}">${meta.icon}</div>${st}</div>
@@ -657,7 +725,7 @@ function buildStatus(wk){
   document.getElementById('delRate').textContent=(dr*100).toFixed(1)+'%';
   const bar=document.getElementById('drBar');
   bar.style.width=(dr*100)+'%';
-  bar.style.background=dr>=0.8?'var(--green-light)':dr>=0.6?'var(--amber)':'var(--red)';
+  bar.style.background=dr>=0.8?'var(--brand-green-mid)':dr>=0.6?'var(--brand-amber)':'var(--brand-orange)';
 }
 
 // ─── COURIERS ───
@@ -674,14 +742,14 @@ function buildCourier(wk){
     return;
   }
   entries.forEach(([name,c])=>{
-    const tatCls=c.avg_tat===0?'tat-g':c.avg_tat<=7?'tat-g':c.avg_tat<=10?'tat-m':'tat-b';
-    const drColor=c.delivery_rate>=90?'var(--green)':c.delivery_rate>=70?'#856404':'var(--red)';
+    const tatCls=c.avg_tat===0?'badge-up':c.avg_tat<=7?'badge-up':c.avg_tat<=10?'badge-warn':'badge-down';
+    const drColor=c.delivery_rate>=90?'var(--brand-green-mid)':c.delivery_rate>=70?'var(--brand-amber)':'var(--brand-orange)';
     const row=document.createElement('div');
     row.className='courier-row';
     row.innerHTML=`<div class="c-name">${name}</div>
       <div style="font-size:11px;color:var(--muted)">${c.orders} orders</div>
-      <div class="tat-pill ${tatCls}">${c.avg_tat>0?c.avg_tat+'d TAT':'—'}</div>
-      <div style="font-size:11px;font-weight:700;color:${drColor}">${c.delivery_rate}%</div>`;
+      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${c.avg_tat>0?c.avg_tat+'d TAT':'—'}</div>
+      <div style="font-size:11px;font-weight:600;color:${drColor}">${c.delivery_rate}%</div>`;
     el.appendChild(row);
   });
 }
@@ -699,7 +767,6 @@ function updateDashboard(){
   buildCourier(wk);
 }
 
-// Trigger live fetch on load instead of hardcoded data
 window.onload = initDashboard;
 </script>
 </body>
