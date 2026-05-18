@@ -367,9 +367,11 @@ let currentMode = 'weekly';
 let RAW = {};
 let WEEKS = [];
 
-// SNACKIBLE BRAND TOKENS FOR CHARTS
-const COLORS={Hot:'#E35C25',KK:'#6566AE',Scootsy:'#3ABCA2',Amazon:'#FBAE25',BB:'#4C94D0',B2B:'#02514F',GT:'#3ABCA2',MT:'#262D67',FC:'#E73744',Others:'#6566AE'};
-const CH_ORDER=['Hot','KK','Scootsy','Amazon','BB','B2B','GT','MT','FC'];
+// --- NEW: BRAND TOKENS (Updated with Combined Names) ---
+const COLORS={'Hot - Blinkit':'#E35C25','KK - Zepto':'#6566AE','Scootsy - Swiggy':'#3ABCA2',Amazon:'#FBAE25',BB:'#4C94D0',B2B:'#02514F',GT:'#3ABCA2',MT:'#262D67',FC:'#E73744',Others:'#6566AE'};
+const CH_ORDER=['Hot - Blinkit','KK - Zepto','Scootsy - Swiggy','Amazon','BB','B2B','GT','MT','FC'];
+// -------------------------------------------------------
+
 const STATUS_META={
   Delivered:{icon:'✅',bg:'rgba(58,188,162,0.15)'},
   'In-Transit':{icon:'🚚',bg:'rgba(76,148,208,0.15)'},
@@ -391,7 +393,6 @@ function fmtL(v){
 }
 function pct(v){return(v*100).toFixed(1)+'%';}
 
-// NEW: Smart Time Labeler that won't crash on Monthly views
 function timeLabel(k) {
   if (currentMode === 'monthly') return k;
   if (currentMode === 'daily') {
@@ -446,9 +447,35 @@ async function initDashboard() {
 
   try {
     const response = await fetch(API_URL);
-    TIME_DATA = await response.json(); 
-    if(TIME_DATA.error) throw new Error(TIME_DATA.error);
+    let rawData = await response.json(); 
+    if(rawData.error) throw new Error(rawData.error);
 
+    // --- NEW: THE DATA TRANSLATOR (Combined Names) ---
+    const nameMap = {"Hot": "Hot - Blinkit", "Scootsy": "Scootsy - Swiggy", "KK": "KK - Zepto"};
+    const swapKeys = (obj) => {
+        if (!obj) return;
+        Object.keys(nameMap).forEach(oldKey => {
+            if (obj[oldKey] !== undefined) {
+                obj[nameMap[oldKey]] = obj[oldKey];
+                delete obj[oldKey];
+            }
+        });
+    };
+
+    ['daily', 'weekly', 'monthly'].forEach(mode => {
+        if (rawData[mode]) {
+            Object.values(rawData[mode]).forEach(timeBlock => {
+                swapKeys(timeBlock.channels);
+                swapKeys(timeBlock.channel_fill);
+                if (timeBlock.daily_inv) {
+                    Object.values(timeBlock.daily_inv).forEach(day => swapKeys(day));
+                }
+            });
+        }
+    });
+    // ---------------------------------
+
+    TIME_DATA = rawData;
     switchView('weekly');
 
   } catch (error) {
@@ -770,4 +797,5 @@ function updateDashboard(){
 }
 
 window.onload = initDashboard;
+</script>
 </script>
