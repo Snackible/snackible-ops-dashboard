@@ -601,9 +601,11 @@ function buildChannelChart(wk){
   if(!RAW[wk]) return;
   const d=RAW[wk];
   const entries=Object.entries(d.channels||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  const labels=entries.map(([k])=>k);
-  const vals=entries.map(([,v])=>v);
-  const clrs=labels.map(k=>COLORS[k]||COLORS.Others);
+  
+  // NEW: Splits "Hot - Blinkit" into ["Hot", "(Blinkit)"] for stacking
+  const labels = entries.map(([k]) => k.includes(' - ') ? [k.split(' - ')[0], '(' + k.split(' - ')[1] + ')'] : k);
+  const vals = entries.map(([,v])=>v);
+  const clrs = entries.map(([k])=>COLORS[k]||COLORS.Others);
 
   const ctx=document.getElementById('channelChart').getContext('2d');
   if(ccInst)ccInst.destroy();
@@ -613,51 +615,13 @@ function buildChannelChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:10}, maxRotation: 0, minRotation: 0}},
         y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
       }
     }
   });
   document.getElementById('channelSub').textContent=timeLabel(wk)+' — Invoice Value (₹)';
 }
-
-// ─── TREND CHART ───
-function setTrend(n){
-  trendWindow=n;
-  ['t4','t8','tall'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(n===4?'t4':n===8?'t8':'tall').classList.add('active');
-  buildTrendChart(document.getElementById('weekSelect').value);
-}
-
-function buildTrendChart(selWk){
-  const allWks=WEEKS.slice().reverse(); 
-  const selIdx=allWks.indexOf(selWk);
-  const end=selIdx+1;
-  const start=trendWindow===99?0:Math.max(0,end-trendWindow);
-  const slice=allWks.slice(start,end);
-
-  const ctx=document.getElementById('trendChart').getContext('2d');
-  if(tcInst)tcInst.destroy();
-  tcInst=new Chart(ctx,{
-    type:'line',
-    data:{labels:slice.map(timeLabel),datasets:[{
-      label:'GMV',data:slice.map(w=>RAW[w].gmv),
-      borderColor:'#3ABCA2',backgroundColor:'rgba(58, 188, 162, 0.1)',
-      fill:true,tension:.4,borderWidth:2.5,
-      pointBackgroundColor:slice.map(w=>w===selWk?'#FBAE25':'#3ABCA2'),
-      pointRadius:slice.map(w=>w===selWk?7:4),pointHoverRadius:7,
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:8}, maxRotation: 0, minRotation: 0}},
-        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
-      }
-    }
-  });
-  document.getElementById('trendSub').textContent=`Last ${trendWindow===99?'all':trendWindow} periods · Selected highlighted`;
-}
-
 // ─── DAILY CHART ───
 function buildDailyChart(wk){
   if(!RAW[wk]) return;
@@ -689,22 +653,73 @@ function buildDailyChart(wk){
     stack:'s'
   })).filter(ds=>ds.data.some(v=>v>0));
 
+  // NEW: Splits "Mon 11" into ["Mon", "11"] for stacking
+  const labels = allDays.map(dayLabel).map(l => l.split(' '));
+
   const ctx=document.getElementById('dailyChart').getContext('2d');
   if(dcInst)dcInst.destroy();
   dcInst=new Chart(ctx,{
     type:'bar',
-    data:{labels:allDays.map(dayLabel),datasets},
+    data:{labels:labels,datasets},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:8}, maxRotation: 0, minRotation: 0}},
+        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
         y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>v.toLocaleString('en-IN')}}
       }
     }
   });
   document.getElementById('dailySub').textContent=timeLabel(wk)+' · Dispatch date · Invoice quantities by channel';
 }
+// ─── DAILY CHART ───
+function buildDailyChart(wk){
+  if(!RAW[wk]) return;
+  const d=RAW[wk];
+  const inv=d.daily_inv||{};
+  const allDays=Object.keys(inv).sort();
 
+  const activeChannels=[...new Set(allDays.flatMap(day=>Object.keys(inv[day]||{})))].filter(ch=>CH_ORDER.includes(ch)).sort((a,b)=>CH_ORDER.indexOf(a)-CH_ORDER.indexOf(b));
+  document.getElementById('dailyLegend').innerHTML=activeChannels.map(ch=>`<div class="leg-item"><div class="leg-dot" style="background:${COLORS[ch]||COLORS.Others}"></div>${ch}</div>`).join('');
+
+  if(allDays.length===0){
+    const ctx=document.getElementById('dailyChart').getContext('2d');
+    if(dcInst)dcInst.destroy();
+    dcInst=new Chart(ctx,{
+      type:'bar',data:{labels:['No dispatch data'],datasets:[{data:[0],backgroundColor:'rgba(255,255,255,0.05)'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{display:false}}}
+    });
+    document.getElementById('dailySub').textContent=timeLabel(wk)+' · No dispatch data recorded yet';
+    return;
+  }
+
+  const datasets=CH_ORDER.map(ch=>({
+    label:ch,
+    data:allDays.map(day=>inv[day]?.[ch]||0),
+    backgroundColor:(COLORS[ch]||COLORS.Others)+'CC',
+    borderColor:COLORS[ch]||COLORS.Others,
+    borderWidth:1.5,
+    borderRadius:{topLeft:4,topRight:4},
+    stack:'s'
+  })).filter(ds=>ds.data.some(v=>v>0));
+
+  // NEW: Splits "Mon 11" into ["Mon", "11"] for stacking
+  const labels = allDays.map(dayLabel).map(l => l.split(' '));
+
+  const ctx=document.getElementById('dailyChart').getContext('2d');
+  if(dcInst)dcInst.destroy();
+  dcInst=new Chart(ctx,{
+    type:'bar',
+    data:{labels:labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
+        y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>v.toLocaleString('en-IN')}}
+      }
+    }
+  });
+  document.getElementById('dailySub').textContent=timeLabel(wk)+' · Dispatch date · Invoice quantities by channel';
+}
 // ─── FILL TABLE ───
 function buildFillTable(wk){
   if(!RAW[wk]) return;
