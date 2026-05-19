@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snackible — Weekly Ops Dashboard</title>
+<title>Snackible — B2B/Ecom Operations</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -66,10 +66,25 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 .alert-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .alert-chip { border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 500; }
 
+/* TABS UI */
+.tab-nav {
+  display: flex; gap: 32px; border-bottom: 2px solid var(--divider); margin-bottom: 28px;
+}
+.tab-btn {
+  background: transparent; border: none; color: var(--muted); font-size: 13px; font-weight: 600;
+  padding: 12px 4px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--brand-amber); border-bottom-color: var(--brand-amber); }
+.tab-content { display: none; animation: fadeUp 0.3s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 /* KPI GRID */
 .kpi-grid { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .kpi-card { 
-  flex: 1; min-width: 180px; background: var(--card); border-radius: 12px; 
+  flex: 1; min-width: 200px; background: var(--card); border-radius: 12px; 
   padding: 20px 24px; border: 1px solid var(--border); 
   border-top: 3px solid var(--accent, var(--brand-green-mid)); 
 }
@@ -147,7 +162,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     <div class="logo-badge">S</div>
     <div>
       <div class="header-title">Snackible</div>
-      <div class="header-sub">Weekly Ops Dashboard</div>
+      <div class="header-sub">B2B / Ecom Operations</div>
     </div>
   </div>
   <div class="week-selector">
@@ -173,111 +188,128 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 
-  <div class="kpi-grid">
-    <div class="kpi-card" style="--accent:var(--brand-green-mid)">
-      <div class="kpi-label">Total GMV</div>
-      <div class="kpi-value" id="kGMV">—</div>
-      <div class="kpi-sub">Invoice Value</div>
-      <span class="kpi-badge" id="kGMVb">—</span>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="openTab('tab-sales', this)">Sales & Trends</button>
+    <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
+    <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
+  </div>
+
+  <div id="tab-sales" class="tab-content active">
+    
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Total GMV</div>
+        <div class="kpi-value" id="kGMV">—</div>
+        <div class="kpi-sub">Invoice Value</div>
+        <span class="kpi-badge" id="kGMVb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total Orders</div>
+        <div class="kpi-value" id="kOrders">—</div>
+        <div class="kpi-sub">Excl. Duplicates</div>
+        <span class="kpi-badge" id="kOrdersb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Fill Rate</div>
+        <div class="kpi-value" id="kFill">—</div>
+        <div class="kpi-sub">Avg across channels</div>
+        <span class="kpi-badge" id="kFillb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-green-deep)">
+        <div class="kpi-label">Average TAT (Days)</div>
+        <div class="kpi-value" id="kTAT">—</div>
+        <div class="kpi-sub">Pending Data</div>
+        <span class="kpi-badge badge-warn">Waiting for Deliveries</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-orange)">
+        <div class="kpi-label">RTO %</div>
+        <div class="kpi-value" id="kRTO">—</div>
+        <div class="kpi-sub">of non-dup orders</div>
+        <span class="kpi-badge" id="kRTOb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-red)">
+        <div class="kpi-label">DN / Discrepancy</div>
+        <div class="kpi-value" id="kDN">—</div>
+        <div class="kpi-sub">Value Leaked</div>
+        <span class="kpi-badge" id="kDNb">—</span>
+      </div>
     </div>
-    <div class="kpi-card" style="--accent:var(--brand-amber)">
-      <div class="kpi-label">Total Orders</div>
-      <div class="kpi-value" id="kOrders">—</div>
-      <div class="kpi-sub">Excl. Duplicates</div>
-      <span class="kpi-badge" id="kOrdersb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-orange)">
-      <div class="kpi-label">Fill Rate</div>
-      <div class="kpi-value" id="kFill">—</div>
-      <div class="kpi-sub">Avg across channels</div>
-      <span class="kpi-badge" id="kFillb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-blue)">
-      <div class="kpi-label">Average TAT (Days)</div>
-      <div class="kpi-value" id="kTAT">—</div>
-      <div class="kpi-sub">Pending Data</div>
-      <span class="kpi-badge badge-warn">Waiting for Deliveries</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-orange)">
-      <div class="kpi-label">RTO %</div>
-      <div class="kpi-value" id="kRTO">—</div>
-      <div class="kpi-sub">of non-dup orders</div>
-      <span class="kpi-badge" id="kRTOb">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-purple)">
-      <div class="kpi-label">DN / Discrepancy</div>
-      <div class="kpi-value" id="kDN">—</div>
-      <div class="kpi-sub">Weekly DN Value</div>
-      <span class="kpi-badge" id="kDNb">—</span>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="card-title">GMV by Channel</div>
+        <div class="card-sub" id="channelSub">—</div>
+        <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <div class="card-title">GMV Trend</div>
+            <div class="card-sub" style="margin-bottom:0" id="trendSub">Weekly GMV</div>
+          </div>
+          <div class="trend-tabs">
+            <button class="t-tab" onclick="setTrend(4)" id="t4">4W</button>
+            <button class="t-tab active" onclick="setTrend(8)" id="t8">8W</button>
+            <button class="t-tab" onclick="setTrend(99)" id="tall">All</button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:195px;"><canvas id="trendChart"></canvas></div>
+      </div>
     </div>
   </div>
 
-  <div class="charts-row">
-    <div class="chart-card">
-      <div class="card-title">GMV by Channel</div>
-      <div class="card-sub" id="channelSub">—</div>
-      <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+  <div id="tab-inventory" class="tab-content">
+    
+    <div class="full-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div>
-          <div class="card-title">GMV Trend</div>
-          <div class="card-sub" style="margin-bottom:0" id="trendSub">Weekly GMV</div>
+          <div class="card-title">Daily Dispatched Quantities — Channel Breakdown</div>
+          <div class="card-sub" id="dailySub">Dispatch date · Invoice qty by channel</div>
         </div>
-        <div class="trend-tabs">
-          <button class="t-tab" onclick="setTrend(4)" id="t4">4W</button>
-          <button class="t-tab active" onclick="setTrend(8)" id="t8">8W</button>
-          <button class="t-tab" onclick="setTrend(99)" id="tall">All</button>
-        </div>
+        <div class="legend" id="dailyLegend"></div>
       </div>
-      <div class="chart-wrap" style="height:195px;"><canvas id="trendChart"></canvas></div>
+      <div class="full-chart-wrap"><canvas id="dailyChart"></canvas></div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="chart-card">
+        <div class="card-title">Fill Rate by Channel</div>
+        <div class="card-sub" id="fillSub">PO vs Invoice Quantities</div>
+        <table class="data-table">
+          <thead><tr><th>Channel</th><th>PO Qty</th><th style="min-width:110px">Fill Rate</th><th>Short</th></tr></thead>
+          <tbody id="fillBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="full-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div>
-        <div class="card-title">Daily Dispatched Quantities — Channel Breakdown</div>
-        <div class="card-sub" id="dailySub">Dispatch date · Invoice qty by channel</div>
-      </div>
-      <div class="legend" id="dailyLegend"></div>
-    </div>
-    <div class="full-chart-wrap"><canvas id="dailyChart"></canvas></div>
-  </div>
-
-  <div class="bottom-grid">
-    <div class="chart-card">
-      <div class="card-title">Fill Rate by Channel</div>
-      <div class="card-sub" id="fillSub">PO vs Invoice Quantities</div>
-      <table class="data-table">
-        <thead><tr><th>Channel</th><th>PO Qty</th><th style="min-width:110px">Fill Rate</th><th>Short</th></tr></thead>
-        <tbody id="fillBody"></tbody>
-      </table>
-    </div>
-
-    <div class="chart-card">
-      <div class="card-title">Order Status</div>
-      <div class="card-sub" id="statusSub">All orders this week</div>
-      <ul class="status-list" id="statusList"></ul>
-      <div style="margin-top:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Delivery Rate</span>
-          <span style="font-size:22px;font-weight:600;" id="delRate">—</span>
+  <div id="tab-ops" class="tab-content">
+    
+    <div class="bottom-grid">
+      <div class="chart-card">
+        <div class="card-title">Order Status</div>
+        <div class="card-sub" id="statusSub">All orders this week</div>
+        <ul class="status-list" id="statusList"></ul>
+        <div style="margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Delivery Rate</span>
+            <span style="font-size:22px;font-weight:600;" id="delRate">—</span>
+          </div>
+          <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
         </div>
-        <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
       </div>
-    </div>
 
-    <div class="chart-card">
-      <div class="card-title">Courier Performance</div>
-      <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
-      <div id="courierList"></div>
-      <div class="sum-strip">
-        <div class="ss-label">Period Avg TAT</div>
-        <div style="display:flex;align-items:baseline;gap:8px;">
-          <span style="font-size:26px;font-weight:600;color:var(--brand-amber);" id="tatBig">—</span>
-          <span style="font-size:12px;font-weight:500;color:var(--muted);">days</span>
-          <span class="kpi-badge" id="tatBadge"></span>
+      <div class="chart-card">
+        <div class="card-title">Courier Performance</div>
+        <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
+        <div id="courierList"></div>
+        <div class="sum-strip">
+          <div class="ss-label">Period Avg TAT</div>
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <span style="font-size:26px;font-weight:600;color:var(--brand-amber);" id="tatBig">—</span>
+            <span style="font-size:12px;font-weight:500;color:var(--muted);">days</span>
+            <span class="kpi-badge" id="tatBadge"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -336,6 +368,20 @@ function timeLabel(k) {
 function dayLabel(dt){
   const d=new Date(dt+'T00:00:00');
   return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+d.getDate();
+}
+
+// ─── TAB NAVIGATION LOGIC ───
+function openTab(tabId, btn) {
+  // Hide all tabs & remove active classes
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  // Show selected tab & add active class
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+
+  // Fix Chart.js rendering issue when unhidden
+  Object.values(Chart.instances).forEach(chart => chart.resize());
 }
 
 // ─── THE NEW VIEW SWITCHER ───
