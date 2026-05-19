@@ -613,7 +613,7 @@ function buildChannelChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:11}}},
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
         y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
       }
     }
@@ -650,7 +650,7 @@ function buildTrendChart(selWk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9},maxRotation:45}},
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:8}, maxRotation: 0, minRotation: 0}},
         y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
       }
     }
@@ -697,7 +697,7 @@ function buildDailyChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:10}}},
+        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:8}, maxRotation: 0, minRotation: 0}},
         y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>v.toLocaleString('en-IN')}}
       }
     }
