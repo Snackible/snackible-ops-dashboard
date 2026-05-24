@@ -785,7 +785,6 @@ function buildStatus(wk){
   bar.style.width=(dr*100)+'%';
   bar.style.background=dr>=0.8?'var(--brand-green-mid)':dr>=0.6?'var(--brand-amber)':'var(--brand-orange)';
 }
-
 // ─── COURIERS ───
 function buildCourier(wk){
   if(!RAW[wk]) return;
@@ -799,17 +798,35 @@ function buildCourier(wk){
     el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px 0;">No courier data yet</div>';
     return;
   }
+  
+  let totalTatSum = 0; let totalTatCount = 0;
+
   entries.forEach(([name,c])=>{
-    const tatCls=c.avg_tat===0?'badge-up':c.avg_tat<=7?'badge-up':c.avg_tat<=10?'badge-warn':'badge-down';
-    const drColor=c.delivery_rate>=90?'var(--brand-green-mid)':c.delivery_rate>=70?'var(--brand-amber)':'var(--brand-orange)';
+    // Calculate the math directly on the frontend
+    const avg_tat = c._tatCount > 0 ? Math.round(c._tatSum / c._tatCount) : 0;
+    const delivery_rate = c.orders > 0 ? Math.round((c.delivered / c.orders) * 100) : 0;
+    
+    if(avg_tat > 0) { totalTatSum += avg_tat; totalTatCount++; }
+
+    const tatCls=avg_tat===0?'badge-up':avg_tat<=7?'badge-up':avg_tat<=10?'badge-warn':'badge-down';
+    const drColor=delivery_rate>=90?'var(--brand-green-mid)':delivery_rate>=70?'var(--brand-amber)':'var(--brand-orange)';
     const row=document.createElement('div');
     row.className='courier-row';
     row.innerHTML=`<div class="c-name">${name}</div>
       <div style="font-size:11px;color:var(--muted)">${c.orders} orders</div>
-      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${c.avg_tat>0?c.avg_tat+'d TAT':'—'}</div>
-      <div style="font-size:11px;font-weight:600;color:${drColor}">${c.delivery_rate}%</div>`;
+      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${avg_tat>0?avg_tat+'d TAT':'—'}</div>
+      <div style="font-size:11px;font-weight:600;color:${drColor}">${delivery_rate}%</div>`;
     el.appendChild(row);
   });
+
+  // Update the big TAT summary at the bottom of the card
+  const periodTat = totalTatCount > 0 ? Math.round(totalTatSum / totalTatCount) : 0;
+  document.getElementById('tatBig').textContent = periodTat > 0 ? periodTat : '—';
+  const tatBadge = document.getElementById('tatBadge');
+  if (tatBadge) {
+      tatBadge.textContent = periodTat > 0 ? (periodTat <= 7 ? '✓ Good' : '⚠ Slow') : 'No data';
+      tatBadge.className = 'kpi-badge ' + (periodTat > 0 && periodTat <= 7 ? 'badge-up' : 'badge-warn');
+  }
 }
 // ─── DEEP DIVE CHARTS ───
 function buildDeepDive(wk) {
@@ -876,8 +893,8 @@ function updateDashboard(){
   buildFillTable(wk);
   buildStatus(wk);
   buildCourier(wk);
+  if(typeof buildDeepDive === 'function') buildDeepDive(wk); // Triggers the new tabs
 }
-
 window.onload = initDashboard;
 </script>
 </body>
