@@ -188,8 +188,9 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 
-  <div class="tab-nav">
-    <button class="tab-btn active" onclick="openTab('tab-sales', this)">Sales & Trends</button>
+ <div class="tab-nav">
+    <button class="tab-btn active" onclick="openTab('tab-sales', this)">Sales Overview</button>
+    <button class="tab-btn" onclick="openTab('tab-deepdive', this)">Sales Deep Dive</button>
     <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
     <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
   </div>
@@ -257,7 +258,55 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
   </div>
+<div id="tab-deepdive" class="tab-content">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+      
+      <div class="chart-card">
+        <div class="card-title">Revenue by Order Type</div>
+        <div class="card-sub" id="typeSub">Breakdown of active period GMV</div>
+        <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+      </div>
 
+      <div class="chart-card">
+        <div class="card-title">Top Locations (GMV)</div>
+        <div class="card-sub" id="locSub">Highest performing cities</div>
+        <div class="chart-wrap"><canvas id="locChart"></canvas></div>
+      </div>
+
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-bottom: 28px;">
+      
+      <div class="chart-card">
+        <div class="card-title">SKU Volume Tracker</div>
+        <div class="card-sub" id="skuSub">Units shipped cross-referenced from details tab</div>
+        <div style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product (SKU)</th>
+                <th style="text-align:right">Units Shipped</th>
+              </tr>
+            </thead>
+            <tbody id="skuBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="chart-card" style="overflow-x: auto;">
+        <div class="card-title">State vs Top SKUs (Units)</div>
+        <div class="card-sub" id="matrixSub">Regional volume distribution</div>
+        <div style="max-height: 350px; overflow-y: auto;">
+          <table class="data-table">
+            <thead id="matrixHead"></thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
   <div id="tab-inventory" class="tab-content">
     
     <div class="full-card">
@@ -341,7 +390,8 @@ const STATUS_META={
   Other:{icon:'📦',bg:'rgba(255,255,255,0.05)'},
 };
 
-let ccInst,tcInst,dcInst,trendWindow=8;
+let ccInst, tcInst, dcInst, typeInst, locInst, trendWindow=8;
+const TYPE_COLORS={'Q-Com':'#E35C25','B2B':'#02514F','GT':'#3ABCA2','MT':'#262D67','Ecom':'#FBAE25','Other':'#6566AE'};
 
 function fmtL(v){
   if(v>=10000000)return'₹'+(v/10000000).toFixed(2)+'Cr';
@@ -761,7 +811,60 @@ function buildCourier(wk){
     el.appendChild(row);
   });
 }
+// ─── DEEP DIVE CHARTS ───
+function buildDeepDive(wk) {
+  if(!RAW[wk]) return;
+  const d=RAW[wk];
 
+  // 1. Order Types Doughnut
+  const typeEntries = Object.entries(d.order_types||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const ctxType = document.getElementById('typeChart').getContext('2d');
+  if(typeInst) typeInst.destroy();
+  typeInst = new Chart(ctxType, {
+    type: 'doughnut',
+    data: {
+      labels: typeEntries.map(e=>e[0]),
+      datasets: [{data: typeEntries.map(e=>e[1]), backgroundColor: typeEntries.map(e=>TYPE_COLORS[e[0]]||TYPE_COLORS.Other), borderWidth:0}]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position: 'right', labels:{color:'#8AA8A6', font:{family:'Poppins', size:11}} }, tooltip: { callbacks: { label: c=>' '+fmtL(c.raw) } } }, cutout: '70%' }
+  });
+  document.getElementById('typeSub').textContent = timeLabel(wk) + ' — Invoice Value';
+
+  // 2. Top Locations Bar Chart
+  const locEntries = Object.entries(d.cities||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
+  const ctxLoc = document.getElementById('locChart').getContext('2d');
+  if(locInst) locInst.destroy();
+  locInst = new Chart(ctxLoc, {
+    type: 'bar',
+    data: { labels: locEntries.map(e=>e[0]), datasets: [{data: locEntries.map(e=>e[1]), backgroundColor: '#3ABCA2', borderRadius: 4}] },
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Poppins', size:11}}} } }
+  });
+  document.getElementById('locSub').textContent = timeLabel(wk) + ' — Top 6 Cities by GMV';
+
+  // 3. SKU Volume Tracker
+  const skuEntries = Object.entries(d.skus||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const tbody = document.getElementById('skuBody');
+  tbody.innerHTML = skuEntries.length ? skuEntries.map(([name, qty]) => `<tr><td style="white-space:normal; line-height:1.3; font-size:11px;">${name}</td><td style="text-align:right; font-weight:600; color:var(--brand-amber);">${qty.toLocaleString('en-IN')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; color:var(--muted)">No cross-referenced SKU data found for this period.</td></tr>';
+  document.getElementById('skuSub').textContent = timeLabel(wk) + ' — Cross-referenced Sku Details';
+
+  // 4. State vs Top SKUs Matrix
+  const stateEntries = Object.entries(d.state_sku||{});
+  const matrixHead = document.getElementById('matrixHead');
+  const matrixBody = document.getElementById('matrixBody');
+  
+  if (stateEntries.length === 0 || skuEntries.length === 0) {
+    matrixHead.innerHTML = ''; matrixBody.innerHTML = '<tr><td style="text-align:center; color:var(--muted); padding:20px;">No regional SKU data available.</td></tr>';
+    return;
+  }
+
+  // Get top 5 SKUs dynamically for columns
+  const topSkus = skuEntries.slice(0, 5).map(e=>e[0]);
+  matrixHead.innerHTML = `<tr><th style="min-width:100px;">State</th>${topSkus.map(s=>`<th style="text-align:right; min-width:80px; font-size:10px;" title="${s}">${s.substring(0, 15)}...</th>`).join('')}</tr>`;
+  
+  matrixBody.innerHTML = stateEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0, 10).map(([state, skus]) => {
+    return `<tr><td style="font-weight:600; color:var(--text);">${state}</td>${topSkus.map(sku => `<td style="text-align:right; color:${skus[sku] ? 'var(--brand-green-mid)' : 'var(--muted)'};">${skus[sku] ? skus[sku].toLocaleString('en-IN') : '—'}</td>`).join('')}</tr>`;
+  }).join('');
+}
 // ─── MAIN ───
 function updateDashboard(){
   const wk=document.getElementById('weekSelect').value;
