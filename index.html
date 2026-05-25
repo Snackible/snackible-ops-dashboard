@@ -188,7 +188,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 
- <div class="tab-nav">
+  <div class="tab-nav">
     <button class="tab-btn active" onclick="openTab('tab-sales', this)">Sales Overview</button>
     <button class="tab-btn" onclick="openTab('tab-deepdive', this)">Sales Deep Dive</button>
     <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
@@ -258,7 +258,8 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
   </div>
-<div id="tab-deepdive" class="tab-content">
+
+  <div id="tab-deepdive" class="tab-content">
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px;">
       
       <div class="chart-card">
@@ -275,19 +276,6 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 
       <div class="chart-card">
         <div class="card-title">Top Cities (GMV)</div>
-        <div class="card-sub" id="locSub">Highest performing cities</div>
-        <div class="chart-wrap"><canvas id="locChart"></canvas></div>
-      </div>
-
-    </div>      
-      <div class="chart-card">
-        <div class="card-title">Revenue by Order Type</div>
-        <div class="card-sub" id="typeSub">Breakdown of active period GMV</div>
-        <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
-      </div>
-
-      <div class="chart-card">
-        <div class="card-title">Top Locations (GMV)</div>
         <div class="card-sub" id="locSub">Highest performing cities</div>
         <div class="chart-wrap"><canvas id="locChart"></canvas></div>
       </div>
@@ -411,6 +399,7 @@ const STATUS_META={
 
 let ccInst, tcInst, dcInst, typeInst, locInst, stateInst, trendWindow=8;
 const TYPE_COLORS={'Blinkit':'#E35C25','Zepto':'#6566AE','Swiggy':'#3ABCA2','B2B':'#02514F','GT':'#3ABCA2','MT':'#262D67','Big Basket':'#4C94D0','Ecom':'#FBAE25','Other':'#8AA8A6'};
+
 function fmtL(v){
   if(v>=10000000)return'₹'+(v/10000000).toFixed(2)+'Cr';
   if(v>=100000)return'₹'+(v/100000).toFixed(1)+'L';
@@ -440,15 +429,10 @@ function dayLabel(dt){
 
 // ─── TAB NAVIGATION LOGIC ───
 function openTab(tabId, btn) {
-  // Hide all tabs & remove active classes
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  
-  // Show selected tab & add active class
   document.getElementById(tabId).classList.add('active');
   btn.classList.add('active');
-
-  // Fix Chart.js rendering issue when unhidden
   Object.values(Chart.instances).forEach(chart => chart.resize());
 }
 
@@ -457,7 +441,6 @@ function switchView(mode) {
   if (!TIME_DATA[mode]) return;
   currentMode = mode;
   RAW = TIME_DATA[mode]; 
-
   WEEKS = Object.keys(RAW).filter(k => RAW[k].orders > 0).sort().reverse();
 
   const select = document.getElementById('weekSelect');
@@ -469,7 +452,6 @@ function switchView(mode) {
     opt.textContent = timeLabel(k) + (idx === 0 ? " ← Latest" : "");
     select.appendChild(opt);
   });
-  
   if (WEEKS.length > 0) updateDashboard(); 
 }
 
@@ -490,7 +472,6 @@ async function initDashboard() {
     let rawData = await response.json(); 
     if(rawData.error) throw new Error(rawData.error);
 
-    // --- THE DATA TRANSLATOR (Combined Names) ---
     const nameMap = {"Hot": "Hot - Blinkit", "Scootsy": "Scootsy - Swiggy", "KK": "KK - Zepto"};
     const swapKeys = (obj) => {
         if (!obj) return;
@@ -532,7 +513,6 @@ function buildAlert(wk){
   const d=RAW[wk];
   const bad=Object.entries(d.channel_fill||{}).filter(([,v])=>v.po>0&&v.rate<0.9);
   const bn=document.getElementById('alertBanner');
-  
   const isPartial = wk === WEEKS[0] && d.orders < 50;
 
   if(isPartial){
@@ -563,7 +543,6 @@ function buildKPIs(wk){
   const idx=WEEKS.indexOf(wk);
   const prev=idx<WEEKS.length-1?RAW[WEEKS[idx+1]]:null;
 
-  // GMV
   const gmvChg=prev?((d.gmv-prev.gmv)/prev.gmv*100):0;
   const gmvUp=d.gmv>=(prev?.gmv||0);
   document.getElementById('kGMV').textContent=fmtL(d.gmv);
@@ -571,19 +550,16 @@ function buildKPIs(wk){
   kb.textContent=prev?(gmvUp?'▲ ':'▼ ')+Math.abs(gmvChg).toFixed(1)+'% vs Prior':'First period';
   kb.className='kpi-badge '+(prev?(gmvUp?'badge-up':'badge-down'):'badge-warn');
 
-  // Orders
   document.getElementById('kOrders').textContent=d.orders;
   const dup=d.statuses?.Duplicate||0;
   document.getElementById('kOrdersb').textContent=dup>0?`${dup} duplicates excl.`:'No duplicates';
   document.getElementById('kOrdersb').className='kpi-badge badge-warn';
 
-  // Fill
   document.getElementById('kFill').textContent=d.avg_fill+'%';
   const fb=document.getElementById('kFillb');
   fb.textContent=d.avg_fill>=95?'✓ Healthy':d.avg_fill>=85?'⚠ Moderate':'⚠ Below Target';
   fb.className='kpi-badge '+(d.avg_fill>=95?'badge-up':'badge-warn');
 
-  // TAT
   const tatCard = document.getElementById('kTAT').parentElement;
   if (d.avg_total_tat > 0) {
     tatCard.innerHTML = `
@@ -613,7 +589,6 @@ function buildKPIs(wk){
     `;
   }
 
-  // Courier TAT Badge
   const tatBig = document.getElementById('tatBig');
   if (tatBig) tatBig.textContent = d.avg_total_tat > 0 ? d.avg_total_tat : '—';
   const tatBadge = document.getElementById('tatBadge');
@@ -622,13 +597,11 @@ function buildKPIs(wk){
       tatBadge.className = 'kpi-badge ' + (d.avg_total_tat > 0 && d.avg_total_tat <= 10 ? 'badge-up' : 'badge-warn');
   }
 
-  // RTO
   document.getElementById('kRTO').textContent=d.rto_pct+'%';
   const rb=document.getElementById('kRTOb');
   rb.textContent=d.rto_pct===0?'No RTOs':d.rto_pct<=3?'✓ Acceptable':'⚠ High RTO';
   rb.className='kpi-badge '+(d.rto_pct<=3?'badge-up':d.rto_pct<=5?'badge-warn':'badge-down');
 
-  // DN
   document.getElementById('kDN').textContent=fmtL(d.dn_value);
   const db=document.getElementById('kDNb');
   db.textContent=d.dn_value===0?'No discrepancies':d.dn_value<50000?'Low exposure':'⚠ Review needed';
@@ -640,8 +613,6 @@ function buildChannelChart(wk){
   if(!RAW[wk]) return;
   const d=RAW[wk];
   const entries=Object.entries(d.channels||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  
-  // Stacking fix for names
   const labels = entries.map(([k]) => k.includes(' - ') ? [k.split(' - ')[0], '(' + k.split(' - ')[1] + ')'] : k);
   const vals = entries.map(([,v])=>v);
   const clrs = entries.map(([k])=>COLORS[k]||COLORS.Others);
@@ -677,7 +648,6 @@ function buildTrendChart(selWk){
   const start=trendWindow===99?0:Math.max(0,end-trendWindow);
   const slice=allWks.slice(start,end);
 
-  // Stacking fix for dates
   const labels = slice.map(w => timeLabel(w).split(' - '));
 
   const ctx=document.getElementById('trendChart').getContext('2d');
@@ -733,7 +703,6 @@ function buildDailyChart(wk){
     stack:'s'
   })).filter(ds=>ds.data.some(v=>v>0));
 
-  // Stacking fix for days
   const labels = allDays.map(dayLabel).map(l => l.split(' '));
 
   const ctx=document.getElementById('dailyChart').getContext('2d');
@@ -803,6 +772,7 @@ function buildStatus(wk){
   bar.style.width=(dr*100)+'%';
   bar.style.background=dr>=0.8?'var(--brand-green-mid)':dr>=0.6?'var(--brand-amber)':'var(--brand-orange)';
 }
+
 // ─── COURIERS ───
 function buildCourier(wk){
   if(!RAW[wk]) return;
@@ -820,7 +790,6 @@ function buildCourier(wk){
   let totalTatSum = 0; let totalTatCount = 0;
 
   entries.forEach(([name,c])=>{
-    // Calculate the math directly on the frontend
     const avg_tat = c._tatCount > 0 ? Math.round(c._tatSum / c._tatCount) : 0;
     const delivery_rate = c.orders > 0 ? Math.round((c.delivered / c.orders) * 100) : 0;
     
@@ -837,7 +806,6 @@ function buildCourier(wk){
     el.appendChild(row);
   });
 
-  // Update the big TAT summary at the bottom of the card
   const periodTat = totalTatCount > 0 ? Math.round(totalTatSum / totalTatCount) : 0;
   document.getElementById('tatBig').textContent = periodTat > 0 ? periodTat : '—';
   const tatBadge = document.getElementById('tatBadge');
@@ -846,6 +814,7 @@ function buildCourier(wk){
       tatBadge.className = 'kpi-badge ' + (periodTat > 0 && periodTat <= 7 ? 'badge-up' : 'badge-warn');
   }
 }
+
 // ─── DEEP DIVE CHARTS ───
 function buildDeepDive(wk) {
   if(!RAW[wk]) return;
@@ -866,16 +835,16 @@ function buildDeepDive(wk) {
   document.getElementById('typeSub').textContent = timeLabel(wk) + ' — Invoice Value';
 
   // 1.5 Top States Bar Chart
-  const stateEntries = Object.entries(d.locations||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
+  const stateEntriesList = Object.entries(d.locations||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
   const ctxState = document.getElementById('stateChart').getContext('2d');
   if(stateInst) stateInst.destroy();
   stateInst = new Chart(ctxState, {
     type: 'bar',
-    data: { labels: stateEntries.map(e=>e[0]), datasets: [{data: stateEntries.map(e=>e[1]), backgroundColor: '#FBAE25', borderRadius: 4}] },
+    data: { labels: stateEntriesList.map(e=>e[0]), datasets: [{data: stateEntriesList.map(e=>e[1]), backgroundColor: '#FBAE25', borderRadius: 4}] },
     options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Poppins', size:11}}} } }
   });
   document.getElementById('stateSub').textContent = timeLabel(wk) + ' — Top 6 States by GMV';
-  
+
   // 2. Top Locations Bar Chart
   const locEntries = Object.entries(d.cities||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
   const ctxLoc = document.getElementById('locChart').getContext('2d');
@@ -894,23 +863,23 @@ function buildDeepDive(wk) {
   document.getElementById('skuSub').textContent = timeLabel(wk) + ' — Cross-referenced Sku Details';
 
   // 4. State vs Top SKUs Matrix
-  const stateEntries = Object.entries(d.state_sku||{});
+  const stateMatrixEntries = Object.entries(d.state_sku||{});
   const matrixHead = document.getElementById('matrixHead');
   const matrixBody = document.getElementById('matrixBody');
   
-  if (stateEntries.length === 0 || skuEntries.length === 0) {
+  if (stateMatrixEntries.length === 0 || skuEntries.length === 0) {
     matrixHead.innerHTML = ''; matrixBody.innerHTML = '<tr><td style="text-align:center; color:var(--muted); padding:20px;">No regional SKU data available.</td></tr>';
     return;
   }
 
-  // Get top 5 SKUs dynamically for columns
   const topSkus = skuEntries.slice(0, 5).map(e=>e[0]);
   matrixHead.innerHTML = `<tr><th style="min-width:100px;">State</th>${topSkus.map(s=>`<th style="text-align:right; min-width:80px; font-size:10px;" title="${s}">${s.substring(0, 15)}...</th>`).join('')}</tr>`;
   
-  matrixBody.innerHTML = stateEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0, 10).map(([state, skus]) => {
+  matrixBody.innerHTML = stateMatrixEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0, 10).map(([state, skus]) => {
     return `<tr><td style="font-weight:600; color:var(--text);">${state}</td>${topSkus.map(sku => `<td style="text-align:right; color:${skus[sku] ? 'var(--brand-green-mid)' : 'var(--muted)'};">${skus[sku] ? skus[sku].toLocaleString('en-IN') : '—'}</td>`).join('')}</tr>`;
   }).join('');
 }
+
 // ─── MAIN ───
 function updateDashboard(){
   const wk=document.getElementById('weekSelect').value;
@@ -922,8 +891,9 @@ function updateDashboard(){
   buildFillTable(wk);
   buildStatus(wk);
   buildCourier(wk);
-  if(typeof buildDeepDive === 'function') buildDeepDive(wk); // Triggers the new tabs
+  if(typeof buildDeepDive === 'function') buildDeepDive(wk);
 }
+
 window.onload = initDashboard;
 </script>
 </body>
