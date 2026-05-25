@@ -259,8 +259,27 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 <div id="tab-deepdive" class="tab-content">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px;">
       
+      <div class="chart-card">
+        <div class="card-title">Revenue by Order Type</div>
+        <div class="card-sub" id="typeSub">Breakdown of active period</div>
+        <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-title">Top States (GMV)</div>
+        <div class="card-sub" id="stateSub">Highest performing states</div>
+        <div class="chart-wrap"><canvas id="stateChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-title">Top Cities (GMV)</div>
+        <div class="card-sub" id="locSub">Highest performing cities</div>
+        <div class="chart-wrap"><canvas id="locChart"></canvas></div>
+      </div>
+
+    </div>      
       <div class="chart-card">
         <div class="card-title">Revenue by Order Type</div>
         <div class="card-sub" id="typeSub">Breakdown of active period GMV</div>
@@ -390,9 +409,8 @@ const STATUS_META={
   Other:{icon:'📦',bg:'rgba(255,255,255,0.05)'},
 };
 
-let ccInst, tcInst, dcInst, typeInst, locInst, trendWindow=8;
+let ccInst, tcInst, dcInst, typeInst, locInst, stateInst, trendWindow=8;
 const TYPE_COLORS={'Blinkit':'#E35C25','Zepto':'#6566AE','Swiggy':'#3ABCA2','B2B':'#02514F','GT':'#3ABCA2','MT':'#262D67','Big Basket':'#4C94D0','Ecom':'#FBAE25','Other':'#8AA8A6'};
-
 function fmtL(v){
   if(v>=10000000)return'₹'+(v/10000000).toFixed(2)+'Cr';
   if(v>=100000)return'₹'+(v/100000).toFixed(1)+'L';
@@ -847,6 +865,17 @@ function buildDeepDive(wk) {
   });
   document.getElementById('typeSub').textContent = timeLabel(wk) + ' — Invoice Value';
 
+  // 1.5 Top States Bar Chart
+  const stateEntries = Object.entries(d.locations||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
+  const ctxState = document.getElementById('stateChart').getContext('2d');
+  if(stateInst) stateInst.destroy();
+  stateInst = new Chart(ctxState, {
+    type: 'bar',
+    data: { labels: stateEntries.map(e=>e[0]), datasets: [{data: stateEntries.map(e=>e[1]), backgroundColor: '#FBAE25', borderRadius: 4}] },
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Poppins', size:11}}} } }
+  });
+  document.getElementById('stateSub').textContent = timeLabel(wk) + ' — Top 6 States by GMV';
+  
   // 2. Top Locations Bar Chart
   const locEntries = Object.entries(d.cities||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0, 6);
   const ctxLoc = document.getElementById('locChart').getContext('2d');
