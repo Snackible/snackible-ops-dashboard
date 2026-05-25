@@ -908,13 +908,7 @@ function buildDeepDive(wk) {
       </tr>`;
 
       // Pre-build city rows for this state (hidden by default)
-      const citiesInState = Object.entries(citySkuData)
-        .filter(([city]) => {
-          // Match cities to state via location mapping approximation
-          const cityGmv = cityGmvData[city];
-          const stateTotal = stateGmv;
-          return citySkuData[city] && Object.keys(citySkuData[city]).some(sku => skus[sku]);
-        })
+      const citiesInState = Object.entries(citySkuData[state] || {})
         .sort((a,b) => Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0));
 
       const cityRows = citiesInState.map(([city, cSkus]) => `
@@ -923,7 +917,6 @@ function buildDeepDive(wk) {
           <td style="text-align:right; font-size:11px; color:var(--muted);">${fmtL(cityGmvData[city]||0)}</td>
           ${topSkus.map(sku=>`<td style="text-align:right; font-size:11px; color:${cSkus[sku]?'var(--brand-green-mid)':'var(--muted)'};">${cSkus[sku]?cSkus[sku].toLocaleString('en-IN'):'—'}</td>`).join('')}
         </tr>`).join('');
-
       return stateRow + cityRows;
     }).join('');
   }
