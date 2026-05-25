@@ -545,7 +545,9 @@ function openTab(tabId, btn) {
   btn.classList.add('active');
   Object.values(Chart.instances).forEach(chart => chart.resize());
   if (tabId === 'tab-delivered') buildDelivered();
-  if (tabId === 'tab-po') buildPOTracker(document.getElementById('weekSelect').value);
+  if (tabId === 'tab-po') {
+    setTimeout(() => buildPOTracker(document.getElementById('weekSelect').value), 50);
+  }
 }
 
 
