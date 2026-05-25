@@ -884,22 +884,83 @@ function buildDeepDive(wk) {
   tbody.innerHTML = skuEntries.length ? skuEntries.map(([name, qty]) => `<tr><td style="white-space:normal; line-height:1.3; font-size:11px;">${name}</td><td style="text-align:right; font-weight:600; color:var(--brand-amber);">${qty.toLocaleString('en-IN')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; color:var(--muted)">No cross-referenced SKU data found for this period.</td></tr>';
   document.getElementById('skuSub').textContent = timeLabel(wk) + ' — Cross-referenced Sku Details';
 
-  // 4. State vs Top SKUs Matrix
+ // 4. State vs Top SKUs Matrix (with city drill-down)
   const stateMatrixEntries = Object.entries(d.state_sku||{});
   const matrixHead = document.getElementById('matrixHead');
   const matrixBody = document.getElementById('matrixBody');
   
   if (stateMatrixEntries.length === 0 || skuEntries.length === 0) {
     matrixHead.innerHTML = ''; matrixBody.innerHTML = '<tr><td style="text-align:center; color:var(--muted); padding:20px;">No regional SKU data available.</td></tr>';
-    return;
+  } else {
+    const topSkus = skuEntries.slice(0, 5).map(e=>e[0]);
+    matrixHead.innerHTML = `<tr><th style="min-width:120px;">State</th><th style="text-align:right; min-width:80px; font-size:10px;">GMV</th>${topSkus.map(s=>`<th style="text-align:right; min-width:80px; font-size:10px;" title="${s}">${s.substring(0,15)}...</th>`).join('')}</tr>`;
+
+    const sortedStates = stateMatrixEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0,10);
+    const citySkuData = d.city_sku || {};
+    const cityGmvData = d.cities || {};
+
+    matrixBody.innerHTML = sortedStates.map(([state, skus]) => {
+      const stateGmv = d.locations[state] || 0;
+      const stateRow = `<tr class="state-row" onclick="toggleCityDrill(this, '${state}')" style="cursor:pointer;">
+        <td style="font-weight:600; color:var(--text);">▶ ${state}</td>
+        <td style="text-align:right; color:var(--brand-amber); font-size:11px;">${fmtL(stateGmv)}</td>
+        ${topSkus.map(sku=>`<td style="text-align:right; color:${skus[sku]?'var(--brand-green-mid)':'var(--muted)'};">${skus[sku]?skus[sku].toLocaleString('en-IN'):'—'}</td>`).join('')}
+      </tr>`;
+
+      // Pre-build city rows for this state (hidden by default)
+      const citiesInState = Object.entries(citySkuData)
+        .filter(([city]) => {
+          // Match cities to state via location mapping approximation
+          const cityGmv = cityGmvData[city];
+          const stateTotal = stateGmv;
+          return citySkuData[city] && Object.keys(citySkuData[city]).some(sku => skus[sku]);
+        })
+        .sort((a,b) => Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0));
+
+      const cityRows = citiesInState.map(([city, cSkus]) => `
+        <tr class="city-drill-${state.replace(/\s+/g,'_')}" style="display:none; background:rgba(255,255,255,0.03);">
+          <td style="padding-left:24px; font-size:11px; color:var(--muted);">↳ ${city}</td>
+          <td style="text-align:right; font-size:11px; color:var(--muted);">${fmtL(cityGmvData[city]||0)}</td>
+          ${topSkus.map(sku=>`<td style="text-align:right; font-size:11px; color:${cSkus[sku]?'var(--brand-green-mid)':'var(--muted)'};">${cSkus[sku]?cSkus[sku].toLocaleString('en-IN'):'—'}</td>`).join('')}
+        </tr>`).join('');
+
+      return stateRow + cityRows;
+    }).join('');
   }
 
-  const topSkus = skuEntries.slice(0, 5).map(e=>e[0]);
-  matrixHead.innerHTML = `<tr><th style="min-width:100px;">State</th>${topSkus.map(s=>`<th style="text-align:right; min-width:80px; font-size:10px;" title="${s}">${s.substring(0, 15)}...</th>`).join('')}</tr>`;
-  
-  matrixBody.innerHTML = stateMatrixEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0) - Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0, 10).map(([state, skus]) => {
-    return `<tr><td style="font-weight:600; color:var(--text);">${state}</td>${topSkus.map(sku => `<td style="text-align:right; color:${skus[sku] ? 'var(--brand-green-mid)' : 'var(--muted)'};">${skus[sku] ? skus[sku].toLocaleString('en-IN') : '—'}</td>`).join('')}</tr>`;
-  }).join('');
+  // 5. Channel × SKU Matrix
+  const channelSkuData = d.channel_sku || {};
+  const channelMatrixHead = document.getElementById('channelMatrixHead');
+  const channelMatrixBody = document.getElementById('channelMatrixBody');
+
+  if (!channelMatrixHead || !channelMatrixBody) return;
+
+  const channelEntries = Object.entries(channelSkuData).sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0));
+  const topSkusForChannel = skuEntries.slice(0,5).map(e=>e[0]);
+
+  if (channelEntries.length === 0) {
+    channelMatrixHead.innerHTML = '';
+    channelMatrixBody.innerHTML = '<tr><td style="text-align:center; color:var(--muted); padding:20px;">No channel SKU data available.</td></tr>';
+  } else {
+    channelMatrixHead.innerHTML = `<tr><th style="min-width:100px;">Channel</th>${topSkusForChannel.map(s=>`<th style="text-align:right; min-width:80px; font-size:10px;" title="${s}">${s.substring(0,15)}...</th>`).join('')}<th style="text-align:right;">Total Units</th></tr>`;
+    channelMatrixBody.innerHTML = channelEntries.map(([ch, skus]) => {
+      const total = Object.values(skus).reduce((s,v)=>s+v,0);
+      return `<tr>
+        <td style="font-weight:600; color:var(--text);"><span class="ch-dot" style="background:${COLORS[ch]||TYPE_COLORS[ch]||'#8AA8A6'}"></span>${ch}</td>
+        ${topSkusForChannel.map(sku=>`<td style="text-align:right; color:${skus[sku]?'var(--brand-green-mid)':'var(--muted)'};">${skus[sku]?skus[sku].toLocaleString('en-IN'):'—'}</td>`).join('')}
+        <td style="text-align:right; font-weight:600; color:var(--brand-amber);">${total.toLocaleString('en-IN')}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function toggleCityDrill(row, state) {
+  const key = state.replace(/\s+/g,'_');
+  const cityRows = document.querySelectorAll(`.city-drill-${key}`);
+  const isOpen = cityRows.length && cityRows[0].style.display !== 'none';
+  cityRows.forEach(r => r.style.display = isOpen ? 'none' : 'table-row');
+  const arrow = row.querySelector('td:first-child');
+  arrow.textContent = arrow.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
 }
 // ─── DELIVERED DATA TAB ───
 function buildDelivered() {
