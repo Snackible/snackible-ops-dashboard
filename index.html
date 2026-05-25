@@ -193,6 +193,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     <button class="tab-btn" onclick="openTab('tab-deepdive', this)">Sales Deep Dive</button>
     <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
     <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
+    <button class="tab-btn" onclick="openTab('tab-delivered', this)">Delivered Data</button>
   </div>
 
   <div id="tab-sales" class="tab-content active">
@@ -354,7 +355,26 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
           <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
         </div>
       </div>
-
+<div id="tab-delivered" class="tab-content">
+    <div class="full-card">
+      <div class="card-title">Delivered Orders Log</div>
+      <div class="card-sub" style="margin-bottom: 20px;">Recent successfully delivered orders from the Delivered Data tab</div>
+      <div style="max-height: 500px; overflow-y: auto;">
+        <table class="data-table">
+          <thead style="position: sticky; top: 0; background: var(--card); z-index: 10;">
+            <tr>
+              <th style="min-width: 100px;">Delivery Date</th>
+              <th>Ref No.</th>
+              <th>PO Name</th>
+              <th>Channel</th>
+              <th style="text-align:right">Invoice Value</th>
+            </tr>
+          </thead>
+          <tbody id="deliveredBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
       <div class="chart-card">
         <div class="card-title">Courier Performance</div>
         <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
@@ -879,7 +899,26 @@ function buildDeepDive(wk) {
     return `<tr><td style="font-weight:600; color:var(--text);">${state}</td>${topSkus.map(sku => `<td style="text-align:right; color:${skus[sku] ? 'var(--brand-green-mid)' : 'var(--muted)'};">${skus[sku] ? skus[sku].toLocaleString('en-IN') : '—'}</td>`).join('')}</tr>`;
   }).join('');
 }
-
+// ─── DELIVERED DATA TAB ───
+function buildDelivered() {
+  const tbody = document.getElementById('deliveredBody');
+  const list = TIME_DATA.delivered_log || [];
+  
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:20px;">No delivered orders found in the tab.</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = list.map(item => `
+    <tr>
+      <td style="color:var(--brand-green-mid); font-weight:500;">${item.date}</td>
+      <td style="font-weight:600;">${item.ref}</td>
+      <td style="font-size:11px; color:var(--muted);">${item.po}</td>
+      <td><span class="ch-dot" style="background:${COLORS[item.channel] || '#8AA8A6'}"></span>${item.channel}</td>
+      <td style="text-align:right; font-weight:600; color:var(--brand-amber);">${fmtL(item.val)}</td>
+    </tr>
+  `).join('');
+}
 // ─── MAIN ───
 function updateDashboard(){
   const wk=document.getElementById('weekSelect').value;
