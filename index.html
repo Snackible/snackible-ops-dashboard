@@ -338,6 +338,17 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         </table>
       </div>
     </div>
+
+    <div class="chart-card" style="overflow-x:auto; margin-bottom:28px;">
+      <div class="card-title">Fill Rate by State & City</div>
+      <div class="card-sub" id="stateFillSub">PO vs Invoice Qty — click a state to expand cities</div>
+      <div style="max-height:420px; overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr><th style="min-width:140px;">Location</th><th>PO Qty</th><th>Invoice Qty</th><th style="min-width:120px;">Fill Rate</th><th>Short</th></tr></thead>
+          <tbody id="stateFillBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="tab-ops" class="tab-content">
@@ -955,6 +966,72 @@ function toggleCityDrill(row, state) {
   const arrow = row.querySelector('td:first-child');
   arrow.textContent = arrow.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
 }
+// ─── FILL RATE BY STATE & CITY ───
+function buildStateFillTable(wk) {
+  if (!RAW[wk]) return;
+  const d = RAW[wk];
+  const tbody = document.getElementById('stateFillBody');
+  if (!tbody) return;
+  document.getElementById('stateFillSub').textContent = timeLabel(wk) + ' — PO vs Invoice Qty';
+
+  const stateFill = d.state_fill || {};
+  const cityFill = d.city_fill || {};
+
+  const sortedStates = Object.entries(stateFill)
+    .filter(([,v]) => v.po > 0 || v.inv > 0)
+    .sort((a,b) => b[1].inv - a[1].inv);
+
+  if (!sortedStates.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No state fill data available.</td></tr>';
+    return;
+  }
+
+  const makeBar = (rate) => {
+    const clr = rate >= 0.95 ? 'var(--brand-green-mid)' : rate >= 0.85 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    return `<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(rate*100,100)}%;background:${clr}"></div></div><span style="font-size:11px;font-weight:600;color:${clr}">${pct(rate)}</span></div>`;
+  };
+
+  tbody.innerHTML = sortedStates.map(([state, sf]) => {
+    const rate = sf.po > 0 ? sf.inv / sf.po : (sf.inv > 0 ? 1 : 0);
+    const short = Math.max(0, sf.po - sf.inv);
+    const stateKey = state.replace(/\s+/g,'_');
+
+    const cities = Object.entries(cityFill[state] || {})
+      .filter(([,v]) => v.po > 0 || v.inv > 0)
+      .sort((a,b) => b[1].inv - a[1].inv);
+
+    const cityRows = cities.map(([city, cf]) => {
+      const cr = cf.po > 0 ? cf.inv / cf.po : (cf.inv > 0 ? 1 : 0);
+      const cs = Math.max(0, cf.po - cf.inv);
+      return `<tr class="city-fill-${stateKey}" style="display:none; background:rgba(255,255,255,0.03);">
+        <td style="padding-left:24px; font-size:11px; color:var(--muted);">↳ ${city}</td>
+        <td style="color:var(--muted); font-size:11px;">${cf.po > 0 ? cf.po.toLocaleString('en-IN') : '—'}</td>
+        <td style="color:var(--muted); font-size:11px;">${cf.inv > 0 ? cf.inv.toLocaleString('en-IN') : '—'}</td>
+        <td>${makeBar(cr)}</td>
+        <td style="color:var(--brand-orange); font-size:11px; font-weight:600;">${cs > 0 ? cs.toLocaleString('en-IN') : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    const stateRow = `<tr style="cursor:pointer;" onclick="toggleCityFill(this, '${stateKey}')">
+      <td style="font-weight:600; color:var(--text);">▶ ${state}</td>
+      <td style="color:var(--muted);">${sf.po > 0 ? sf.po.toLocaleString('en-IN') : '—'}</td>
+      <td style="color:var(--muted);">${sf.inv > 0 ? sf.inv.toLocaleString('en-IN') : '—'}</td>
+      <td>${makeBar(rate)}</td>
+      <td style="color:var(--brand-orange); font-weight:600;">${short > 0 ? short.toLocaleString('en-IN') : '—'}</td>
+    </tr>`;
+
+    return stateRow + cityRows;
+  }).join('');
+}
+
+function toggleCityFill(row, stateKey) {
+  const cityRows = document.querySelectorAll(`.city-fill-${stateKey}`);
+  const isOpen = cityRows.length && cityRows[0].style.display !== 'none';
+  cityRows.forEach(r => r.style.display = isOpen ? 'none' : 'table-row');
+  const cell = row.querySelector('td:first-child');
+  cell.textContent = cell.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
+}
+
 // ─── DELIVERED DATA TAB ───
 function buildDelivered() {
   const tbody = document.getElementById('deliveredBody');
@@ -987,6 +1064,7 @@ function updateDashboard(){
   buildStatus(wk);
   buildCourier(wk);
   if(typeof buildDeepDive === 'function') buildDeepDive(wk);
+  if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
 }
 
 window.onload = initDashboard;
