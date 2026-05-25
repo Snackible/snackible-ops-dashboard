@@ -193,6 +193,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     <button class="tab-btn" onclick="openTab('tab-deepdive', this)">Sales Deep Dive</button>
     <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
     <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
+    <button class="tab-btn" onclick="openTab('tab-po', this)">PO Tracker</button>
     <button class="tab-btn" onclick="openTab('tab-delivered', this)">Delivered Data</button>
   </div>
 
@@ -366,6 +367,84 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
           <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
         </div>
       </div>
+<div id="tab-po" class="tab-content">
+
+  <!-- KPI Row -->
+  <div class="kpi-grid" style="margin-bottom:28px;">
+    <div class="kpi-card" style="--accent:var(--brand-amber)">
+      <div class="kpi-label">Total PO Qty</div>
+      <div class="kpi-value" id="poPOQty">—</div>
+      <div class="kpi-sub">Units ordered</div>
+      <span class="kpi-badge" id="poPOQtyB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+      <div class="kpi-label">Total Invoice Qty</div>
+      <div class="kpi-value" id="poInvQty">—</div>
+      <div class="kpi-sub">Units fulfilled</div>
+      <span class="kpi-badge" id="poInvQtyB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-blue)">
+      <div class="kpi-label">Overall Fill Rate</div>
+      <div class="kpi-value" id="poFillRate">—</div>
+      <div class="kpi-sub">Invoice / PO</div>
+      <span class="kpi-badge" id="poFillRateB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-orange)">
+      <div class="kpi-label">Total Short</div>
+      <div class="kpi-value" id="poShort">—</div>
+      <div class="kpi-sub">Units unfulfilled</div>
+      <span class="kpi-badge" id="poShortB">—</span>
+    </div>
+  </div>
+
+  <!-- Trend Charts Row -->
+  <div class="charts-row" style="margin-bottom:28px;">
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <div class="card-title">PO vs Invoice Qty — Weekly Trend</div>
+          <div class="card-sub" id="poTrendWoWSub" style="margin-bottom:0;">Week on Week</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <div class="card-title">Fill Rate % — Weekly Trend</div>
+          <div class="card-sub" id="poFillTrendSub" style="margin-bottom:0;">Week on Week</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Monthly Trend -->
+  <div class="full-card" style="margin-bottom:28px;">
+    <div class="card-title">PO vs Invoice Qty — Monthly Trend</div>
+    <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
+    <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM"></canvas></div>
+  </div>
+
+  <!-- Channel Breakdown Table -->
+  <div class="chart-card" style="margin-bottom:28px;">
+    <div class="card-title">PO vs Invoice by Channel</div>
+    <div class="card-sub" id="poChanSub">Current period breakdown</div>
+    <table class="data-table">
+      <thead><tr>
+        <th>Channel</th>
+        <th style="text-align:right">PO Qty</th>
+        <th style="text-align:right">Invoice Qty</th>
+        <th style="min-width:130px;">Fill Rate</th>
+        <th style="text-align:right">Short</th>
+        <th style="text-align:right">Short %</th>
+      </tr></thead>
+      <tbody id="poChanBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
 <div id="tab-delivered" class="tab-content">
     <div class="full-card">
       <div class="card-title">Delivered Orders Log</div>
@@ -466,6 +545,7 @@ function openTab(tabId, btn) {
   btn.classList.add('active');
   Object.values(Chart.instances).forEach(chart => chart.resize());
   if (tabId === 'tab-delivered') buildDelivered();
+  if (tabId === 'tab-po') buildPOTracker(document.getElementById('weekSelect').value);
 }
 
 
@@ -1032,6 +1112,159 @@ function toggleCityFill(row, stateKey) {
   cell.textContent = cell.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
 }
 
+// ─── PO TRACKER TAB ───
+let poWoWInst, poFillInst, poMoMInst;
+
+function buildPOTracker(wk) {
+  if (!RAW[wk]) return;
+  const d = RAW[wk];
+  const cf = d.channel_fill || {};
+
+  // KPIs
+  let totalPO = 0, totalInv = 0;
+  Object.values(cf).forEach(v => { totalPO += v.po; totalInv += v.inv; });
+  const totalShort = Math.max(0, totalPO - totalInv);
+  const fillRate = totalPO > 0 ? totalInv / totalPO : 0;
+  const idx = WEEKS.indexOf(wk);
+  const prev = idx < WEEKS.length - 1 ? RAW[WEEKS[idx + 1]] : null;
+
+  document.getElementById('poPOQty').textContent = totalPO.toLocaleString('en-IN');
+  document.getElementById('poInvQty').textContent = totalInv.toLocaleString('en-IN');
+  document.getElementById('poFillRate').textContent = (fillRate * 100).toFixed(1) + '%';
+  document.getElementById('poShort').textContent = totalShort.toLocaleString('en-IN');
+
+  const fillB = document.getElementById('poFillRateB');
+  fillB.textContent = fillRate >= 0.95 ? '✓ Healthy' : fillRate >= 0.85 ? '⚠ Moderate' : '⚠ Below Target';
+  fillB.className = 'kpi-badge ' + (fillRate >= 0.95 ? 'badge-up' : fillRate >= 0.85 ? 'badge-warn' : 'badge-down');
+
+  const shortB = document.getElementById('poShortB');
+  shortB.textContent = totalShort === 0 ? 'Fully fulfilled' : totalShort.toLocaleString('en-IN') + ' units short';
+  shortB.className = 'kpi-badge ' + (totalShort === 0 ? 'badge-up' : 'badge-warn');
+
+  if (prev) {
+    let prevPO = 0, prevInv = 0;
+    Object.values(prev.channel_fill || {}).forEach(v => { prevPO += v.po; prevInv += v.inv; });
+    const poChg = prevPO > 0 ? ((totalPO - prevPO) / prevPO * 100).toFixed(1) : 0;
+    const invChg = prevInv > 0 ? ((totalInv - prevInv) / prevInv * 100).toFixed(1) : 0;
+    const pb = document.getElementById('poPOQtyB');
+    pb.textContent = (poChg >= 0 ? '▲ ' : '▼ ') + Math.abs(poChg) + '% vs prior';
+    pb.className = 'kpi-badge ' + (poChg >= 0 ? 'badge-up' : 'badge-down');
+    const ib = document.getElementById('poInvQtyB');
+    ib.textContent = (invChg >= 0 ? '▲ ' : '▼ ') + Math.abs(invChg) + '% vs prior';
+    ib.className = 'kpi-badge ' + (invChg >= 0 ? 'badge-up' : 'badge-down');
+  }
+
+  // WoW Trend (last 8 weeks)
+  const allWks = WEEKS.slice().reverse();
+  const selIdx = allWks.indexOf(wk);
+  const wowSlice = allWks.slice(Math.max(0, selIdx - 7), selIdx + 1);
+  const wowLabels = wowSlice.map(w => timeLabel(w).split(' - ')[0]);
+  const wowPO = wowSlice.map(w => Object.values(RAW[w]?.channel_fill || {}).reduce((s, v) => s + v.po, 0));
+  const wowInv = wowSlice.map(w => Object.values(RAW[w]?.channel_fill || {}).reduce((s, v) => s + v.inv, 0));
+
+  const ctxWoW = document.getElementById('poTrendWoW').getContext('2d');
+  if (poWoWInst) poWoWInst.destroy();
+  poWoWInst = new Chart(ctxWoW, {
+    type: 'bar',
+    data: {
+      labels: wowLabels,
+      datasets: [
+        { label: 'PO Qty', data: wowPO, backgroundColor: 'rgba(251,174,37,0.7)', borderColor: '#FBAE25', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Invoice Qty', data: wowInv, backgroundColor: 'rgba(58,188,162,0.7)', borderColor: '#3ABCA2', borderWidth: 1.5, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 9 }, maxRotation: 0 } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v.toLocaleString('en-IN') } }
+      }
+    }
+  });
+  document.getElementById('poTrendWoWSub').textContent = 'Last 8 weeks';
+
+  // Fill Rate % WoW Trend
+  const wowFill = wowSlice.map(w => {
+    let p = 0, i = 0;
+    Object.values(RAW[w]?.channel_fill || {}).forEach(v => { p += v.po; i += v.inv; });
+    return p > 0 ? parseFloat((i / p * 100).toFixed(1)) : 0;
+  });
+
+  const ctxFill = document.getElementById('poFillTrend').getContext('2d');
+  if (poFillInst) poFillInst.destroy();
+  poFillInst = new Chart(ctxFill, {
+    type: 'line',
+    data: {
+      labels: wowLabels,
+      datasets: [
+        { label: 'Fill Rate %', data: wowFill, borderColor: '#4C94D0', backgroundColor: 'rgba(76,148,208,0.1)', fill: true, tension: 0.4, borderWidth: 2.5, pointBackgroundColor: '#4C94D0', pointRadius: 4 },
+        { label: 'Target (95%)', data: wowSlice.map(() => 95), borderColor: 'rgba(58,188,162,0.4)', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 9 }, maxRotation: 0 } },
+        y: { min: 0, max: 110, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // MoM Trend
+  const months = Object.keys(TIME_DATA.monthly || {}).sort();
+  const momPO = months.map(m => Object.values(TIME_DATA.monthly[m]?.channel_fill || {}).reduce((s, v) => s + v.po, 0));
+  const momInv = months.map(m => Object.values(TIME_DATA.monthly[m]?.channel_fill || {}).reduce((s, v) => s + v.inv, 0));
+
+  const ctxMoM = document.getElementById('poTrendMoM').getContext('2d');
+  if (poMoMInst) poMoMInst.destroy();
+  poMoMInst = new Chart(ctxMoM, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'PO Qty', data: momPO, backgroundColor: 'rgba(251,174,37,0.7)', borderColor: '#FBAE25', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Invoice Qty', data: momInv, backgroundColor: 'rgba(58,188,162,0.7)', borderColor: '#3ABCA2', borderWidth: 1.5, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 10 }, maxRotation: 0 } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v.toLocaleString('en-IN') } }
+      }
+    }
+  });
+  document.getElementById('poTrendMoMSub').textContent = 'All months — PO Qty vs Invoice Qty';
+
+  // Channel Table
+  const tbody = document.getElementById('poChanBody');
+  document.getElementById('poChanSub').textContent = timeLabel(wk) + ' — Channel breakdown';
+  const chanRows = Object.entries(cf).filter(([,v]) => v.po > 0 || v.inv > 0).sort((a, b) => b[1].po - a[1].po);
+
+  if (!chanRows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No data for this period.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = chanRows.map(([ch, v]) => {
+    const rate = v.po > 0 ? v.inv / v.po : (v.inv > 0 ? 1 : 0);
+    const short = Math.max(0, v.po - v.inv);
+    const shortPct = v.po > 0 ? (short / v.po * 100).toFixed(1) : '—';
+    const clr = rate >= 0.95 ? 'var(--brand-green-mid)' : rate >= 0.85 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    return `<tr>
+      <td><span class="ch-dot" style="background:${COLORS[ch]||TYPE_COLORS[ch]||'#8AA8A6'}"></span>${ch}</td>
+      <td style="text-align:right; color:var(--muted);">${v.po.toLocaleString('en-IN')}</td>
+      <td style="text-align:right; color:var(--brand-green-mid);">${v.inv.toLocaleString('en-IN')}</td>
+      <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(rate*100,100)}%;background:${clr}"></div></div><span style="font-size:11px;font-weight:600;color:${clr}">${pct(rate)}</span></div></td>
+      <td style="text-align:right; color:var(--brand-orange); font-weight:600;">${short > 0 ? short.toLocaleString('en-IN') : '—'}</td>
+      <td style="text-align:right; color:var(--muted); font-size:11px;">${shortPct !== '—' ? shortPct + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
 // ─── DELIVERED DATA TAB ───
 function buildDelivered() {
   const tbody = document.getElementById('deliveredBody');
@@ -1065,6 +1298,7 @@ function updateDashboard(){
   buildCourier(wk);
   if(typeof buildDeepDive === 'function') buildDeepDive(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
+  if(typeof buildPOTracker === 'function') buildPOTracker(wk);
 }
 
 window.onload = initDashboard;
