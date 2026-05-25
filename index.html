@@ -1118,17 +1118,19 @@ function toggleCityFill(row, stateKey) {
 let poWoWInst, poFillInst, poMoMInst;
 
 function buildPOTracker(wk) {
-  if (!RAW[wk]) return;
-  const d = RAW[wk];
+  const weeklyData = TIME_DATA.weekly || {};
+  const weeklyKeys = Object.keys(weeklyData).filter(k => weeklyData[k].orders > 0).sort().reverse();
+  const weekKey = weeklyKeys[0]; // always use latest week for current period
+  if (!weeklyData[weekKey]) return;
+  const d = weeklyData[weekKey];
   const cf = d.channel_fill || {};
-
   // KPIs
   let totalPO = 0, totalInv = 0;
   Object.values(cf).forEach(v => { totalPO += v.po; totalInv += v.inv; });
   const totalShort = Math.max(0, totalPO - totalInv);
   const fillRate = totalPO > 0 ? totalInv / totalPO : 0;
-  const idx = WEEKS.indexOf(wk);
-  const prev = idx < WEEKS.length - 1 ? RAW[WEEKS[idx + 1]] : null;
+  const idx = weeklyKeys.indexOf(weekKey);
+  const prev = idx < weeklyKeys.length - 1 ? weeklyData[weeklyKeys[idx + 1]] : null;
 
   document.getElementById('poPOQty').textContent = totalPO.toLocaleString('en-IN');
   document.getElementById('poInvQty').textContent = totalInv.toLocaleString('en-IN');
@@ -1157,13 +1159,11 @@ function buildPOTracker(wk) {
   }
 
   // WoW Trend (last 8 weeks)
-  const allWks = WEEKS.slice().reverse();
-  const selIdx = allWks.indexOf(wk);
-  const wowSlice = allWks.slice(Math.max(0, selIdx - 7), selIdx + 1);
+  const allWks = weeklyKeys.slice().reverse();
+  const wowSlice = allWks.slice(Math.max(0, allWks.length - 8));
   const wowLabels = wowSlice.map(w => timeLabel(w).split(' - ')[0]);
-  const wowPO = wowSlice.map(w => Object.values(RAW[w]?.channel_fill || {}).reduce((s, v) => s + v.po, 0));
-  const wowInv = wowSlice.map(w => Object.values(RAW[w]?.channel_fill || {}).reduce((s, v) => s + v.inv, 0));
-
+  const wowPO = wowSlice.map(w => Object.values(weeklyData[w]?.channel_fill || {}).reduce((s, v) => s + v.po, 0));
+  const wowInv = wowSlice.map(w => Object.values(weeklyData[w]?.channel_fill || {}).reduce((s, v) => s + v.inv, 0));
   const ctxWoW = document.getElementById('poTrendWoW').getContext('2d');
   if (poWoWInst) poWoWInst.destroy();
   poWoWInst = new Chart(ctxWoW, {
@@ -1189,7 +1189,7 @@ function buildPOTracker(wk) {
   // Fill Rate % WoW Trend
   const wowFill = wowSlice.map(w => {
     let p = 0, i = 0;
-    Object.values(RAW[w]?.channel_fill || {}).forEach(v => { p += v.po; i += v.inv; });
+    Object.values(weeklyData[w]?.channel_fill || {}).forEach(v => { p += v.po; i += v.inv; });
     return p > 0 ? parseFloat((i / p * 100).toFixed(1)) : 0;
   });
 
