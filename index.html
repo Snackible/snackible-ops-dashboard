@@ -897,7 +897,7 @@ function buildDeepDive(wk) {
 
     const sortedStates = stateMatrixEntries.sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0,10);
     const citySkuData = d.city_sku || {};
-    const cityGmvData = d.cities || {};
+      const cityGmvData = d.city_gmv || {};
 
     matrixBody.innerHTML = sortedStates.map(([state, skus]) => {
       const stateGmv = d.locations[state] || 0;
@@ -914,7 +914,7 @@ function buildDeepDive(wk) {
       const cityRows = citiesInState.map(([city, cSkus]) => `
         <tr class="city-drill-${state.replace(/\s+/g,'_')}" style="display:none; background:rgba(255,255,255,0.03);">
           <td style="padding-left:24px; font-size:11px; color:var(--muted);">↳ ${city}</td>
-          <td style="text-align:right; font-size:11px; color:var(--muted);">${fmtL(cityGmvData[city]||0)}</td>
+          <td style="text-align:right; font-size:11px; color:var(--muted);">${fmtL((cityGmvData[state]||{})[city]||0)}</td>
           ${topSkus.map(sku=>`<td style="text-align:right; font-size:11px; color:${cSkus[sku]?'var(--brand-green-mid)':'var(--muted)'};">${cSkus[sku]?cSkus[sku].toLocaleString('en-IN'):'—'}</td>`).join('')}
         </tr>`).join('');
       return stateRow + cityRows;
