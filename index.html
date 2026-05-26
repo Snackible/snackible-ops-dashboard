@@ -1247,7 +1247,17 @@ function buildPOTracker(wk) {
   });
 
   // MoM Trend
-  const months = Object.keys(TIME_DATA.monthly || {}).sort();
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = Object.keys(TIME_DATA.monthly || {})
+    .filter(m => {
+      const parts = m.split(' ');
+      return parts.length === 2 && monthOrder.includes(parts[0]) && !isNaN(parseInt(parts[1])) && parseInt(parts[1]) > 2000;
+    })
+    .sort((a, b) => {
+      const [aM, aY] = a.split(' ');
+      const [bM, bY] = b.split(' ');
+      return (parseInt(aY) - parseInt(bY)) || (monthOrder.indexOf(aM) - monthOrder.indexOf(bM));
+    });
   const momPO = months.map(m => Object.values(TIME_DATA.monthly[m]?.channel_fill || {}).reduce((s, v) => s + v.po, 0));
   const momInv = months.map(m => Object.values(TIME_DATA.monthly[m]?.channel_fill || {}).reduce((s, v) => s + v.inv, 0));
 
