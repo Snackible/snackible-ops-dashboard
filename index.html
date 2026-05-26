@@ -1221,6 +1221,7 @@ function buildPOTracker(wk) {
     });
     // Use TIME_DATA.monthly directly for aggregated channel_fill
     const mData = TIME_DATA.monthly?.[selectedMonth] || weeklyData[weekKey];
+    if (!mData) return;
     d = mData;
     cf = mData.channel_fill || {};
   } else {
