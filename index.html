@@ -1152,11 +1152,26 @@ let poWoWInst, poFillInst, poMoMInst;
 function buildPOTracker(wk) {
   const weeklyData = TIME_DATA.weekly || {};
   const weeklyKeys = Object.keys(weeklyData).filter(k => weeklyData[k].orders > 0).sort().reverse();
-  // Use selected week if valid weekly key, otherwise use last complete week (index 1)
   const weekKey = weeklyKeys.includes(wk) ? wk : (weeklyKeys[1] || weeklyKeys[0]);
-  if (!weeklyData[weekKey]) return;
-  const d = weeklyData[weekKey];
-  const cf = d.channel_fill || {};
+  
+  // For monthly mode, aggregate all weekly data into one object
+  let d, cf;
+  if (currentMode === 'monthly') {
+    const selectedMonth = wk; // e.g. "May 2026"
+    const monthlyWeeks = weeklyKeys.filter(w => {
+      const date = new Date(w + 'T00:00:00');
+      const label = date.toLocaleString('en-GB', {month:'short', year:'numeric'}).replace(' ', ' ');
+      return TIME_DATA.monthly?.[selectedMonth] !== undefined;
+    });
+    // Use TIME_DATA.monthly directly for aggregated channel_fill
+    const mData = TIME_DATA.monthly?.[selectedMonth] || weeklyData[weekKey];
+    d = mData;
+    cf = mData.channel_fill || {};
+  } else {
+    d = weeklyData[weekKey];
+    cf = d.channel_fill || {};
+  }
+  if (!weeklyData[weekKey] && !TIME_DATA.monthly?.[wk]) return;
   // KPIs
   let totalPO = 0, totalInv = 0;
   Object.values(cf).forEach(v => { totalPO += v.po; totalInv += v.inv; });
