@@ -352,8 +352,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 
-  <div id="tab-ops" class="tab-content">
-    
+<div id="tab-ops" class="tab-content">
     <div class="bottom-grid">
       <div class="chart-card">
         <div class="card-title">Order Status</div>
@@ -367,86 +366,107 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
           <div class="dr-bar-bg"><div id="drBar" class="dr-bar-fill" style="width:0%"></div></div>
         </div>
       </div>
-<div id="tab-po" class="tab-content">
-
-  <!-- KPI Row -->
-  <div class="kpi-grid" style="margin-bottom:28px;">
-    <div class="kpi-card" style="--accent:var(--brand-amber)">
-      <div class="kpi-label">Total PO Qty</div>
-      <div class="kpi-value" id="poPOQty">—</div>
-      <div class="kpi-sub">Units ordered</div>
-      <span class="kpi-badge" id="poPOQtyB">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-green-mid)">
-      <div class="kpi-label">Total Invoice Qty</div>
-      <div class="kpi-value" id="poInvQty">—</div>
-      <div class="kpi-sub">Units fulfilled</div>
-      <span class="kpi-badge" id="poInvQtyB">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-blue)">
-      <div class="kpi-label">Overall Fill Rate</div>
-      <div class="kpi-value" id="poFillRate">—</div>
-      <div class="kpi-sub">Invoice / PO</div>
-      <span class="kpi-badge" id="poFillRateB">—</span>
-    </div>
-    <div class="kpi-card" style="--accent:var(--brand-orange)">
-      <div class="kpi-label">Total Short</div>
-      <div class="kpi-value" id="poShort">—</div>
-      <div class="kpi-sub">Units unfulfilled</div>
-      <span class="kpi-badge" id="poShortB">—</span>
-    </div>
-  </div>
-
-  <!-- Trend Charts Row -->
-  <div class="charts-row" style="margin-bottom:28px;">
-    <div class="chart-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div>
-          <div class="card-title">PO vs Invoice Qty — Weekly Trend</div>
-          <div class="card-sub" id="poTrendWoWSub" style="margin-bottom:0;">Week on Week</div>
+      <div class="chart-card">
+        <div class="card-title">Courier Performance</div>
+        <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
+        <div id="courierList"></div>
+        <div class="sum-strip">
+          <div class="ss-label">Period Avg TAT</div>
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <span style="font-size:26px;font-weight:600;color:var(--brand-amber);" id="tatBig">—</span>
+            <span style="font-size:12px;font-weight:500;color:var(--muted);">days</span>
+            <span class="kpi-badge" id="tatBadge"></span>
+          </div>
         </div>
       </div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW" style="height:220px;"></canvas></div>
     </div>
-    <div class="chart-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div>
-          <div class="card-title">Fill Rate % — Weekly Trend</div>
-          <div class="card-sub" id="poFillTrendSub" style="margin-bottom:0;">Week on Week</div>
-        </div>
+  </div>
+
+  <div id="tab-po" class="tab-content">
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total PO Qty</div>
+        <div class="kpi-value" id="poPOQty">—</div>
+        <div class="kpi-sub">Units ordered</div>
+        <span class="kpi-badge" id="poPOQtyB">—</span>
       </div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend" style="height:220px;"></canvas></div>
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Total Invoice Qty</div>
+        <div class="kpi-value" id="poInvQty">—</div>
+        <div class="kpi-sub">Units fulfilled</div>
+        <span class="kpi-badge" id="poInvQtyB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Overall Fill Rate</div>
+        <div class="kpi-value" id="poFillRate">—</div>
+        <div class="kpi-sub">Invoice / PO</div>
+        <span class="kpi-badge" id="poFillRateB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-orange)">
+        <div class="kpi-label">Total Short</div>
+        <div class="kpi-value" id="poShort">—</div>
+        <div class="kpi-sub">Units unfulfilled</div>
+        <span class="kpi-badge" id="poShortB">—</span>
+      </div>
+    </div>
+    <div class="charts-row" style="margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">PO vs Invoice Qty — Weekly Trend</div>
+        <div class="card-sub" id="poTrendWoWSub" style="margin-bottom:0;">Week on Week</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Fill Rate % — Weekly Trend</div>
+        <div class="card-sub" id="poFillTrendSub" style="margin-bottom:0;">Week on Week</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend"></canvas></div>
+      </div>
+    </div>
+    <div class="full-card" style="margin-bottom:28px;">
+      <div class="card-title">PO vs Invoice Qty — Monthly Trend</div>
+      <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
+      <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM"></canvas></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:28px;">
+      <div class="card-title">PO vs Invoice by Channel</div>
+      <div class="card-sub" id="poChanSub">Current period breakdown</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>Channel</th>
+          <th style="text-align:right">PO Qty</th>
+          <th style="text-align:right">Invoice Qty</th>
+          <th style="min-width:130px;">Fill Rate</th>
+          <th style="text-align:right">Short</th>
+          <th style="text-align:right">Short %</th>
+        </tr></thead>
+        <tbody id="poChanBody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Monthly Trend -->
-  <div class="full-card" style="margin-bottom:28px;">
-    <div class="card-title">PO vs Invoice Qty — Monthly Trend</div>
-    <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
-    <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM" style="height:220px;"></canvas></div>
-  </div>
-
-  <!-- Channel Breakdown Table -->
-  <div class="chart-card" style="margin-bottom:28px;">
-    <div class="card-title">PO vs Invoice by Channel</div>
-    <div class="card-sub" id="poChanSub">Current period breakdown</div>
-    <table class="data-table">
-      <thead><tr>
-        <th>Channel</th>
-        <th style="text-align:right">PO Qty</th>
-        <th style="text-align:right">Invoice Qty</th>
-        <th style="min-width:130px;">Fill Rate</th>
-        <th style="text-align:right">Short</th>
-        <th style="text-align:right">Short %</th>
-      </tr></thead>
-      <tbody id="poChanBody"></tbody>
-    </table>
+  <div id="tab-delivered" class="tab-content">
+    <div class="full-card">
+      <div class="card-title">Delivered Orders Log</div>
+      <div class="card-sub" style="margin-bottom:20px;">Recent successfully delivered orders</div>
+      <div style="max-height:500px; overflow-y:auto;">
+        <table class="data-table">
+          <thead style="position:sticky; top:0; background:var(--card); z-index:10;">
+            <tr>
+              <th style="min-width:100px;">Delivery Date</th>
+              <th>Ref No.</th>
+              <th>PO Name</th>
+              <th>Channel</th>
+              <th style="text-align:right">Invoice Value</th>
+            </tr>
+          </thead>
+          <tbody id="deliveredBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
 </div>
-
-<div id="tab-delivered" class="tab-content">
-    <div class="full-card">
+      <div class="chart-card">
+        <div class="card-title">Courier Performance</div>
       <div class="card-title">Delivered Orders Log</div>
       <div class="card-sub" style="margin-bottom: 20px;">Recent successfully delivered orders from the Delivered Data tab</div>
       <div style="max-height: 500px; overflow-y: auto;">
