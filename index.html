@@ -830,7 +830,14 @@ function setTrend(n){
 }
 
 function buildTrendChart(selWk){
-  const allWks=WEEKS.slice().reverse(); 
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const allWks = currentMode === 'monthly'
+    ? WEEKS.slice().sort((a, b) => {
+        const [aM, aY] = a.split(' ');
+        const [bM, bY] = b.split(' ');
+        return (parseInt(aY) - parseInt(bY)) || (monthOrder.indexOf(aM) - monthOrder.indexOf(bM));
+      })
+    : WEEKS.slice().reverse(); 
   const selIdx=allWks.indexOf(selWk);
   const end=selIdx+1;
   const start=trendWindow===99?0:Math.max(0,end-trendWindow);
