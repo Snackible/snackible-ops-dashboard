@@ -406,7 +406,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
           <div class="card-sub" id="poTrendWoWSub" style="margin-bottom:0;">Week on Week</div>
         </div>
       </div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW"></canvas></div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW" style="height:220px;"></canvas></div>
     </div>
     <div class="chart-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -415,7 +415,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
           <div class="card-sub" id="poFillTrendSub" style="margin-bottom:0;">Week on Week</div>
         </div>
       </div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend"></canvas></div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend" style="height:220px;"></canvas></div>
     </div>
   </div>
 
@@ -423,7 +423,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
   <div class="full-card" style="margin-bottom:28px;">
     <div class="card-title">PO vs Invoice Qty — Monthly Trend</div>
     <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
-    <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM"></canvas></div>
+    <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM" style="height:220px;"></canvas></div>
   </div>
 
   <!-- Channel Breakdown Table -->
@@ -484,6 +484,8 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 </div>
 
 <script>
+Chart.defaults.responsive = true;
+Chart.defaults.maintainAspectRatio = false;  
 // LIVE API INJECTION
 const API_URL = "https://script.google.com/macros/s/AKfycbyVeaKeSXazGacJubRBqciQk5bfv6F0V1-uND3VTlx-hZlpUHU-oJ_zuGE-UuKhVeI/exec";
 
