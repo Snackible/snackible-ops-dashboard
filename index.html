@@ -1152,7 +1152,8 @@ let poWoWInst, poFillInst, poMoMInst;
 function buildPOTracker(wk) {
   const weeklyData = TIME_DATA.weekly || {};
   const weeklyKeys = Object.keys(weeklyData).filter(k => weeklyData[k].orders > 0).sort().reverse();
-  const weekKey = weeklyKeys.includes(wk) ? wk : weeklyKeys[0];
+  // Use selected week if valid weekly key, otherwise use last complete week (index 1)
+  const weekKey = weeklyKeys.includes(wk) ? wk : (weeklyKeys[1] || weeklyKeys[0]);
   if (!weeklyData[weekKey]) return;
   const d = weeklyData[weekKey];
   const cf = d.channel_fill || {};
