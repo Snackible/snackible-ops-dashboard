@@ -615,7 +615,20 @@ function switchView(mode) {
   if (!TIME_DATA[mode]) return;
   currentMode = mode;
   RAW = TIME_DATA[mode]; 
-  WEEKS = Object.keys(RAW).filter(k => RAW[k].orders > 0).sort().reverse();
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if (mode === 'monthly') {
+    WEEKS = Object.keys(RAW).filter(k => {
+      if (!RAW[k].orders > 0) return false;
+      const parts = k.split(' ');
+      return parts.length === 2 && monthOrder.includes(parts[0]) && parseInt(parts[1]) > 2000;
+    }).sort((a, b) => {
+      const [aM, aY] = a.split(' ');
+      const [bM, bY] = b.split(' ');
+      return (parseInt(bY) - parseInt(aY)) || (monthOrder.indexOf(bM) - monthOrder.indexOf(aM));
+    });
+  } else {
+    WEEKS = Object.keys(RAW).filter(k => RAW[k].orders > 0).sort().reverse();
+  }
 
   const select = document.getElementById('weekSelect');
   select.innerHTML = ''; 
