@@ -353,8 +353,36 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
   </div>
 
 <div id="tab-ops" class="tab-content">
+
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Order Date → Dispatch</div>
+        <div class="kpi-value" id="tatProc">—</div>
+        <div class="kpi-sub">Avg processing days</div>
+        <span class="kpi-badge" id="tatProcB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Dispatch → Delivery</div>
+        <div class="kpi-value" id="tatTran">—</div>
+        <div class="kpi-sub">Avg transit days</div>
+        <span class="kpi-badge" id="tatTranB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Order Date → Delivery</div>
+        <div class="kpi-value" id="tatTotal">—</div>
+        <div class="kpi-sub">End to end TAT</div>
+        <span class="kpi-badge" id="tatTotalB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-orange)">
+        <div class="kpi-label">RTO Rate</div>
+        <div class="kpi-value" id="tatRTO">—</div>
+        <div class="kpi-sub">of total orders</div>
+        <span class="kpi-badge" id="tatRTOB">—</span>
+      </div>
+    </div>
+
     <div class="bottom-grid">
-      <div class="chart-card">
+  <div class="chart-card">
         <div class="card-title">Order Status</div>
         <div class="card-sub" id="statusSub">All orders this week</div>
         <ul class="status-list" id="statusList"></ul>
@@ -920,6 +948,37 @@ function buildStatus(wk){
   bar.style.background=dr>=0.8?'var(--brand-green-mid)':dr>=0.6?'var(--brand-amber)':'var(--brand-orange)';
 }
 
+// ─── TAT KPIs ───
+function buildTATKPIs(wk) {
+  if (!RAW[wk]) return;
+  const d = RAW[wk];
+
+  const proc = d.avg_proc_tat || 0;
+  const tran = d.avg_tran_tat || 0;
+  const total = d.avg_total_tat || 0;
+
+  document.getElementById('tatProc').textContent = proc > 0 ? proc + 'd' : '—';
+  document.getElementById('tatTran').textContent = tran > 0 ? tran + 'd' : '—';
+  document.getElementById('tatTotal').textContent = total > 0 ? total + 'd' : '—';
+  document.getElementById('tatRTO').textContent = (d.rto_pct || 0) + '%';
+
+  const pb = document.getElementById('tatProcB');
+  pb.textContent = proc > 0 ? (proc <= 3 ? '✓ Fast' : proc <= 7 ? '⚠ Moderate' : '⚠ Slow') : 'No data';
+  pb.className = 'kpi-badge ' + (proc > 0 && proc <= 3 ? 'badge-up' : proc <= 7 ? 'badge-warn' : 'badge-down');
+
+  const tb = document.getElementById('tatTranB');
+  tb.textContent = tran > 0 ? (tran <= 5 ? '✓ Fast' : tran <= 10 ? '⚠ Moderate' : '⚠ Slow') : 'No data';
+  tb.className = 'kpi-badge ' + (tran > 0 && tran <= 5 ? 'badge-up' : tran <= 10 ? 'badge-warn' : 'badge-down');
+
+  const ttb = document.getElementById('tatTotalB');
+  ttb.textContent = total > 0 ? (total <= 7 ? '✓ Good' : total <= 12 ? '⚠ Moderate' : '⚠ Slow') : 'No data';
+  ttb.className = 'kpi-badge ' + (total > 0 && total <= 7 ? 'badge-up' : total <= 12 ? 'badge-warn' : 'badge-down');
+
+  const rb = document.getElementById('tatRTOB');
+  rb.textContent = (d.rto_pct || 0) === 0 ? 'No RTOs' : (d.rto_pct <= 3 ? '✓ Acceptable' : '⚠ High');
+  rb.className = 'kpi-badge ' + ((d.rto_pct || 0) <= 3 ? 'badge-up' : 'badge-warn');
+}
+
 // ─── COURIERS ───
 function buildCourier(wk){
   if(!RAW[wk]) return;
@@ -1357,6 +1416,7 @@ function updateDashboard(){
   buildStatus(wk);
   buildCourier(wk);
   if(typeof buildDeepDive === 'function') buildDeepDive(wk);
+  if(typeof buildTATKPIs === 'function') buildTATKPIs(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
   if(typeof buildPOTracker === 'function') buildPOTracker(wk);
 }
