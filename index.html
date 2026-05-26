@@ -1152,7 +1152,7 @@ let poWoWInst, poFillInst, poMoMInst;
 function buildPOTracker(wk) {
   const weeklyData = TIME_DATA.weekly || {};
   const weeklyKeys = Object.keys(weeklyData).filter(k => weeklyData[k].orders > 0).sort().reverse();
-  const weekKey = weeklyKeys[0]; // always use latest week for current period
+  const weekKey = weeklyKeys.includes(wk) ? wk : weeklyKeys[0];
   if (!weeklyData[weekKey]) return;
   const d = weeklyData[weekKey];
   const cf = d.channel_fill || {};
@@ -1160,7 +1160,7 @@ function buildPOTracker(wk) {
   let totalPO = 0, totalInv = 0;
   Object.values(cf).forEach(v => { totalPO += v.po; totalInv += v.inv; });
   const totalShort = Math.max(0, totalPO - totalInv);
-  const fillRate = totalPO > 0 ? totalInv / totalPO : 0;
+  const fillRate = totalPO > 0 ? Math.min(totalInv / totalPO, 1) : 0;
   const idx = weeklyKeys.indexOf(weekKey);
   const prev = idx < weeklyKeys.length - 1 ? weeklyData[weeklyKeys[idx + 1]] : null;
 
@@ -1284,7 +1284,7 @@ function buildPOTracker(wk) {
   }
 
   tbody.innerHTML = chanRows.map(([ch, v]) => {
-    const rate = v.po > 0 ? v.inv / v.po : (v.inv > 0 ? 1 : 0);
+    const rate = v.po > 0 ? Math.min(v.inv / v.po, 1) : (v.inv > 0 ? 1 : 0);
     const short = Math.max(0, v.po - v.inv);
     const shortPct = v.po > 0 ? (short / v.po * 100).toFixed(1) : '—';
     const clr = rate >= 0.95 ? 'var(--brand-green-mid)' : rate >= 0.85 ? 'var(--brand-amber)' : 'var(--brand-orange)';
