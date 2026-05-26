@@ -493,41 +493,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
   </div>
 
 </div>
-      <div class="chart-card">
-        <div class="card-title">Courier Performance</div>
-      <div class="card-title">Delivered Orders Log</div>
-      <div class="card-sub" style="margin-bottom: 20px;">Recent successfully delivered orders from the Delivered Data tab</div>
-      <div style="max-height: 500px; overflow-y: auto;">
-        <table class="data-table">
-          <thead style="position: sticky; top: 0; background: var(--card); z-index: 10;">
-            <tr>
-              <th style="min-width: 100px;">Delivery Date</th>
-              <th>Ref No.</th>
-              <th>PO Name</th>
-              <th>Channel</th>
-              <th style="text-align:right">Invoice Value</th>
-            </tr>
-          </thead>
-          <tbody id="deliveredBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-      <div class="chart-card">
-        <div class="card-title">Courier Performance</div>
-        <div class="card-sub" id="courierSub">Avg TAT · Delivery rate</div>
-        <div id="courierList"></div>
-        <div class="sum-strip">
-          <div class="ss-label">Period Avg TAT</div>
-          <div style="display:flex;align-items:baseline;gap:8px;">
-            <span style="font-size:26px;font-weight:600;color:var(--brand-amber);" id="tatBig">—</span>
-            <span style="font-size:12px;font-weight:500;color:var(--muted);">days</span>
-            <span class="kpi-badge" id="tatBadge"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
 </div>
 
@@ -1005,7 +971,10 @@ function buildCourier(wk){
   const d=RAW[wk];
   const el=document.getElementById('courierList');
   el.innerHTML='';
-  document.getElementById('courierSub').textContent=timeLabel(wk);
+  document.getElementById('courierSub').textContent = timeLabel(wk) + ' — TAT · On-time dispatch · Gap vs Est';
+  el.innerHTML = `<div style="display:grid; grid-template-columns:110px 70px 90px 90px 80px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:8px;">
+    <div>Partner</div><div>Orders</div><div>Avg TAT</div><div>On-Time</div><div>Disp Gap</div>
+  </div>`;
 
   const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
   if(!entries.length){
@@ -1016,19 +985,27 @@ function buildCourier(wk){
   let totalTatSum = 0; let totalTatCount = 0;
 
   entries.forEach(([name,c])=>{
-    const avg_tat = c._tatCount > 0 ? Math.round(c._tatSum / c._tatCount) : 0;
-    const delivery_rate = c.orders > 0 ? Math.round((c.delivered / c.orders) * 100) : 0;
-    
+    const avg_tat = c.avg_tat || 0;
+    const delivery_rate = c.delivery_rate || 0;
+    const on_time = c.on_time_pct || 0;
+    const gap = c.avg_dispatch_gap || 0;
+
     if(avg_tat > 0) { totalTatSum += avg_tat; totalTatCount++; }
 
-    const tatCls=avg_tat===0?'badge-up':avg_tat<=7?'badge-up':avg_tat<=10?'badge-warn':'badge-down';
-    const drColor=delivery_rate>=90?'var(--brand-green-mid)':delivery_rate>=70?'var(--brand-amber)':'var(--brand-orange)';
-    const row=document.createElement('div');
-    row.className='courier-row';
-    row.innerHTML=`<div class="c-name">${name}</div>
-      <div style="font-size:11px;color:var(--muted)">${c.orders} orders</div>
-      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${avg_tat>0?avg_tat+'d TAT':'—'}</div>
-      <div style="font-size:11px;font-weight:600;color:${drColor}">${delivery_rate}%</div>`;
+    const tatCls = avg_tat === 0 ? 'badge-warn' : avg_tat <= 7 ? 'badge-up' : avg_tat <= 10 ? 'badge-warn' : 'badge-down';
+    const drColor = delivery_rate >= 90 ? 'var(--brand-green-mid)' : delivery_rate >= 70 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    const onTimeColor = on_time >= 80 ? 'var(--brand-green-mid)' : on_time >= 60 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    const gapColor = gap <= 0 ? 'var(--brand-green-mid)' : gap <= 2 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+
+    const row = document.createElement('div');
+    row.className = 'courier-row';
+    row.style.cssText = 'display:grid; grid-template-columns: 110px 70px 90px 90px 80px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:8px;';
+    row.innerHTML = `
+      <div class="c-name">${name}</div>
+      <div style="color:var(--muted); font-size:11px;">${c.orders} orders</div>
+      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${avg_tat > 0 ? avg_tat + 'd TAT' : '—'}</div>
+      <div style="font-size:11px; font-weight:600; color:${onTimeColor};">${on_time > 0 ? on_time + '% on-time' : '—'}</div>
+      <div style="font-size:11px; font-weight:600; color:${gapColor};">${gap > 0 ? '+' + gap + 'd gap' : gap < 0 ? gap + 'd early' : '—'}</div>`;
     el.appendChild(row);
   });
 
