@@ -550,9 +550,13 @@ function openTab(tabId, btn) {
       [poWoWInst, poFillInst, poMoMInst].forEach(c => { if(c) c.destroy(); });
       poWoWInst = null; poFillInst = null; poMoMInst = null;
       buildPOTracker(document.getElementById('weekSelect').value);
-    }, 100);
+      setTimeout(() => {
+        if(poWoWInst) poWoWInst.resize();
+        if(poFillInst) poFillInst.resize();
+        if(poMoMInst) poMoMInst.resize();
+      }, 100);
+    }, 50);
   }
-}
 
 
 // ─── THE NEW VIEW SWITCHER ───
