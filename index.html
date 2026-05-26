@@ -972,7 +972,7 @@ function buildCourier(wk){
   const el=document.getElementById('courierList');
   el.innerHTML='';
   document.getElementById('courierSub').textContent = timeLabel(wk) + ' — TAT · On-time dispatch · Gap vs Est';
-  el.innerHTML = `<div style="display:grid; grid-template-columns:110px 70px 90px 90px 80px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:8px;">
+  el.innerHTML = `<div style="display:grid; grid-template-columns:120px 80px 100px 120px 100px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
     <div>Partner</div><div>Orders</div><div>Avg TAT</div><div>On-Time</div><div>Disp Gap</div>
   </div>`;
 
@@ -999,7 +999,7 @@ function buildCourier(wk){
 
     const row = document.createElement('div');
     row.className = 'courier-row';
-    row.style.cssText = 'display:grid; grid-template-columns: 110px 70px 90px 90px 80px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:8px;';
+    row.style.cssText = 'display:grid; grid-template-columns: 120px 80px 100px 120px 100px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
     row.innerHTML = `
       <div class="c-name">${name}</div>
       <div style="color:var(--muted); font-size:11px;">${c.orders} orders</div>
