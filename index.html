@@ -546,7 +546,11 @@ function openTab(tabId, btn) {
   Object.values(Chart.instances).forEach(chart => chart.resize());
   if (tabId === 'tab-delivered') buildDelivered();
   if (tabId === 'tab-po') {
-    setTimeout(() => buildPOTracker(document.getElementById('weekSelect').value), 50);
+    setTimeout(() => {
+      [poWoWInst, poFillInst, poMoMInst].forEach(c => { if(c) c.destroy(); });
+      poWoWInst = null; poFillInst = null; poMoMInst = null;
+      buildPOTracker(document.getElementById('weekSelect').value);
+    }, 100);
   }
 }
 
@@ -612,6 +616,7 @@ async function initDashboard() {
 
     TIME_DATA = rawData;
     switchView('weekly');
+    setTimeout(() => buildPOTracker(Object.keys(TIME_DATA.weekly || {}).sort().reverse()[0]), 300);
 
   } catch (error) {
     bn.style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
