@@ -679,13 +679,14 @@ async function initDashboard() {
             Object.values(rawData[mode]).forEach(timeBlock => {
                 swapKeys(timeBlock.channels);
                 swapKeys(timeBlock.channel_fill);
+                swapKeys(timeBlock.channel_val);
+                swapKeys(timeBlock.channel_sku);
                 if (timeBlock.daily_inv) {
                     Object.values(timeBlock.daily_inv).forEach(day => swapKeys(day));
                 }
             });
         }
     });
-
     TIME_DATA = rawData;
     switchView('weekly');
     setTimeout(() => buildPOTracker(Object.keys(TIME_DATA.weekly || {}).sort().reverse()[0]), 300);
