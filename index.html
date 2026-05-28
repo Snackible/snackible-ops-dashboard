@@ -1290,9 +1290,8 @@ function buildPOTracker(wk) {
   shortB.className = 'kpi-badge ' + (totalShort === 0 ? 'badge-up' : 'badge-warn');
 
   // Value Fulfillment KPI
-  const chanVal = d.channel_val || {};
-  let totalOrderVal = 0, totalInvVal = 0;
-  Object.values(chanVal).forEach(v => { totalOrderVal += v.po_val; totalInvVal += v.inv_val; });
+  const totalOrderVal = d.total_order_val || 0;
+  const totalInvVal = d.total_inv_val || 0;
   const valRate = totalOrderVal > 0 ? Math.min(totalInvVal / totalOrderVal, 1) : 0;
   const vrEl = document.getElementById('poValRate');
   const vrBEl = document.getElementById('poValRateB');
