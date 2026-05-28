@@ -509,11 +509,23 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>
 <div id="tab-delivered" class="tab-content">
+    <!-- Delivered Tab own filter bar -->
+    <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+      <select id="delModeSelect" onchange="buildDelivered()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;">
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="daily">Daily</option>
+      </select>
+      <select id="delPeriodSelect" onchange="buildDelivered()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;min-width:180px;">
+        <option value="">— Select Period —</option>
+      </select>
+    </div>
+
     <div class="kpi-grid" style="margin-bottom:28px;">
       <div class="kpi-card" style="--accent:var(--brand-green-mid)">
         <div class="kpi-label">Delivered Orders</div>
         <div class="kpi-value" id="delCount">—</div>
-        <div class="kpi-sub" id="delPeriodSub">Current period</div>
+        <div class="kpi-sub" id="delPeriodSub">Select a period above</div>
       </div>
       <div class="kpi-card" style="--accent:var(--brand-amber)">
         <div class="kpi-label">Invoice Value</div>
@@ -526,19 +538,20 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div class="kpi-sub">Per delivered order</div>
       </div>
     </div>
+
     <div class="full-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div>
           <div class="card-title">Delivered Orders Log</div>
-          <div class="card-sub" style="margin-bottom:0;" id="delLogSub">Filtered by selected period</div>
+          <div class="card-sub" style="margin-bottom:0;" id="delLogSub">Filtered by PO Date</div>
         </div>
       </div>
       <div style="max-height:600px; overflow-y:auto;">
         <table class="data-table">
           <thead style="position:sticky; top:0; background:var(--card); z-index:10;">
             <tr>
-              <th style="min-width:100px;">Delivery Date</th>
               <th style="min-width:90px;">PO Date</th>
+              <th style="min-width:100px;">Delivery Date</th>
               <th>Ref No.</th>
               <th>PO Name</th>
               <th>Channel</th>
@@ -549,8 +562,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         </table>
       </div>
     </div>
-  </div>
-  
+  </div>  
 
 </div>
 
@@ -1477,31 +1489,103 @@ function buildPOTracker(wk) {
     </tr>`;
   }).join('');
 }
-
-// ─── DELIVERED DATA TAB ───
 function buildDelivered() {
-  const tbody = document.getElementById('deliveredBody');
   const allList = TIME_DATA.delivered_log || [];
-  const wk = document.getElementById('weekSelect').value;
+  const mode = document.getElementById('delModeSelect')?.value || 'weekly';
+  const periodSelect = document.getElementById('delPeriodSelect');
+  const tbody = document.getElementById('deliveredBody');
 
-  // Filter by selected period
-  let filtered = allList;
-  if (currentMode === 'weekly' && wk) {
-    const weekStart = new Date(wk + 'T00:00:00');
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
-    filtered = allList.filter(item => {
-      const t = item._time;
-      return t >= weekStart.getTime() && t <= weekEnd.getTime() + 86399999;
+  // Build period options based on mode, using PO Date (week field from Apps Script)
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Collect unique periods from po_date/_time
+  let periodMap = {};
+  allList.forEach(item => {
+    if (!item._time) return;
+    const d = new Date(item._time);
+    let key;
+    if (mode === 'weekly') {
+      // Use week number stored in item.week to get week start date
+      const wk = parseInt(item.week);
+      if (!isNaN(wk) && wk > 0) {
+        const wStart = new Date("2025-12-29T00:00:00");
+        wStart.setDate(wStart.getDate() + (wk - 1) * 7);
+        key = wStart.toISOString().split('T')[0]; // yyyy-MM-dd
+      }
+    } else if (mode === 'monthly') {
+      const mo = d.toLocaleString('en-GB', {month:'short'});
+      const yr = d.getFullYear();
+      key = mo + ' ' + yr;
+    } else if (mode === 'daily') {
+      key = d.toISOString().split('T')[0];
+    }
+    if (key) periodMap[key] = true;
+  });
+
+  // Sort periods
+  let periods = Object.keys(periodMap);
+  if (mode === 'weekly' || mode === 'daily') {
+    periods.sort().reverse();
+  } else {
+    periods.sort((a, b) => {
+      const [aM, aY] = a.split(' '); const [bM, bY] = b.split(' ');
+      return (parseInt(bY) - parseInt(aY)) || (monthOrder.indexOf(bM) - monthOrder.indexOf(aM));
     });
-  } else if (currentMode === 'daily' && wk) {
-    const dayStart = new Date(wk + 'T00:00:00').getTime();
-    const dayEnd = dayStart + 86399999;
-    filtered = allList.filter(item => item._time >= dayStart && item._time <= dayEnd);
-  } else if (currentMode === 'monthly' && wk) {
+  }
+
+  // Repopulate dropdown if mode changed
+  const currentVal = periodSelect.value;
+  periodSelect.innerHTML = '<option value="">— Select Period —</option>';
+  periods.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    if (mode === 'weekly') {
+      const d = new Date(p + 'T00:00:00');
+      const e = new Date(d); e.setDate(e.getDate() + 6);
+      const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      opt.textContent = M[d.getMonth()] + ' ' + d.getDate() + ' - ' + M[e.getMonth()] + ' ' + e.getDate() + (i === 0 ? ' ← Latest' : '');
+    } else if (mode === 'daily') {
+      const d = new Date(p + 'T00:00:00');
+      opt.textContent = d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + (i === 0 ? ' ← Latest' : '');
+    } else {
+      opt.textContent = p + (i === 0 ? ' ← Latest' : '');
+    }
+    periodSelect.appendChild(opt);
+  });
+
+  // Restore or default to latest
+  if (periods.includes(currentVal)) periodSelect.value = currentVal;
+  else if (periods.length) periodSelect.value = periods[0];
+
+  const selectedPeriod = periodSelect.value;
+  if (!selectedPeriod) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Select a period above.</td></tr>';
+    document.getElementById('delCount').textContent = '—';
+    document.getElementById('delInvTotal').textContent = '—';
+    document.getElementById('delAvgVal').textContent = '—';
+    return;
+  }
+
+  // Filter by PO week (item.week maps to week number)
+  let filtered = [];
+  if (mode === 'weekly') {
+    const wStart = new Date(selectedPeriod + 'T00:00:00');
+    const wEnd = new Date(wStart); wEnd.setDate(wEnd.getDate() + 6);
+    // match by week field
+    const wk = getWeekNumFromDate(wStart);
+    filtered = allList.filter(item => item.week && parseInt(item.week) === wk);
+  } else if (mode === 'monthly') {
     filtered = allList.filter(item => {
+      if (!item._time) return false;
       const d = new Date(item._time);
-      const label = d.toLocaleString('en-GB', {month:'short', year:'numeric'}).replace(' ',' ');
-      return label === wk;
+      const mo = d.toLocaleString('en-GB', {month:'short'});
+      const yr = d.getFullYear();
+      return (mo + ' ' + yr) === selectedPeriod;
+    });
+  } else if (mode === 'daily') {
+    filtered = allList.filter(item => {
+      if (!item._time) return false;
+      return new Date(item._time).toISOString().split('T')[0] === selectedPeriod;
     });
   }
 
@@ -1512,24 +1596,30 @@ function buildDelivered() {
   document.getElementById('delCount').textContent = count.toLocaleString('en-IN');
   document.getElementById('delInvTotal').textContent = fmtL(totalVal);
   document.getElementById('delAvgVal').textContent = fmtL(Math.round(avgVal));
-  document.getElementById('delPeriodSub').textContent = timeLabel(wk);
-  document.getElementById('delLogSub').textContent = timeLabel(wk) + ' · ' + count + ' orders';
+  document.getElementById('delPeriodSub').textContent = periodSelect.options[periodSelect.selectedIndex]?.text || selectedPeriod;
+  document.getElementById('delLogSub').textContent = 'Filtered by PO Date · ' + count + ' orders';
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:20px;">No delivered orders for this period.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No delivered orders for this period.</td></tr>';
     return;
   }
 
   tbody.innerHTML = filtered.map(item => `
     <tr>
-      <td style="color:var(--brand-green-mid); font-weight:500;">${item.date}</td>
       <td style="color:var(--muted); font-size:11px;">${item.po_date || '—'}</td>
+      <td style="color:var(--brand-green-mid); font-weight:500;">${item.date}</td>
       <td style="font-weight:600;">${item.ref}</td>
       <td style="font-size:11px; color:var(--muted);">${item.po}</td>
       <td><span class="ch-dot" style="background:${COLORS[item.channel] || '#8AA8A6'}"></span>${item.channel}</td>
       <td style="text-align:right; font-weight:600; color:var(--brand-amber);">${fmtL(item.val)}</td>
     </tr>
   `).join('');
+}
+
+function getWeekNumFromDate(date) {
+  const base = new Date("2025-12-29T00:00:00");
+  const diff = Math.floor((date - base) / (7 * 86400000));
+  return diff + 1;
 }
 // ─── MAIN ───
 function updateDashboard(){
