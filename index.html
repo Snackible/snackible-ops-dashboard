@@ -283,27 +283,10 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
 
     </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-bottom: 28px;">
-      
-      <div class="chart-card">
-        <div class="card-title">SKU Volume Tracker</div>
-        <div class="card-sub" id="skuSub">Units shipped cross-referenced from details tab</div>
-        <div style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Product (SKU)</th>
-                <th style="text-align:right">Units Shipped</th>
-              </tr>
-            </thead>
-            <tbody id="skuBody"></tbody>
-          </table>
-        </div>
-      </div>
+<div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-bottom: 28px;">
 
       <div class="chart-card" style="overflow-x: auto;">
-        <div class="card-title">State vs Top SKUs (Units)</div>
+        <div class="card-title">State vs Top SKUs (Units Ordered)</div>
         <div class="card-sub" id="matrixSub">Regional volume distribution</div>
         <div style="max-height: 350px; overflow-y: auto;">
           <table class="data-table">
@@ -314,6 +297,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
 
     </div>
+    
   </div>
   
   <div id="tab-inventory" class="tab-content">
@@ -454,8 +438,19 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
       <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM"></canvas></div>
     </div>
-    <div class="chart-card" style="margin-bottom:28px;">
-      <div class="card-title">PO vs Invoice by Channel</div>
+    <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:16px; margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">SKU Volume Tracker</div>
+        <div class="card-sub" id="skuSub">Units Ordered (PO Qty per SKU)</div>
+        <div style="max-height:350px; overflow-y:auto; padding-right:8px;">
+          <table class="data-table">
+            <thead><tr><th>Product (SKU)</th><th style="text-align:right">Units Ordered</th></tr></thead>
+            <tbody id="skuBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0;">
+        <div class="card-title">PO vs Invoice by Channel</div>
       <div class="card-sub" id="poChanSub">Current period breakdown</div>
       <table class="data-table">
         <thead><tr>
@@ -469,7 +464,8 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <tbody id="poChanBody"></tbody>
       </table>
     </div>
-  </div>
+      </div>
+    </div>
 
   <div id="tab-delivered" class="tab-content">
     <div class="full-card">
@@ -1062,8 +1058,8 @@ function buildDeepDive(wk) {
   // 3. SKU Volume Tracker
   const skuEntries = Object.entries(d.skus||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const tbody = document.getElementById('skuBody');
-  tbody.innerHTML = skuEntries.length ? skuEntries.map(([name, qty]) => `<tr><td style="white-space:normal; line-height:1.3; font-size:11px;">${name}</td><td style="text-align:right; font-weight:600; color:var(--brand-amber);">${qty.toLocaleString('en-IN')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; color:var(--muted)">No cross-referenced SKU data found for this period.</td></tr>';
-  document.getElementById('skuSub').textContent = timeLabel(wk) + ' — Cross-referenced Sku Details';
+  tbody.innerHTML = skuEntries.length ? skuEntries.map(([name, qty]) => `<tr><td style="white-space:normal; line-height:1.3; font-size:11px;">${name}</td><td style="text-align:right; font-weight:600; color:var(--brand-amber);">${qty.toLocaleString('en-IN')}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center; color:var(--muted)">No SKU data found for this period.</td></tr>';
+  document.getElementById('skuSub').textContent = timeLabel(wk) + ' — Units Ordered (PO Qty per SKU)';
 
  // 4. State vs Top SKUs Matrix (with city drill-down)
   const stateMatrixEntries = Object.entries(d.state_sku||{});
