@@ -420,6 +420,12 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div class="kpi-sub">Units unfulfilled</div>
         <span class="kpi-badge" id="poShortB">—</span>
       </div>
+      <div class="kpi-card" style="--accent:var(--brand-purple)">
+        <div class="kpi-label">Value Fulfillment</div>
+        <div class="kpi-value" id="poValRate">—</div>
+        <div class="kpi-sub">Invoice Value / Order Value</div>
+        <span class="kpi-badge" id="poValRateB">—</span>
+      </div>
     </div>
     <div class="charts-row" style="margin-bottom:28px;">
       <div class="chart-card">
@@ -1245,6 +1251,19 @@ function buildPOTracker(wk) {
   const shortB = document.getElementById('poShortB');
   shortB.textContent = totalShort === 0 ? 'Fully fulfilled' : totalShort.toLocaleString('en-IN') + ' units short';
   shortB.className = 'kpi-badge ' + (totalShort === 0 ? 'badge-up' : 'badge-warn');
+
+  // Value Fulfillment KPI
+  const chanVal = d.channel_val || {};
+  let totalOrderVal = 0, totalInvVal = 0;
+  Object.values(chanVal).forEach(v => { totalOrderVal += v.po_val; totalInvVal += v.inv_val; });
+  const valRate = totalOrderVal > 0 ? Math.min(totalInvVal / totalOrderVal, 1) : 0;
+  const vrEl = document.getElementById('poValRate');
+  const vrBEl = document.getElementById('poValRateB');
+  if (vrEl) vrEl.textContent = (valRate * 100).toFixed(1) + '%';
+  if (vrBEl) {
+    vrBEl.textContent = valRate >= 0.95 ? '✓ Healthy' : valRate >= 0.85 ? '⚠ Moderate' : '⚠ Below Target';
+    vrBEl.className = 'kpi-badge ' + (valRate >= 0.95 ? 'badge-up' : valRate >= 0.85 ? 'badge-warn' : 'badge-down');
+  }
 
   if (prev) {
     let prevPO = 0, prevInv = 0;
