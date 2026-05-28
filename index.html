@@ -420,11 +420,46 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div class="kpi-sub">Units unfulfilled</div>
         <span class="kpi-badge" id="poShortB">—</span>
       </div>
-      <div class="kpi-card" style="--accent:var(--brand-purple)">
-        <div class="kpi-label">Value Fulfillment</div>
-        <div class="kpi-value" id="poValRate">—</div>
-        <div class="kpi-sub">Invoice Value / Order Value</div>
-        <span class="kpi-badge" id="poValRateB">—</span>
+      </div>
+
+    <!-- Value Fulfillment expanded tile -->
+    <div class="chart-card" style="margin-bottom:28px; border-top:3px solid var(--brand-purple);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div>
+          <div class="kpi-label">Value Fulfillment</div>
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <div class="kpi-value" id="poValRate">—</div>
+            <span class="kpi-badge" id="poValRateB">—</span>
+          </div>
+          <div class="kpi-sub">Invoice Value / Order Value</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">vs prior week</div>
+          <div style="font-size:16px; font-weight:600;" id="poValChg">—</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:12px 16px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Order Value</div>
+          <div style="font-size:20px; font-weight:600; color:var(--text);" id="poTotalOrderVal">—</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:12px 16px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Invoice Value</div>
+          <div style="font-size:20px; font-weight:600; color:var(--brand-green-mid);" id="poTotalInvVal">—</div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-size:11px; color:var(--muted);">Value Short</span>
+          <span style="font-size:11px; font-weight:600; color:var(--brand-orange);" id="poValShort">—</span>
+        </div>
+        <div class="bar-bg" style="height:8px;">
+          <div id="poValBar" class="bar-fill" style="width:0%; background:var(--brand-orange);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+          <span style="font-size:10px; color:var(--muted);">Invoiced</span>
+          <span style="font-size:10px; color:var(--muted);">Target 95%</span>
+        </div>
       </div>
     </div>
     <div class="charts-row" style="margin-bottom:28px;">
@@ -1263,6 +1298,26 @@ function buildPOTracker(wk) {
   if (vrBEl) {
     vrBEl.textContent = valRate >= 0.95 ? '✓ Healthy' : valRate >= 0.85 ? '⚠ Moderate' : '⚠ Below Target';
     vrBEl.className = 'kpi-badge ' + (valRate >= 0.95 ? 'badge-up' : valRate >= 0.85 ? 'badge-warn' : 'badge-down');
+  }
+  const valShort = Math.max(0, totalOrderVal - totalInvVal);
+  const ovEl = document.getElementById('poTotalOrderVal');
+  const ivEl = document.getElementById('poTotalInvVal');
+  const vsEl = document.getElementById('poValShort');
+  const vbEl = document.getElementById('poValBar');
+  if (ovEl) ovEl.textContent = fmtL(totalOrderVal);
+  if (ivEl) ivEl.textContent = fmtL(totalInvVal);
+  if (vsEl) vsEl.textContent = fmtL(valShort);
+  if (vbEl) vbEl.style.width = Math.min(valRate * 100, 100) + '%';
+
+  // vs prior week
+  const vcEl = document.getElementById('poValChg');
+  if (vcEl && prev) {
+    let prevOV = 0, prevIV = 0;
+    Object.values(prev.channel_val || {}).forEach(v => { prevOV += v.po_val; prevIV += v.inv_val; });
+    const prevRate = prevOV > 0 ? prevIV / prevOV : 0;
+    const chg = ((valRate - prevRate) * 100).toFixed(1);
+    vcEl.textContent = (chg >= 0 ? '▲ ' : '▼ ') + Math.abs(chg) + '%';
+    vcEl.style.color = chg >= 0 ? 'var(--brand-green-mid)' : 'var(--brand-orange)';
   }
 
   if (prev) {
