@@ -508,16 +508,37 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
   </div>
-
-  <div id="tab-delivered" class="tab-content">
+<div id="tab-delivered" class="tab-content">
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Delivered Orders</div>
+        <div class="kpi-value" id="delCount">—</div>
+        <div class="kpi-sub" id="delPeriodSub">Current period</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Invoice Value</div>
+        <div class="kpi-value" id="delInvTotal">—</div>
+        <div class="kpi-sub">Delivered orders only</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-value" id="delAvgVal">—</div>
+        <div class="kpi-sub">Per delivered order</div>
+      </div>
+    </div>
     <div class="full-card">
-      <div class="card-title">Delivered Orders Log</div>
-      <div class="card-sub" style="margin-bottom:20px;">Recent successfully delivered orders</div>
-      <div style="max-height:500px; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div>
+          <div class="card-title">Delivered Orders Log</div>
+          <div class="card-sub" style="margin-bottom:0;" id="delLogSub">Filtered by selected period</div>
+        </div>
+      </div>
+      <div style="max-height:600px; overflow-y:auto;">
         <table class="data-table">
           <thead style="position:sticky; top:0; background:var(--card); z-index:10;">
             <tr>
               <th style="min-width:100px;">Delivery Date</th>
+              <th style="min-width:90px;">PO Date</th>
               <th>Ref No.</th>
               <th>PO Name</th>
               <th>Channel</th>
@@ -529,6 +550,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
   </div>
+  
 
 </div>
 
@@ -1459,16 +1481,49 @@ function buildPOTracker(wk) {
 // ─── DELIVERED DATA TAB ───
 function buildDelivered() {
   const tbody = document.getElementById('deliveredBody');
-  const list = TIME_DATA.delivered_log || [];
-  
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:20px;">No delivered orders found in the tab.</td></tr>';
+  const allList = TIME_DATA.delivered_log || [];
+  const wk = document.getElementById('weekSelect').value;
+
+  // Filter by selected period
+  let filtered = allList;
+  if (currentMode === 'weekly' && wk) {
+    const weekStart = new Date(wk + 'T00:00:00');
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+    filtered = allList.filter(item => {
+      const t = item._time;
+      return t >= weekStart.getTime() && t <= weekEnd.getTime() + 86399999;
+    });
+  } else if (currentMode === 'daily' && wk) {
+    const dayStart = new Date(wk + 'T00:00:00').getTime();
+    const dayEnd = dayStart + 86399999;
+    filtered = allList.filter(item => item._time >= dayStart && item._time <= dayEnd);
+  } else if (currentMode === 'monthly' && wk) {
+    filtered = allList.filter(item => {
+      const d = new Date(item._time);
+      const label = d.toLocaleString('en-GB', {month:'short', year:'numeric'}).replace(' ',' ');
+      return label === wk;
+    });
+  }
+
+  // KPIs
+  const count = filtered.length;
+  const totalVal = filtered.reduce((s, i) => s + i.val, 0);
+  const avgVal = count > 0 ? totalVal / count : 0;
+  document.getElementById('delCount').textContent = count.toLocaleString('en-IN');
+  document.getElementById('delInvTotal').textContent = fmtL(totalVal);
+  document.getElementById('delAvgVal').textContent = fmtL(Math.round(avgVal));
+  document.getElementById('delPeriodSub').textContent = timeLabel(wk);
+  document.getElementById('delLogSub').textContent = timeLabel(wk) + ' · ' + count + ' orders';
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:20px;">No delivered orders for this period.</td></tr>';
     return;
   }
-  
-  tbody.innerHTML = list.map(item => `
+
+  tbody.innerHTML = filtered.map(item => `
     <tr>
       <td style="color:var(--brand-green-mid); font-weight:500;">${item.date}</td>
+      <td style="color:var(--muted); font-size:11px;">${item.po_date || '—'}</td>
       <td style="font-weight:600;">${item.ref}</td>
       <td style="font-size:11px; color:var(--muted);">${item.po}</td>
       <td><span class="ch-dot" style="background:${COLORS[item.channel] || '#8AA8A6'}"></span>${item.channel}</td>
@@ -1491,6 +1546,7 @@ function updateDashboard(){
   if(typeof buildTATKPIs === 'function') buildTATKPIs(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
   if(typeof buildPOTracker === 'function') buildPOTracker(wk);
+  if(document.getElementById('tab-delivered').classList.contains('active')) buildDelivered();
 }
 
 window.onload = initDashboard;
