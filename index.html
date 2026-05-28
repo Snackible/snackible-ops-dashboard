@@ -507,6 +507,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
       </div>
     </div>
+  </div>
 
   <div id="tab-delivered" class="tab-content">
     <div class="full-card">
@@ -1307,7 +1308,10 @@ function buildPOTracker(wk) {
   if (ovEl) ovEl.textContent = fmtL(totalOrderVal);
   if (ivEl) ivEl.textContent = fmtL(totalInvVal);
   if (vsEl) vsEl.textContent = fmtL(valShort);
-  if (vbEl) vbEl.style.width = Math.min(valRate * 100, 100) + '%';
+  if (vbEl) {
+    vbEl.style.width = Math.min(valRate * 100, 100) + '%';
+    vbEl.style.background = valRate >= 0.95 ? 'var(--brand-green-mid)' : valRate >= 0.85 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+  }
 
   // vs prior week
   const vcEl = document.getElementById('poValChg');
