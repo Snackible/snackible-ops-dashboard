@@ -365,8 +365,8 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
 
-    <div class="bottom-grid">
-  <div class="chart-card">
+<div class="bottom-grid">
+  <div class="chart-card" style="flex:0 0 280px; min-width:0;">
         <div class="card-title">Order Status</div>
         <div class="card-sub" id="statusSub">All orders this week</div>
         <ul class="status-list" id="statusList"></ul>
@@ -1047,8 +1047,8 @@ function buildCourier(wk){
   document.getElementById('courierSub').textContent = timeLabel(wk) + ' — 3-Stage TAT Breakdown';
   
   // 1. Update the table headers to show the 3 steps
-  el.innerHTML = `<div style="display:grid; grid-template-columns:120px 60px 80px 80px 80px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
-    <div>Partner</div><div>Orders</div><div>Whse (Proc)</div><div>Transit</div><div>Total TAT</div>
+  el.innerHTML = `<div style="display:grid; grid-template-columns:120px 55px 1fr 1fr 1fr; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
+    <div>Partner</div><div>Orders</div><div>PO→Disp</div><div>Disp→Delivery</div><div>PO→Delivery</div>
   </div>`;
 
   const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
@@ -1069,7 +1069,7 @@ function buildCourier(wk){
 
     const row = document.createElement('div');
     row.className = 'courier-row';
-    row.style.cssText = 'display:grid; grid-template-columns: 120px 60px 80px 80px 80px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
+    row.style.cssText = 'display:grid; grid-template-columns: 120px 55px 1fr 1fr 1fr; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
     
     // 3. Print the 3 steps in the row
     row.innerHTML = `
