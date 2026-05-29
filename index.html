@@ -1044,9 +1044,11 @@ function buildCourier(wk){
   const d=RAW[wk];
   const el=document.getElementById('courierList');
   el.innerHTML='';
-  document.getElementById('courierSub').textContent = timeLabel(wk) + ' — TAT · On-time dispatch · Gap vs Est';
-  el.innerHTML = `<div style="display:grid; grid-template-columns:120px 80px 100px 120px 100px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
-    <div>Partner</div><div>Orders</div><div>Avg TAT</div><div>On-Time</div><div>Disp Gap</div>
+  document.getElementById('courierSub').textContent = timeLabel(wk) + ' — 3-Stage TAT Breakdown';
+  
+  // 1. Update the table headers to show the 3 steps
+  el.innerHTML = `<div style="display:grid; grid-template-columns:120px 60px 80px 80px 80px; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
+    <div>Partner</div><div>Orders</div><div>Whse (Proc)</div><div>Transit</div><div>Total TAT</div>
   </div>`;
 
   const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
@@ -1054,35 +1056,33 @@ function buildCourier(wk){
     el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px 0;">No courier data yet</div>';
     return;
   }
-  
-  let totalTatSum = 0; let totalTatCount = 0;
 
   entries.forEach(([name,c])=>{
-    const avg_tat = c.avg_tat || 0;
-    const delivery_rate = c.delivery_rate || 0;
-    const on_time = c.on_time_pct || 0;
-    const gap = c.avg_dispatch_gap || 0;
+    // 2. Pull the new 3-stage variables sent by the Apps Script
+    const proc = c.avg_proc_tat || 0;
+    const tran = c.avg_tran_tat || 0;
+    const total = c.avg_total_tat || 0;
 
-    if(avg_tat > 0) { totalTatSum += avg_tat; totalTatCount++; }
-
-    const tatCls = avg_tat === 0 ? 'badge-warn' : avg_tat <= 7 ? 'badge-up' : avg_tat <= 10 ? 'badge-warn' : 'badge-down';
-    const drColor = delivery_rate >= 90 ? 'var(--brand-green-mid)' : delivery_rate >= 70 ? 'var(--brand-amber)' : 'var(--brand-orange)';
-    const onTimeColor = on_time >= 80 ? 'var(--brand-green-mid)' : on_time >= 60 ? 'var(--brand-amber)' : 'var(--brand-orange)';
-    const gapColor = gap <= 0 ? 'var(--brand-green-mid)' : gap <= 2 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    const tatCls = total === 0 ? 'badge-warn' : total <= 7 ? 'badge-up' : total <= 10 ? 'badge-warn' : 'badge-down';
+    const procColor = proc <= 2 ? 'var(--brand-green-mid)' : proc <= 5 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+    const tranColor = tran <= 5 ? 'var(--brand-green-mid)' : tran <= 8 ? 'var(--brand-amber)' : 'var(--brand-orange)';
 
     const row = document.createElement('div');
     row.className = 'courier-row';
-    row.style.cssText = 'display:grid; grid-template-columns: 120px 80px 100px 120px 100px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
+    row.style.cssText = 'display:grid; grid-template-columns: 120px 60px 80px 80px 80px; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
+    
+    // 3. Print the 3 steps in the row
     row.innerHTML = `
       <div class="c-name">${name}</div>
-      <div style="color:var(--muted); font-size:11px;">${c.orders} orders</div>
-      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${avg_tat > 0 ? avg_tat + 'd TAT' : '—'}</div>
-      <div style="font-size:11px; font-weight:600; color:${onTimeColor};">${on_time > 0 ? on_time + '% on-time' : '—'}</div>
-      <div style="font-size:11px; font-weight:600; color:${gapColor};">${gap > 0 ? '+' + gap + 'd gap' : gap < 0 ? gap + 'd early' : '—'}</div>`;
+      <div style="color:var(--muted); font-size:11px;">${c.orders}</div>
+      <div style="font-size:11px; font-weight:600; color:${procColor};">${proc > 0 ? proc + 'd' : '—'}</div>
+      <div style="font-size:11px; font-weight:600; color:${tranColor};">${tran > 0 ? tran + 'd' : '—'}</div>
+      <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0;">${total > 0 ? total + 'd' : '—'}</div>`;
     el.appendChild(row);
   });
 
-  const periodTat = totalTatCount > 0 ? Math.round(totalTatSum / totalTatCount) : 0;
+  // 4. Update the bottom summary strip
+  const periodTat = d.avg_total_tat || 0;
   document.getElementById('tatBig').textContent = periodTat > 0 ? periodTat : '—';
   const tatBadge = document.getElementById('tatBadge');
   if (tatBadge) {
@@ -1090,7 +1090,6 @@ function buildCourier(wk){
       tatBadge.className = 'kpi-badge ' + (periodTat > 0 && periodTat <= 7 ? 'badge-up' : 'badge-warn');
   }
 }
-
 // ─── DEEP DIVE CHARTS ───
 function buildDeepDive(wk) {
   if(!RAW[wk]) return;
