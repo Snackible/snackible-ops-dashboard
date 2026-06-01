@@ -157,23 +157,6 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 </head>
 <body>
 
-<!-- PASSWORD GATE -->
-<div id="authOverlay" style="position:fixed;inset:0;background:#0E1A1A;z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px 48px;max-width:400px;width:90%;text-align:center;">
-    <div style="width:52px;height:52px;background:var(--brand-amber);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;color:var(--brand-green-deep);margin:0 auto 20px;">S</div>
-    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;">Snackible Ops Dashboard</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:28px;">Internal use only. Enter access code to continue.</div>
-    <input id="authInput" type="password" placeholder="Enter access code" 
-      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;font-family:Poppins,sans-serif;"
-      onkeydown="if(event.key==='Enter')checkAuth()">
-    <button onclick="checkAuth()" 
-      style="width:100%;background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;">
-      Access Dashboard
-    </button>
-    <div id="authError" style="color:var(--brand-orange);font-size:12px;margin-top:12px;display:none;">Incorrect access code. Try again.</div>
-  </div>
-</div>
-
 <div class="header">
   <div class="logo-area">
     <div class="logo-badge">S</div>
