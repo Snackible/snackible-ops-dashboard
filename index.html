@@ -157,6 +157,23 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 </head>
 <body>
 
+<!-- PASSWORD GATE -->
+<div id="authOverlay" style="position:fixed;inset:0;background:#0E1A1A;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px 48px;max-width:400px;width:90%;text-align:center;">
+    <div style="width:52px;height:52px;background:var(--brand-amber);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;color:var(--brand-green-deep);margin:0 auto 20px;">S</div>
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;">Snackible Ops Dashboard</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:28px;">Internal use only. Enter access code to continue.</div>
+    <input id="authInput" type="password" placeholder="Enter access code" 
+      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;font-family:Poppins,sans-serif;"
+      onkeydown="if(event.key==='Enter')checkAuth()">
+    <button onclick="checkAuth()" 
+      style="width:100%;background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;">
+      Access Dashboard
+    </button>
+    <div id="authError" style="color:var(--brand-orange);font-size:12px;margin-top:12px;display:none;">Incorrect access code. Try again.</div>
+  </div>
+</div>
+
 <div class="header">
   <div class="logo-area">
     <div class="logo-badge">S</div>
@@ -195,6 +212,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
     <button class="tab-btn" onclick="openTab('tab-po', this)">PO Tracker</button>
     <button class="tab-btn" onclick="openTab('tab-delivered', this)">Delivered Data</button>
+    <button class="tab-btn" onclick="openTab('tab-ai', this)">✦ AI Insights</button>
   </div>
 
   <div id="tab-sales" class="tab-content active">
@@ -564,6 +582,76 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     </div>
   </div>  
 
+<div id="tab-ai" class="tab-content">
+
+    <!-- Generate button -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:18px;font-weight:600;color:var(--text);">AI Insights</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="aiPeriodLabel">Powered by Claude · Current period analysis</div>
+      </div>
+      <button onclick="generateInsights()" id="aiGenBtn"
+        style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;display:flex;align-items:center;gap:8px;">
+        ✦ Generate Insights
+      </button>
+    </div>
+
+    <!-- Insight cards row -->
+    <div id="aiCardsRow" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div class="chart-card" style="border-top:3px solid var(--brand-green-mid);">
+          <div class="kpi-label" style="margin-bottom:12px;">📊 Performance Summary</div>
+          <div id="aiPerf" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
+        </div>
+        <div class="chart-card" style="border-top:3px solid var(--brand-orange);">
+          <div class="kpi-label" style="margin-bottom:12px;">⚠️ Anomalies Detected</div>
+          <div id="aiAnomalies" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
+        </div>
+        <div class="chart-card" style="border-top:3px solid var(--brand-amber);">
+          <div class="kpi-label" style="margin-bottom:12px;">✅ Recommendations</div>
+          <div id="aiRecs" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
+        </div>
+      </div>
+
+      <!-- Channel & State commentary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div class="chart-card">
+          <div class="kpi-label" style="margin-bottom:12px;">📦 Channel Commentary</div>
+          <div id="aiChannels" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
+        </div>
+        <div class="chart-card">
+          <div class="kpi-label" style="margin-bottom:12px;">📍 State & Geo Commentary</div>
+          <div id="aiStates" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="aiLoading" style="display:none;text-align:center;padding:60px 0;">
+      <div style="font-size:32px;margin-bottom:16px;animation:spin 1.5s linear infinite;display:inline-block;">✦</div>
+      <div style="font-size:14px;color:var(--muted);" id="aiLoadingText">Analyzing your operations data...</div>
+    </div>
+
+    <!-- Chat interface -->
+    <div id="aiChatSection" style="display:none;">
+      <div class="chart-card" style="margin-bottom:0;">
+        <div class="kpi-label" style="margin-bottom:16px;">💬 Ask About Your Data</div>
+        <div id="aiChatHistory" style="max-height:360px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:12px;"></div>
+        <div style="display:flex;gap:10px;">
+          <input id="aiChatInput" type="text" placeholder="e.g. Why is fill rate low for Zepto? Which state has the most RTO?"
+            style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:13px;outline:none;font-family:Poppins,sans-serif;"
+            onkeydown="if(event.key==='Enter')sendAIChat()">
+          <button onclick="sendAIChat()" 
+            style="background:var(--brand-green-mid);color:#0E1A1A;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:Poppins,sans-serif;">
+            Ask →
+          </button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="aiSuggestions"></div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 
@@ -571,10 +659,33 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 
 <script>
 Chart.defaults.responsive = true;
-Chart.defaults.maintainAspectRatio = false;  
-// LIVE API INJECTION
-const API_URL = "https://script.google.com/macros/s/AKfycbyVeaKeSXazGacJubRBqciQk5bfv6F0V1-uND3VTlx-hZlpUHU-oJ_zuGE-UuKhVeI/exec";
+Chart.defaults.maintainAspectRatio = false;
 
+// ─── AUTH ───
+const ACCESS_CODE = 'snackible1234'; // change this to whatever you want
+function checkAuth() {
+  const val = document.getElementById('authInput').value;
+  if (val === ACCESS_CODE) {
+    document.getElementById('authOverlay').style.display = 'none';
+    initDashboard();
+  } else {
+    document.getElementById('authError').style.display = 'block';
+    document.getElementById('authInput').value = '';
+  }
+}
+// Block initDashboard from running on load — auth gate handles it
+window.onload = () => {
+  document.getElementById('authInput').focus();
+};
+
+// ─── AI CONFIG ───
+const ANTHROPIC_API_KEY = null; // handled by proxy
+const CLAUDE_PROXY_URL = 'https://your-vercel-project.vercel.app/api/claude';
+let aiChatHistory = [];
+let aiContextSnapshot = null;
+
+// ─── LIVE API INJECTION
+const API_URL ="https://script.google.com/macros/s/AKfycbyVeaKeSXazGacJubRBqciQk5bfv6F0V1-uND3VTlx-hZlpUHU-oJ_zuGE-UuKhVeI/exec";
 let TIME_DATA = {}; 
 let currentMode = 'weekly';
 let RAW = {};
@@ -1620,6 +1731,240 @@ function getWeekNumFromDate(date) {
   const diff = Math.floor((date - base) / (7 * 86400000));
   return diff + 1;
 }
+// ─── AI INSIGHTS ───
+function buildAIContext(wk) {
+  if (!RAW[wk]) return null;
+  const d = RAW[wk];
+  const idx = WEEKS.indexOf(wk);
+  const prev = idx < WEEKS.length - 1 ? RAW[WEEKS[idx + 1]] : null;
+
+  const channelFillSummary = Object.entries(d.channel_fill || {})
+    .filter(([,v]) => v.po > 0)
+    .map(([ch, v]) => `${ch}: PO=${v.po.toLocaleString()}, Invoiced=${v.inv.toLocaleString()}, FillRate=${(v.rate*100).toFixed(1)}%`)
+    .join('\n');
+
+  const topStates = Object.entries(d.locations || {})
+    .sort((a,b) => b[1]-a[1]).slice(0,6)
+    .map(([s,v]) => `${s}: ${fmtL(v)}`).join(', ');
+
+  const stateFillSummary = Object.entries(d.state_fill || {})
+    .filter(([,v]) => v.po > 0)
+    .map(([s,v]) => {
+      const r = v.po > 0 ? (v.inv/v.po*100).toFixed(1) : 0;
+      return `${s}: ${r}% fill`;
+    }).join(', ');
+
+  const statusSummary = Object.entries(d.statuses || {})
+    .map(([k,v]) => `${k}=${v}`).join(', ');
+
+  const courierSummary = Object.entries(d.couriers || {})
+    .map(([name,c]) => `${name}: ${c.orders} orders, TAT=${c.avg_tat}d, OnTime=${c.on_time_pct}%`)
+    .join('\n');
+
+  const skuTop5 = Object.entries(d.skus || {})
+    .sort((a,b) => b[1]-a[1]).slice(0,5)
+    .map(([n,q]) => `${n}: ${q.toLocaleString()} units`).join(', ');
+
+  const prevSummary = prev ? `Prior period GMV: ${fmtL(prev.gmv)}, Fill: ${prev.avg_fill}%, Orders: ${prev.orders}` : 'No prior period data.';
+
+  const wow = prev && prev.gmv > 0 ? ((d.gmv - prev.gmv) / prev.gmv * 100).toFixed(1) : 'N/A';
+
+  return {
+    period: timeLabel(wk),
+    gmv: fmtL(d.gmv),
+    orders: d.orders,
+    fillRate: d.avg_fill + '%',
+    rto: d.rto_pct + '%',
+    avgTAT: d.avg_total_tat + 'd',
+    procTAT: d.avg_proc_tat + 'd',
+    tranTAT: d.avg_tran_tat + 'd',
+    dnValue: fmtL(d.dn_value),
+    wowGMV: wow + '%',
+    channelFillSummary,
+    topStates,
+    stateFillSummary,
+    statusSummary,
+    courierSummary,
+    skuTop5,
+    prevSummary
+  };
+}
+
+async function generateInsights() {
+  const wk = document.getElementById('weekSelect').value;
+  const ctx = buildAIContext(wk);
+  if (!ctx) return;
+  aiContextSnapshot = ctx;
+
+  document.getElementById('aiGenBtn').textContent = '⏳ Generating...';
+  document.getElementById('aiGenBtn').disabled = true;
+  document.getElementById('aiCardsRow').style.display = 'none';
+  document.getElementById('aiChatSection').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiPeriodLabel').textContent = `Analyzing: ${ctx.period}`;
+
+  const loadingTexts = [
+    'Analyzing GMV and fill rate trends...',
+    'Scanning for anomalies across channels...',
+    'Evaluating state and geo performance...',
+    'Drafting recommendations...'
+  ];
+  let li = 0;
+  const loadInterval = setInterval(() => {
+    li = (li + 1) % loadingTexts.length;
+    const el = document.getElementById('aiLoadingText');
+    if (el) el.textContent = loadingTexts[li];
+  }, 1800);
+
+  const systemPrompt = `You are a sharp ops analyst for Snackible, an Indian D2C millet snack brand. You analyze weekly ops data and give concise, actionable commentary. Always be specific — use numbers. No filler. Format each section as 2-4 bullet points starting with an emoji. Keep bullets to 1-2 lines max.`;
+
+  const userPrompt = `Analyze this period's data for Snackible Operations:
+
+PERIOD: ${ctx.period}
+GMV: ${ctx.gmv} (WoW change: ${ctx.wowGMV})
+Orders: ${ctx.orders} | Fill Rate: ${ctx.fillRate} | RTO: ${ctx.rto}
+TAT: Total ${ctx.avgTAT} (PO→Dispatch: ${ctx.procTAT}, Dispatch→Delivery: ${ctx.tranTAT})
+DN/Discrepancy Value: ${ctx.dnValue}
+
+CHANNEL FILL RATES:
+${ctx.channelFillSummary}
+
+TOP STATES BY GMV: ${ctx.topStates}
+STATE FILL RATES: ${ctx.stateFillSummary}
+
+ORDER STATUSES: ${ctx.statusSummary}
+
+COURIER PERFORMANCE:
+${ctx.courierSummary}
+
+TOP 5 SKUs: ${ctx.skuTop5}
+
+PRIOR PERIOD: ${ctx.prevSummary}
+
+Respond ONLY in this exact JSON format (no markdown, no backticks):
+{
+  "performance": "2-4 bullet points on overall performance. Use actual numbers. Each bullet on new line starting with •",
+  "anomalies": "2-4 bullet points on anomalies, drops or spikes vs prior period. Each bullet on new line starting with •",
+  "recommendations": "3 specific actionable recommendations ranked by priority. Each on new line starting with •",
+  "channels": "2-4 bullets on channel-level commentary — which channels are over/underperforming and why. Each bullet on new line starting with •",
+  "states": "2-4 bullets on geo performance — top states, states with low fill rate, any concerns. Each bullet on new line starting with •"
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    clearInterval(loadInterval);
+
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch { parsed = { performance: text, anomalies: '—', recommendations: '—', channels: '—', states: '—' }; }
+
+    const fmt = (s) => s.replace(/•\s*/g, '<div style="margin-bottom:8px;">• ').split('<div').filter(Boolean).map((p,i) => i===0 ? p : '<div' + p).join('') + (s.includes('•') ? '</div>' : '');
+
+    document.getElementById('aiPerf').innerHTML = fmt(parsed.performance || '—');
+    document.getElementById('aiAnomalies').innerHTML = fmt(parsed.anomalies || '—');
+    document.getElementById('aiRecs').innerHTML = fmt(parsed.recommendations || '—');
+    document.getElementById('aiChannels').innerHTML = fmt(parsed.channels || '—');
+    document.getElementById('aiStates').innerHTML = fmt(parsed.states || '—');
+
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiCardsRow').style.display = 'block';
+    document.getElementById('aiChatSection').style.display = 'block';
+
+    // Seed chat history with context
+    aiChatHistory = [{
+      role: 'user',
+      content: `Here is the current ops data context:\n${userPrompt}`
+    }, {
+      role: 'assistant',
+      content: text
+    }];
+
+    // Suggested follow-up questions
+    const suggestions = [
+      'Which channel needs urgent attention?',
+      'Why might RTO be high?',
+      'What\'s dragging down fill rate?',
+      'Which state should we prioritize?'
+    ];
+    document.getElementById('aiSuggestions').innerHTML = suggestions.map(q =>
+      `<button onclick="askSuggestion('${q}')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Poppins,sans-serif;">${q}</button>`
+    ).join('');
+
+  } catch(e) {
+    clearInterval(loadInterval);
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiPerf').textContent = 'Error generating insights. Check your API key.';
+    document.getElementById('aiCardsRow').style.display = 'block';
+    console.error(e);
+  }
+
+  document.getElementById('aiGenBtn').textContent = '✦ Regenerate';
+  document.getElementById('aiGenBtn').disabled = false;
+}
+
+function askSuggestion(q) {
+  document.getElementById('aiChatInput').value = q;
+  sendAIChat();
+}
+
+async function sendAIChat() {
+  const input = document.getElementById('aiChatInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+
+  const history = document.getElementById('aiChatHistory');
+
+  // Add user bubble
+  history.innerHTML += `<div style="align-self:flex-end;background:var(--brand-green-deep);border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:75%;font-size:13px;line-height:1.5;">${q}</div>`;
+  history.innerHTML += `<div id="aiTyping" style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:13px;color:var(--muted);">Thinking...</div>`;
+  history.scrollTop = history.scrollHeight;
+
+  aiChatHistory.push({ role: 'user', content: q });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: `You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.`,
+        messages: aiChatHistory
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'Could not get a response.';
+    aiChatHistory.push({ role: 'assistant', content: reply });
+
+    const typing = document.getElementById('aiTyping');
+    if (typing) typing.outerHTML = `<div style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px 12px 12px 2px;padding:10px 14px;max-width:80%;font-size:13px;color:var(--text);line-height:1.6;">${reply}</div>`;
+    history.scrollTop = history.scrollHeight;
+
+  } catch(e) {
+    const typing = document.getElementById('aiTyping');
+    if (typing) typing.outerHTML = `<div style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--brand-orange);">Error. Check API key.</div>`;
+  }
+}
+
+// Add spin animation to CSS
+const spinStyle = document.createElement('style');
+spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(spinStyle);
+
 // ─── MAIN ───
 function updateDashboard(){
   const wk=document.getElementById('weekSelect').value;
@@ -1638,7 +1983,7 @@ function updateDashboard(){
   if(document.getElementById('tab-delivered').classList.contains('active')) buildDelivered();
 }
 
-window.onload = initDashboard;
+// window.onload is handled by the auth gate above
 </script>
 </body>
 </html>
