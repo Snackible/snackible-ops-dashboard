@@ -5,33 +5,38 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { messages, system, max_tokens } = req.body;
+  try {
+    const { messages, system, max_tokens } = req.body;
 
-  // Combine system prompt into first user message instead of injecting fake turns
-  const geminiMessages = messages.map((m, i) => {
-    let text = m.content;
-    if (i === 0 && system) text = system + '\n\n' + text;
-    return {
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text }]
-    };
-  });
+    // Build single prompt string — most reliable approach
+    let fullPrompt = '';
+    if (system) fullPrompt += system + '\n\n';
+    messages.forEach(m => {
+      fullPrompt += (m.role === 'user' ? 'User: ' : 'Assistant: ') + m.content + '\n\n';
+    });
+    fullPrompt += 'Assistant:';
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: geminiMessages,
-        generationConfig: { maxOutputTokens: max_tokens || 1000, temperature: 0.7 }
-      })
-    }
-  );
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+          generationConfig: { maxOutputTokens: max_tokens || 1000, temperature: 0.7 }
+        })
+      }
+    );
 
-  const data = await response.json();
-  console.log('Gemini status:', response.status, JSON.stringify(data).substring(0, 300));
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  res.status(200).json({ content: [{ type: 'text', text }] });
+    const data = await response.json();
+    console.log('Gemini status:', response.status, JSON.stringify(data).substring(0, 400));
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    res.status(200).json({ content: [{ type: 'text', text }] });
+
+  } catch (err) {
+    console.error('Handler error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 }
