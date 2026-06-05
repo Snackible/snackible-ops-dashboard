@@ -910,7 +910,12 @@ async function initDashboard() {
     TIME_DATA = rawData;
     switchView('weekly');
     setTimeout(() => buildPOTracker(Object.keys(TIME_DATA.weekly || {}).sort().reverse()[0]), 300);
-    setTimeout(() => { if(TIME_DATA.shopify) buildShopify(); }, 500);
+    setTimeout(async () => {
+      try {
+        const sr = await fetch(SHOPIFY_API_URL);
+        TIME_DATA.shopify = await sr.json();
+      } catch(e) { console.error('Shopify fetch failed', e); }
+    }, 500);
 
   } catch (error) {
     bn.style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
