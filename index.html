@@ -395,6 +395,18 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       </div>
     </div>
   </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
+      <div class="chart-card" style="overflow-x:auto;">
+        <div class="card-title">TAT by Channel</div>
+        <div class="card-sub" id="tatChanSub">3-Stage Breakdown</div>
+        <div id="tatChanList" style="max-height:300px; overflow-y:auto;"></div>
+      </div>
+      <div class="chart-card" style="overflow-x:auto;">
+        <div class="card-title">TAT by State</div>
+        <div class="card-sub" id="tatStateSub">3-Stage Breakdown</div>
+        <div id="tatStateList" style="max-height:300px; overflow-y:auto;"></div>
+      </div>
+    </div>
 
   <div id="tab-po" class="tab-content">
     <div class="kpi-grid" style="margin-bottom:28px;">
@@ -1243,8 +1255,6 @@ function buildTATKPIs(wk) {
   rb.textContent = (d.rto_pct || 0) === 0 ? 'No RTOs' : (d.rto_pct <= 3 ? '✓ Acceptable' : '⚠ High');
   rb.className = 'kpi-badge ' + ((d.rto_pct || 0) <= 3 ? 'badge-up' : 'badge-warn');
 }
-
-// ─── COURIERS ───
 function buildCourier(wk){
   if(!RAW[wk]) return;
   const d=RAW[wk];
@@ -1252,7 +1262,6 @@ function buildCourier(wk){
   el.innerHTML='';
   document.getElementById('courierSub').textContent = timeLabel(wk) + ' — 3-Stage TAT Breakdown';
   
-  // 1. Update the table headers to show the 3 steps
   el.innerHTML = `<div style="display:grid; grid-template-columns:120px 55px 1fr 1fr 1fr; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
     <div>Partner</div><div>Orders</div><div>PO→Disp</div><div>Disp→Delivery</div><div>PO→Delivery</div>
   </div>`;
@@ -1264,11 +1273,7 @@ function buildCourier(wk){
   }
 
   entries.forEach(([name,c])=>{
-    // 2. Pull the new 3-stage variables sent by the Apps Script
-    const proc = c.avg_proc_tat || 0;
-    const tran = c.avg_tran_tat || 0;
-    const total = c.avg_total_tat || 0;
-
+    const proc = c.avg_proc_tat || 0; const tran = c.avg_tran_tat || 0; const total = c.avg_total_tat || 0;
     const tatCls = total === 0 ? 'badge-warn' : total <= 7 ? 'badge-up' : total <= 10 ? 'badge-warn' : 'badge-down';
     const procColor = proc <= 2 ? 'var(--brand-green-mid)' : proc <= 5 ? 'var(--brand-amber)' : 'var(--brand-orange)';
     const tranColor = tran <= 5 ? 'var(--brand-green-mid)' : tran <= 8 ? 'var(--brand-amber)' : 'var(--brand-orange)';
@@ -1276,8 +1281,6 @@ function buildCourier(wk){
     const row = document.createElement('div');
     row.className = 'courier-row';
     row.style.cssText = 'display:grid; grid-template-columns: 120px 55px 1fr 1fr 1fr; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
-    
-    // 3. Print the 3 steps in the row
     row.innerHTML = `
       <div class="c-name">${name}</div>
       <div style="color:var(--muted); font-size:11px;">${c.orders}</div>
@@ -1287,14 +1290,53 @@ function buildCourier(wk){
     el.appendChild(row);
   });
 
-  // 4. Update the bottom summary strip
   const periodTat = d.avg_total_tat || 0;
-  document.getElementById('tatBig').textContent = periodTat > 0 ? periodTat : '—';
+  const tatBig = document.getElementById('tatBig');
+  if (tatBig) tatBig.textContent = periodTat > 0 ? periodTat : '—';
   const tatBadge = document.getElementById('tatBadge');
   if (tatBadge) {
       tatBadge.textContent = periodTat > 0 ? (periodTat <= 7 ? '✓ Good' : '⚠ Slow') : 'No data';
       tatBadge.className = 'kpi-badge ' + (periodTat > 0 && periodTat <= 7 ? 'badge-up' : 'badge-warn');
   }
+}
+  function buildTATBreakdowns(wk) {
+  if(!RAW[wk]) return;
+  const d=RAW[wk];
+
+  const makeRows = (obj, containerId, subId, title) => {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.innerHTML = `<div style="display:grid; grid-template-columns:120px 55px 1fr 1fr 1fr; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
+      <div>Name</div><div>Orders</div><div>PO→Disp</div><div>Disp→Del</div><div>PO→Del</div>
+    </div>`;
+    document.getElementById(subId).textContent = timeLabel(wk) + ' — ' + title;
+
+    const entries = Object.entries(obj || {}).sort((a,b)=>b[1].orders-a[1].orders).slice(0, 15);
+    if(!entries.length){
+      el.innerHTML+='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px 0;">No data available</div>';
+      return;
+    }
+
+    entries.forEach(([name, c]) => {
+      const proc = c.avg_proc_tat || 0; const tran = c.avg_tran_tat || 0; const total = c.avg_total_tat || 0;
+      const tatCls = total === 0 ? 'badge-warn' : total <= 7 ? 'badge-up' : total <= 10 ? 'badge-warn' : 'badge-down';
+      const procColor = proc <= 2 ? 'var(--brand-green-mid)' : proc <= 5 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+      const tranColor = tran <= 5 ? 'var(--brand-green-mid)' : tran <= 8 ? 'var(--brand-amber)' : 'var(--brand-orange)';
+
+      const row = document.createElement('div');
+      row.style.cssText = 'display:grid; grid-template-columns: 120px 55px 1fr 1fr 1fr; align-items:center; padding:12px 0; border-bottom:1px solid var(--divider); font-size:12px; gap:12px;';
+      row.innerHTML = `
+        <div style="font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${name}">${name}</div>
+        <div style="color:var(--muted); font-size:11px;">${c.orders}</div>
+        <div style="font-size:11px; font-weight:600; color:${procColor};">${proc > 0 ? proc + 'd' : '—'}</div>
+        <div style="font-size:11px; font-weight:600; color:${tranColor};">${tran > 0 ? tran + 'd' : '—'}</div>
+        <div class="tat-pill kpi-badge ${tatCls}" style="margin-top:0; width:fit-content;">${total > 0 ? total + 'd' : '—'}</div>`;
+      el.appendChild(row);
+    });
+  };
+
+  makeRows(d.channel_tat, 'tatChanList', 'tatChanSub', '3-Stage Breakdown');
+  makeRows(d.state_tat, 'tatStateList', 'tatStateSub', 'Top 15 States');
 }
 // ─── DEEP DIVE CHARTS ───
 function buildDeepDive(wk) {
@@ -2283,6 +2325,8 @@ function updateDashboard(){
   buildFillTable(wk);
   buildStatus(wk);
   buildCourier(wk);
+  if(typeof buildTATBreakdowns === 'function') buildTATBreakdowns(wk); // Add this line!
+  if(typeof buildDeepDive === 'function') buildDeepDive(wk);
   if(typeof buildDeepDive === 'function') buildDeepDive(wk);
   if(typeof buildTATKPIs === 'function') buildTATKPIs(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
