@@ -1821,13 +1821,14 @@ function buildShopify() {
         <div style="font-size:28px;font-weight:700;color:${clr};margin-bottom:2px;">${pct}%</div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">on time</div>
         
-        <!-- NEW GRID METRICS FOR AVGS, LOG COSTS & PERCENTAGES -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; border-top:1px solid var(--divider); padding-top:12px; margin-bottom:6px; text-align:left; font-size:11px;">
+        <!-- DYNAMIC METRICS GRID (AVGS, FINANCIALS, PER-ORDER METRICS) -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; border-top:1px solid var(--divider); padding-top:12px; text-align:left; font-size:11px;">
           <div><span style="color:var(--muted);">Avg TAT:</span> <strong style="color:var(--text);">${zd.avgTAT > 0 ? zd.avgTAT + 'd' : '—'}</strong></div>
-          <div><span style="color:var(--muted);">Cost:</span> <strong style="color:var(--brand-amber);">${fmtL(zd.logisticsCost)}</strong></div>
+          <div><span style="color:var(--muted);">Total Cost:</span> <strong style="color:var(--brand-amber);">${fmtL(zd.logisticsCost)}</strong></div>
         </div>
-        <div style="text-align:left; font-size:11px; color:var(--muted); margin-bottom:14px;">
-          Cost Ratio: <strong style="color:var(--brand-orange);">${zd.logCostPct > 0 ? zd.logCostPct + '%' : '0%'}</strong>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:4px; margin-bottom:14px; text-align:left; font-size:11px;">
+          <div><span style="color:var(--muted);">Cost Ratio:</span> <strong style="color:var(--brand-orange);">${zd.logCostPct > 0 ? zd.logCostPct + '%' : '0%'}</strong></div>
+          <div><span style="color:var(--muted);">Per Order:</span> <strong style="color:var(--brand-blue);">₹${zd.avgCost || 0}</strong></div>
         </div>
         
         <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:10px;border-top:1px solid var(--divider);padding-top:10px;">
