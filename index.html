@@ -406,9 +406,67 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div class="card-title">TAT by State</div>
         <div class="card-sub" id="tatStateSub">—</div>
         <div id="tatStateList"></div>
+      </table>
       </div>
     </div>
+  </div>
 
+  <div id="tab-ops" class="tab-content">
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">PO → Dispatch</div>
+        <div class="kpi-value" id="tatProc">—</div>
+        <div class="kpi-sub">Processing time</div>
+        <span class="kpi-badge" id="tatProcB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Dispatch → Delivery</div>
+        <div class="kpi-value" id="tatTran">—</div>
+        <div class="kpi-sub">Transit time</div>
+        <span class="kpi-badge" id="tatTranB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total TAT</div>
+        <div class="kpi-value" id="tatTotal">—</div>
+        <div class="kpi-sub">End to end</div>
+        <span class="kpi-badge" id="tatTotalB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-red)">
+        <div class="kpi-label">RTO %</div>
+        <div class="kpi-value" id="tatRTO">—</div>
+        <div class="kpi-sub">Return to origin</div>
+        <span class="kpi-badge" id="tatRTOB">—</span>
+      </div>
+    </div>
+    <div class="bottom-grid" style="margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">Order Status Breakdown</div>
+        <div class="card-sub" id="statusSub">—</div>
+        <ul class="status-list" id="statusList"></ul>
+        <div class="sum-strip">
+          <div class="ss-label">Delivery Rate</div>
+          <div style="font-size:20px; font-weight:600;" id="delRate">—</div>
+          <div class="dr-bar-bg"><div class="dr-bar-fill" id="drBar" style="width:0%;"></div></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Courier TAT Breakdown</div>
+        <div class="card-sub" id="courierSub">—</div>
+        <div id="courierList"></div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">TAT by Channel</div>
+        <div class="card-sub" id="tatChanSub">—</div>
+        <div id="tatChanList"></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">TAT by State</div>
+        <div class="card-sub" id="tatStateSub">—</div>
+        <div id="tatStateList"></div>
+      </div>
+    </div>
   </div>
 
   <div id="tab-po" class="tab-content">
