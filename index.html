@@ -1193,7 +1193,7 @@ function buildCourier(wk){
   document.getElementById('courierSub').textContent = timeLabel(wk) + ' — 3-Stage TAT Breakdown';
   
   el.innerHTML = `<div style="display:grid; grid-template-columns:120px 55px 1fr 1fr 1fr; padding:8px 0; border-bottom:1px solid var(--border); font-size:10px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; gap:12px;">
-    <div>Partner</div><div>Orders</div><div>PO→Disp</div><div>Disp→Delivery</div><div>PO→Delivery</div>
+    <div>Partner</div><div>Orders</div><div>PO→Disp</div><div>Disp→Del</div><div>PO→Del</div>
   </div>`;
 
   const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
