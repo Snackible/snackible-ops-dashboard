@@ -32,9 +32,16 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     console.log('Gemini status:', response.status, JSON.stringify(data).substring(0, 400));
+    if (data.error) {
+      console.error('Gemini error:', JSON.stringify(data.error));
+      return res.status(502).json({ error: data.error.message || 'Gemini API error' });
+    }
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) {
+      console.error('Gemini returned empty text:', JSON.stringify(data).substring(0, 500));
+      return res.status(502).json({ error: 'Gemini returned empty response' });
+    }
     res.status(200).json({ content: [{ type: 'text', text }] });
-
   } catch (err) {
     console.error('Handler error:', err.message);
     res.status(500).json({ error: err.message });
