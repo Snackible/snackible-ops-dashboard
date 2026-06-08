@@ -1328,7 +1328,7 @@ function buildCourier(wk){
     <div>Partner</div><div>Orders</div><div>PO→Disp</div><div>Disp→Del</div><div>PO→Del</div>
   </div>`;
 
-  const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders).slice(0,6);
+  const entries=Object.entries(d.couriers||{}).sort((a,b)=>b[1].orders-a[1].orders);
   if(!entries.length){
     el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px 0;">No courier data yet</div>';
     return;
