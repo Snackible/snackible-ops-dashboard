@@ -1269,10 +1269,11 @@ function buildStatus(wk){
   document.getElementById('statusSub').textContent=timeLabel(wk)+` · ${total} total`;
 
   const ORDER=['Delivered','In-Transit','Pending','Hold','Cancelled','RTO','Kunafa','Duplicate','Other'];
-  ORDER.forEach(st=>{
+  const allStatuses = [...new Set([...ORDER, ...Object.keys(d.statuses||{})])];
+  allStatuses.forEach(st=>{
     const cnt=d.statuses?.[st]||0;
     if(!cnt)return;
-    const meta=STATUS_META[st]||{icon:'📦',bg:'rgba(255,255,255,0.05)'};
+  const meta=STATUS_META[st]||{icon:'📦',bg:'rgba(255,255,255,0.05)'};
     const li=document.createElement('li');
     li.className='status-item';
     li.innerHTML=`<div class="status-left"><div class="s-icon" style="background:${meta.bg}">${meta.icon}</div>${st}</div>
