@@ -961,21 +961,10 @@ async function initDashboard() {
 
   try {
     // Fetch BOTH APIs concurrently
-    const [mainRes, shopifyRes] = await Promise.all([
-      fetch(API_URL),
-      fetch(API_URL + "?action=shopify")
-    ]);
-    
+    const mainRes = await fetch(API_URL);
     let rawData = await mainRes.json(); 
-    let shopifyData = await shopifyRes.json();
     
     if(rawData.error) throw new Error(rawData.error);
-    
-    // Attach Shopify data to the main data object
-    if(!shopifyData.error) {
-       rawData.shopify = shopifyData;
-    }
-
     const nameMap = {"Hot": "Hot - Blinkit", "Scootsy": "Scootsy - Swiggy", "KK": "KK - Zepto"};
     const swapKeys = (obj) => {
         if (!obj) return;
@@ -1800,6 +1789,17 @@ function buildPOTracker(wk) {
   }).join('');
 }
 function buildShopify() {
+  if (!TIME_DATA.shopify) {
+    document.getElementById('shInvVal').textContent = 'Loading...';
+    fetch(API_URL + "?action=shopify")
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error) { TIME_DATA.shopify = data; buildShopify(); }
+        else { document.getElementById('shInvVal').textContent = 'Error'; }
+      })
+      .catch(() => { document.getElementById('shInvVal').textContent = 'Error'; });
+    return;
+  }
   const shopify = TIME_DATA.shopify;
   if (!shopify || !shopify.monthly) {
     document.getElementById('shInvVal').textContent = 'No data';
