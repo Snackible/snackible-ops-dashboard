@@ -2280,7 +2280,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
     try { parsed = JSON.parse(text); }
     catch { parsed = { performance: text, anomalies: '—', recommendations: '—', channels: '—', states: '—' }; }
 
-    const fmt = (s) => s.replace(/•\s*/g, '<div style="margin-bottom:8px;">• ').split('<div').filter(Boolean).map((p,i) => i===0 ? p : '<div' + p).join('') + (s.includes('•') ? '</div>' : '');
+    const fmt = (s) => s.split('•').filter(t => t.trim()).map(t => '<div style="margin-bottom:8px;">• ' + t.trim() + '</div>').join('');
 
     document.getElementById('aiPerf').innerHTML = fmt(parsed.performance || '—');
     document.getElementById('aiAnomalies').innerHTML = fmt(parsed.anomalies || '—');
