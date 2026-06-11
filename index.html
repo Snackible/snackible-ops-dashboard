@@ -994,6 +994,12 @@ async function loadMTD() {
     const res = await fetch(API_URL + '?action=mtd');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+
+    // --- SAFETY NET ---
+    if (data.weekly && data.monthly) {
+        throw new Error("Apps Script Bug: Received the entire global dashboard instead of MTD data.");
+    }
+
     TIME_DATA.mtd_bucket = applyNameMap(data);
     RAW = { 'MTD': TIME_DATA.mtd_bucket };
     WEEKS = ['MTD'];
@@ -1005,6 +1011,7 @@ async function loadMTD() {
   } catch(e) {
     document.getElementById('alertTitle').textContent = 'MTD Load Failed';
     document.getElementById('alertText').textContent = e.message;
+    document.getElementById('alertBanner').style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
     console.error(e);
   }
 }
@@ -1027,6 +1034,12 @@ async function applyCustomRange() {
     const res = await fetch(API_URL + '?action=custom&start=' + start + '&end=' + end);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+
+    // --- SAFETY NET ---
+    if (data.weekly && data.monthly) {
+        throw new Error("Apps Script Bug: Received the entire global dashboard instead of Custom Range data.");
+    }
+
     const label = start + ' → ' + end;
     TIME_DATA.custom_bucket = applyNameMap(data);
     RAW = { [label]: TIME_DATA.custom_bucket };
@@ -1039,6 +1052,9 @@ async function applyCustomRange() {
     buildAlert(label);
   } catch(e) {
     statusEl.textContent = 'Error: ' + e.message;
+    document.getElementById('alertTitle').textContent = 'Custom Range Failed';
+    document.getElementById('alertText').textContent = e.message;
+    document.getElementById('alertBanner').style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
     console.error(e);
   }
 }
@@ -1694,22 +1710,25 @@ function buildPOTracker(wk) {
   // For monthly mode, aggregate all weekly data into one object
   let d, cf;
   if (currentMode === 'monthly') {
-    const selectedMonth = wk; // e.g. "May 2026"
+    const selectedMonth = wk; 
     const monthlyWeeks = weeklyKeys.filter(w => {
       const date = new Date(w + 'T00:00:00');
       const label = date.toLocaleString('en-GB', {month:'short', year:'numeric'}).replace(' ', ' ');
       return TIME_DATA.monthly?.[selectedMonth] !== undefined;
     });
-    // Use TIME_DATA.monthly directly for aggregated channel_fill
     const mData = TIME_DATA.monthly?.[selectedMonth] || weeklyData[weekKey];
     if (!mData) return;
     d = mData;
     cf = mData.channel_fill || {};
+  } else if (currentMode === 'custom' || currentMode === 'mtd') {
+    // Look at the live custom data instead of history
+    d = RAW[wk];
+    cf = d?.channel_fill || {};
   } else {
     d = weeklyData[weekKey];
-    cf = d.channel_fill || {};
+    cf = d?.channel_fill || {};
   }
-  if (!weeklyData[weekKey] && !TIME_DATA.monthly?.[wk]) return;
+  if (!d) return;
   // KPIs
   let totalPO = 0, totalInv = 0;
   Object.values(cf).forEach(v => { totalPO += v.po; totalInv += v.inv; });
