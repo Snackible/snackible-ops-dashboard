@@ -992,22 +992,42 @@ async function loadMTD() {
 
   try {
     const res = await fetch(API_URL + '?action=mtd');
-    const data = await res.json();
+    const text = await res.text();
+    
+    if (text.includes('<!DOCTYPE html>')) {
+      throw new Error("Google sent an HTML page instead of data. Go to Apps Script > Deploy > Manage Deployments > Edit > Select 'New Version' and Deploy.");
+    }
+    
+    const data = JSON.parse(text);
     if (data.error) throw new Error(data.error);
 
-    // --- SAFETY NET ---
     if (data.weekly && data.monthly) {
         throw new Error("Apps Script Bug: Received the entire global dashboard instead of MTD data.");
     }
 
-    TIME_DATA.mtd_bucket = applyNameMap(data);
-    RAW = { 'MTD': TIME_DATA.mtd_bucket };
+    // Unpack the data whether it's wrapped in "mtd", "MTD", or naked
+    let rawMtdData;
+    if (data.mtd && data.mtd["MTD"]) rawMtdData = data.mtd["MTD"];
+    else if (data["MTD"]) rawMtdData = data["MTD"];
+    else rawMtdData = data;
+
+    // Wrap it back so the dashboard can read it safely
+    const packagedData = { "MTD": rawMtdData };
+
+    TIME_DATA.mtd_bucket = applyNameMap(packagedData);
+    RAW = TIME_DATA.mtd_bucket; 
     WEEKS = ['MTD'];
+    
     const select = document.getElementById('weekSelect');
     select.innerHTML = '<option value="MTD">Month to Date ← Current</option>';
     currentMode = 'mtd';
     updateDashboard();
-    buildAlert('MTD');
+    
+    bn.style.cssText = 'background:rgba(58,188,162,0.15);border-color:var(--brand-green-mid);';
+    document.getElementById('alertIcon').textContent = '✅';
+    document.getElementById('alertTitle').textContent = 'MTD Data Loaded';
+    document.getElementById('alertText').textContent = 'Successfully fetched live MTD data.';
+    
   } catch(e) {
     document.getElementById('alertTitle').textContent = 'MTD Load Failed';
     document.getElementById('alertText').textContent = e.message;
@@ -1015,7 +1035,6 @@ async function loadMTD() {
     console.error(e);
   }
 }
-
 // ─── CUSTOM RANGE FETCH ───
 async function applyCustomRange() {
   const start = document.getElementById('customStart').value;
@@ -1032,24 +1051,46 @@ async function applyCustomRange() {
 
   try {
     const res = await fetch(API_URL + '?action=custom&start=' + start + '&end=' + end);
-    const data = await res.json();
+    const text = await res.text();
+    
+    if (text.includes('<!DOCTYPE html>')) {
+      throw new Error("Google sent an HTML page instead of data. Go to Apps Script > Deploy > Manage Deployments > Edit > Select 'New Version' and Deploy.");
+    }
+
+    const data = JSON.parse(text);
     if (data.error) throw new Error(data.error);
 
-    // --- SAFETY NET ---
     if (data.weekly && data.monthly) {
         throw new Error("Apps Script Bug: Received the entire global dashboard instead of Custom Range data.");
     }
 
     const label = start + ' → ' + end;
-    TIME_DATA.custom_bucket = applyNameMap(data);
-    RAW = { [label]: TIME_DATA.custom_bucket };
+    
+    // Unpack the data gracefully
+    let rawCustomData;
+    if (data.custom && data.custom["Custom Range"]) rawCustomData = data.custom["Custom Range"];
+    else if (data.custom && data.custom[label]) rawCustomData = data.custom[label];
+    else if (data["Custom Range"]) rawCustomData = data["Custom Range"];
+    else rawCustomData = data; 
+
+    // Wrap it back so the dashboard can read it safely
+    const packagedData = { [label]: rawCustomData };
+
+    TIME_DATA.custom_bucket = applyNameMap(packagedData);
+    RAW = TIME_DATA.custom_bucket;
     WEEKS = [label];
+    
     const select = document.getElementById('weekSelect');
     select.innerHTML = `<option value="${label}">${label}</option>`;
     currentMode = 'custom';
     statusEl.textContent = '✓ Loaded';
     updateDashboard();
-    buildAlert(label);
+    
+    document.getElementById('alertBanner').style.cssText = 'background:rgba(58,188,162,0.15);border-color:var(--brand-green-mid);';
+    document.getElementById('alertIcon').textContent = '✅';
+    document.getElementById('alertTitle').textContent = 'Custom Range Loaded';
+    document.getElementById('alertText').textContent = `Showing data from ${start} to ${end}.`;
+    
   } catch(e) {
     statusEl.textContent = 'Error: ' + e.message;
     document.getElementById('alertTitle').textContent = 'Custom Range Failed';
@@ -1058,7 +1099,6 @@ async function applyCustomRange() {
     console.error(e);
   }
 }
-
 function applyNameMap(data) {
   const nameMap = {"Hot":"Hot - Blinkit","Scootsy":"Scootsy - Swiggy","KK":"KK - Zepto"};
   const swapKeys = (obj) => {
