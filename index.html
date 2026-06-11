@@ -170,6 +170,8 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
       <option value="daily">Daily</option>
       <option value="weekly" selected>Weekly</option>
       <option value="monthly">Monthly</option>
+      <option value="mtd">MTD</option>
+      <option value="custom">Custom Range</option>
     </select>
     <select id="weekSelect" onchange="updateDashboard()">
       <option value="loading">Loading Live Data...</option>
@@ -178,6 +180,16 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 </div>
 
 <div class="container">
+
+  <!-- Custom date range picker (hidden by default) -->
+  <div id="customRangeBar" style="display:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 20px; margin-bottom:16px; display:none; align-items:center; gap:12px; flex-wrap:wrap;">
+    <span style="font-size:12px; color:var(--muted); font-weight:500;">Custom Range (PO Date):</span>
+    <input type="date" id="customStart" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
+    <span style="color:var(--muted);">→</span>
+    <input type="date" id="customEnd" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
+    <button onclick="applyCustomRange()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;">Apply</button>
+    <span id="customRangeStatus" style="font-size:11px;color:var(--muted);"></span>
+  </div>
 
   <div class="alert-banner" id="alertBanner">
     <div class="alert-icon" id="alertIcon">🔄</div>
@@ -874,6 +886,7 @@ function pct(v){return(v*100).toFixed(1)+'%';}
 
 function timeLabel(k) {
   if (currentMode === 'monthly') return k;
+  if (currentMode === 'mtd' || currentMode === 'custom') return k;
   if (currentMode === 'daily') {
     const d = new Date(k + 'T00:00:00');
     if (isNaN(d)) return k;
@@ -917,9 +930,31 @@ function openTab(tabId, btn) {
 
 // ─── THE NEW VIEW SWITCHER ───
 function switchView(mode) {
-  if (!TIME_DATA[mode]) return;
   currentMode = mode;
-  RAW = TIME_DATA[mode]; 
+
+  // Show/hide custom range bar
+  const customBar = document.getElementById('customRangeBar');
+  customBar.style.display = mode === 'custom' ? 'flex' : 'none';
+
+  // Hide week selector for MTD and Custom
+  document.getElementById('weekSelect').style.display = (mode === 'mtd' || mode === 'custom') ? 'none' : '';
+
+  if (mode === 'mtd') {
+    loadMTD();
+    return;
+  }
+  if (mode === 'custom') {
+    // Pre-fill dates to current month if empty
+    const now = new Date();
+    const start = document.getElementById('customStart');
+    const end = document.getElementById('customEnd');
+    if (!start.value) start.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+    if (!end.value) end.value = now.toISOString().split('T')[0];
+    return;
+  }
+
+  if (!TIME_DATA[mode]) return;
+  RAW = TIME_DATA[mode];
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   if (mode === 'monthly') {
     WEEKS = Object.keys(RAW).filter(k => {
@@ -945,6 +980,80 @@ function switchView(mode) {
     select.appendChild(opt);
   });
   if (WEEKS.length > 0) updateDashboard(); 
+}
+
+// ─── MTD FETCH ───
+async function loadMTD() {
+  const bn = document.getElementById('alertBanner');
+  document.getElementById('alertIcon').textContent = '🔄';
+  document.getElementById('alertTitle').textContent = 'Loading MTD Data...';
+  document.getElementById('alertText').textContent = 'Fetching month-to-date from PO Date.';
+  bn.style.cssText = 'background:rgba(76,148,208,0.15);border-color:var(--brand-blue);';
+
+  try {
+    const res = await fetch(API_URL + '?action=mtd');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    TIME_DATA.mtd_bucket = applyNameMap(data);
+    RAW = { 'MTD': TIME_DATA.mtd_bucket };
+    WEEKS = ['MTD'];
+    const select = document.getElementById('weekSelect');
+    select.innerHTML = '<option value="MTD">Month to Date ← Current</option>';
+    currentMode = 'mtd';
+    updateDashboard();
+    buildAlert('MTD');
+  } catch(e) {
+    document.getElementById('alertTitle').textContent = 'MTD Load Failed';
+    document.getElementById('alertText').textContent = e.message;
+    console.error(e);
+  }
+}
+
+// ─── CUSTOM RANGE FETCH ───
+async function applyCustomRange() {
+  const start = document.getElementById('customStart').value;
+  const end = document.getElementById('customEnd').value;
+  const statusEl = document.getElementById('customRangeStatus');
+  if (!start || !end) { statusEl.textContent = 'Select both dates'; return; }
+  if (start > end) { statusEl.textContent = 'Start must be before end'; return; }
+
+  statusEl.textContent = 'Loading...';
+  document.getElementById('alertIcon').textContent = '🔄';
+  document.getElementById('alertTitle').textContent = 'Loading Custom Range...';
+  document.getElementById('alertText').textContent = start + ' → ' + end + ' (by PO Date)';
+  document.getElementById('alertBanner').style.cssText = 'background:rgba(76,148,208,0.15);border-color:var(--brand-blue);';
+
+  try {
+    const res = await fetch(API_URL + '?action=custom&start=' + start + '&end=' + end);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const label = start + ' → ' + end;
+    TIME_DATA.custom_bucket = applyNameMap(data);
+    RAW = { [label]: TIME_DATA.custom_bucket };
+    WEEKS = [label];
+    const select = document.getElementById('weekSelect');
+    select.innerHTML = `<option value="${label}">${label}</option>`;
+    currentMode = 'custom';
+    statusEl.textContent = '✓ Loaded';
+    updateDashboard();
+    buildAlert(label);
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+function applyNameMap(data) {
+  const nameMap = {"Hot":"Hot - Blinkit","Scootsy":"Scootsy - Swiggy","KK":"KK - Zepto"};
+  const swapKeys = (obj) => {
+    if (!obj) return;
+    Object.keys(nameMap).forEach(oldKey => {
+      if (obj[oldKey] !== undefined) { obj[nameMap[oldKey]] = obj[oldKey]; delete obj[oldKey]; }
+    });
+  };
+  swapKeys(data.channels); swapKeys(data.channel_fill); swapKeys(data.channel_val); swapKeys(data.channel_sku);
+  if (data.daily_inv) Object.values(data.daily_inv).forEach(day => swapKeys(day));
+  return data;
 }
 
 // ─── LIVE FETCH ENGINE ───
