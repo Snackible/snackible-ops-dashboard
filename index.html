@@ -4,34 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snackible — Operations Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  /* SNACKIBLE BRAND COLOURS */
-  --brand-green-deep: #02514F;
-  --brand-green-mid: #3ABCA2;
-  --brand-amber: #FBAE25;
-  --brand-orange: #E35C25;
-  --brand-blue: #4C94D0;
-  --brand-purple: #6566AE;
-  --brand-navy: #262D67;
-  --brand-red: #E73744;
-
-  /* BACKGROUND SYSTEM */
-  --bg: #0E1A1A;
-  --card: #132020;
-  --border: rgba(58, 188, 162, 0.12);
-  --divider: rgba(58, 188, 162, 0.08);
+  /* VERCEL / LINEAR MISSION CONTROL PALETTE */
+  --bg: #060B14;
+  --card: #0C1324;
+  --border: rgba(255, 255, 255, 0.06);
+  --divider: rgba(255, 255, 255, 0.04);
   
   /* TYPOGRAPHY COLOURS */
-  --text: #FFFFFF;
-  --muted: #8AA8A6;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  --sub-muted: #64748B;
+
+  /* STATUS COLOURS */
+  --brand-green-deep: #02514F; /* Kept for legacy compatibility */
+  --brand-green-mid: #22C55E; /* Healthy */
+  --brand-amber: #F59E0B; /* Warning */
+  --brand-orange: #F59E0B; /* Mapped to warning */
+  --brand-red: #EF4444; /* Critical */
+  --brand-blue: #38BDF8; /* Info */
+  --brand-purple: #8B5CF6;
+  --brand-navy: #1E293B;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif !important; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif !important; }
 body { background: var(--bg); color: var(--text); min-height: 100vh; }
-
 /* HEADER */
 .header { 
   background: var(--brand-green-deep); padding: 16px 28px; display: flex; 
@@ -84,13 +84,16 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 /* KPI GRID */
 .kpi-grid { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .kpi-card { 
-  flex: 1; min-width: 200px; background: var(--card); border-radius: 12px; 
-  padding: 20px 24px; border: 1px solid var(--border); 
-  border-top: 3px solid var(--accent, var(--brand-green-mid)); 
+  flex: 1; min-width: 200px; background: var(--card); 
+  border-radius: 16px; 
+  padding: 20px 24px; 
+  border: 1px solid var(--border); 
+  border-top: 1px solid var(--border) !important; /* Kills the thick colored lines */
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 10px 30px rgba(0,0,0,.25);
 }
-.kpi-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-.kpi-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; margin-bottom: 5px; }
-.kpi-sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+.kpi-label { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.kpi-value { font-size: 44px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 8px; letter-spacing: -0.02em; }
+.kpi-sub { font-size: 11px; color: var(--sub-muted); font-weight: 500; }
 
 /* BADGES */
 .kpi-badge { 
@@ -103,13 +106,13 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
 
 /* CHARTS ROW */
 .charts-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 28px; }
-.chart-card, .full-card { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--border); }
-.full-card { margin-bottom: 28px; }
-.card-title { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px; }
-.card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; font-weight: 400; }
-.chart-wrap { position: relative; height: 220px; }
-.full-chart-wrap { position: relative; height: 200px; margin-top: 14px; }
-
+.chart-card, .full-card { 
+  background: var(--card); 
+  border-radius: 16px; 
+  padding: 24px; 
+  border: 1px solid var(--border); 
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 10px 30px rgba(0,0,0,.25);
+}
 /* BOTTOM GRID */
 .bottom-grid { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .bottom-grid > div { flex: 1; min-width: 300px; }
@@ -187,7 +190,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
     <input type="date" id="customStart" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
     <span style="color:var(--muted);">→</span>
     <input type="date" id="customEnd" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
-    <button onclick="applyCustomRange()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;">Apply</button>
+    <button onclick="applyCustomRange()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Apply</button>
     <span id="customRangeStatus" style="font-size:11px;color:var(--muted);"></span>
   </div>
 
@@ -775,7 +778,7 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="aiPeriodLabel">Powered by Claude · Current period analysis</div>
       </div>
       <button onclick="generateInsights()" id="aiGenBtn"
-        style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;display:flex;align-items:center;gap:8px;">
+        style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:8px;">
         ✦ Generate Insights
       </button>
     </div>
@@ -823,10 +826,10 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
         <div id="aiChatHistory" style="max-height:360px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:12px;"></div>
         <div style="display:flex;gap:10px;">
           <input id="aiChatInput" type="text" placeholder="e.g. Why is fill rate low for Zepto? Which state has the most RTO?"
-            style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:13px;outline:none;font-family:Poppins,sans-serif;"
+            style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:13px;outline:none;font-family:Inter,sans-serif;"
             onkeydown="if(event.key==='Enter')sendAIChat()">
           <button onclick="sendAIChat()" 
-            style="background:var(--brand-green-mid);color:#0E1A1A;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:Poppins,sans-serif;">
+            style="background:var(--brand-green-mid);color:#0E1A1A;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:Inter,sans-serif;">
             Ask →
           </button>
         </div>
@@ -1285,8 +1288,8 @@ function buildChannelChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
-        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Inter',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Inter',size:10},callback:v=>fmtL(v)}}
       }
     }
   });
@@ -1331,8 +1334,8 @@ function buildTrendChart(selWk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
-        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>fmtL(v)}}
+        x:{grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Inter',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Inter',size:10},callback:v=>fmtL(v)}}
       }
     }
   });
@@ -1380,8 +1383,8 @@ function buildDailyChart(wk){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('en-IN')+' units'}}},
       scales:{
-        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Poppins',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
-        y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Poppins',size:10},callback:v=>v.toLocaleString('en-IN')}}
+        x:{stacked:true,grid:{display:false},ticks:{color:'#8AA8A6',font:{family:'Inter',weight:'500',size:9}, maxRotation: 0, minRotation: 0}},
+        y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8AA8A6',font:{family:'Inter',size:10},callback:v=>v.toLocaleString('en-IN')}}
       }
     }
   });
@@ -1569,7 +1572,7 @@ function buildDeepDive(wk) {
       labels: typeEntries.map(e=>e[0]),
       datasets: [{data: typeEntries.map(e=>e[1]), backgroundColor: typeEntries.map(e=>TYPE_COLORS[e[0]]||TYPE_COLORS.Other), borderWidth:0}]
     },
-    options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position: 'right', labels:{color:'#8AA8A6', font:{family:'Poppins', size:11}} }, tooltip: { callbacks: { label: c=>' '+fmtL(c.raw) } } }, cutout: '70%' }
+    options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position: 'right', labels:{color:'#8AA8A6', font:{family:'Inter', size:11}} }, tooltip: { callbacks: { label: c=>' '+fmtL(c.raw) } } }, cutout: '70%' }
   });
   document.getElementById('typeSub').textContent = timeLabel(wk) + ' — Invoice Value';
 
@@ -1580,7 +1583,7 @@ function buildDeepDive(wk) {
   stateInst = new Chart(ctxState, {
     type: 'bar',
     data: { labels: stateEntriesList.map(e=>e[0]), datasets: [{data: stateEntriesList.map(e=>e[1]), backgroundColor: '#FBAE25', borderRadius: 4}] },
-    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Poppins', size:11}}} } }
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Inter', size:11}}} } }
   });
   document.getElementById('stateSub').textContent = timeLabel(wk) + ' — Top 6 States by GMV';
 
@@ -1591,7 +1594,7 @@ function buildDeepDive(wk) {
   locInst = new Chart(ctxLoc, {
     type: 'bar',
     data: { labels: locEntries.map(e=>e[0]), datasets: [{data: locEntries.map(e=>e[1]), backgroundColor: '#3ABCA2', borderRadius: 4}] },
-    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Poppins', size:11}}} } }
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } }, scales: { x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6', font:{size:10}, callback:v=>fmtL(v)}}, y:{grid:{display:false}, ticks:{color:'#8AA8A6', font:{family:'Inter', size:11}}} } }
   });
   document.getElementById('locSub').textContent = timeLabel(wk) + ' — Top 6 Cities by GMV';
 
@@ -1857,7 +1860,7 @@ function buildPOTracker(wk) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Inter', size: 11 } } } },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 9 }, maxRotation: 0 } },
         y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v.toLocaleString('en-IN') } }
@@ -1886,7 +1889,7 @@ function buildPOTracker(wk) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Inter', size: 11 } } } },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 9 }, maxRotation: 0 } },
         y: { min: 0, max: 110, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v + '%' } }
@@ -1922,7 +1925,7 @@ function buildPOTracker(wk) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Poppins', size: 11 } } } },
+      plugins: { legend: { labels: { color: '#8AA8A6', font: { family: 'Inter', size: 11 } } } },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#8AA8A6', font: { size: 10 }, maxRotation: 0 } },
         y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8AA8A6', font: { size: 10 }, callback: v => v.toLocaleString('en-IN') } }
@@ -2057,7 +2060,7 @@ function buildShopify() {
       ]
     },
     options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Poppins',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
+      plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Inter',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
       scales:{ x:{ grid:{display:false}, ticks:{color:'#8AA8A6',font:{size:9},maxRotation:0} }, y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6',font:{size:10},callback:v=>fmtL(v)} } }
     }
   });
@@ -2073,7 +2076,7 @@ function buildShopify() {
       ]
     },
     options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Poppins',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
+      plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Inter',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
       scales:{ x:{ grid:{display:false}, ticks:{color:'#8AA8A6',font:{size:9},maxRotation:0} }, y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6',font:{size:10},callback:v=>v+'%'} } }
     }
   });
@@ -2172,7 +2175,7 @@ function buildShopify() {
         ]
       },
       options: { responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Poppins',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
+        plugins:{ legend:{ labels:{ color:'#8AA8A6', font:{family:'Inter',size:11} } }, tooltip:{ callbacks:{ label: c=>' '+fmtL(c.raw) } } },
         scales:{ x:{ grid:{display:false}, ticks:{color:'#8AA8A6',font:{size:10},maxRotation:45} }, y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8AA8A6',font:{size:10},callback:v=>fmtL(v)} } }
       }
     });
@@ -2478,7 +2481,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
       'Which state should we prioritize?'
     ];
     document.getElementById('aiSuggestions').innerHTML = suggestions.map(q =>
-      `<button onclick="askSuggestion('${q}')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Poppins,sans-serif;">${q}</button>`
+      `<button onclick="askSuggestion('${q}')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Inter,sans-serif;">${q}</button>`
     ).join('');
 
   } catch(e) {
