@@ -2180,13 +2180,10 @@ function buildShopify() {
     </tr>`).join('');
   }
 
-  // MoM chart (Uses all months, not just the selected one, to show full timeline)
+  // MoM chart
   if (shMoMInst) shMoMInst.destroy();
   const moRaw = shopify.monthly;
-  // MoM chart (Uses the exact timeline we just filtered above, but flipped chronologically)
-  if (shMoMInst) shMoMInst.destroy();
-  const moRaw = shopify.monthly;
-  const moKeys = [...keys].reverse(); // Flips the keys left-to-right for the chart
+  const moKeys = [...keys].reverse();
   
   const momCtx = document.getElementById('shMoMChart');
   if (momCtx) {
