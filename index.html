@@ -2001,10 +2001,16 @@ function buildShopify() {
   const raw = shopify.monthly;
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Get sorted keys (descending: latest month first)
+  // Get sorted keys (descending) — STRICT CUTOFF AT NOV 2025
   const keys = Object.keys(raw).filter(k => {
     const p = k.split(' ');
-    return p.length === 2 && monthOrder.includes(p[0]) && parseInt(p[1]) > 2000;
+    if (p.length !== 2 || !monthOrder.includes(p[0])) return false;
+    const year = parseInt(p[1], 10);
+    const moIdx = monthOrder.indexOf(p[0]);
+    
+    if (year >= 2026) return true; // Keep all of 2026+
+    if (year === 2025 && (moIdx === 10 || moIdx === 11)) return true; // Keep Nov (10) & Dec (11) 2025
+    return false;
   }).sort((a, b) => {
     const [aM, aY] = a.split(' ');
     const [bM, bY] = b.split(' ');
@@ -2177,12 +2183,10 @@ function buildShopify() {
   // MoM chart (Uses all months, not just the selected one, to show full timeline)
   if (shMoMInst) shMoMInst.destroy();
   const moRaw = shopify.monthly;
-  const moKeys = Object.keys(moRaw).filter(k=>{
-    const p=k.split(' '); return p.length===2&&monthOrder.includes(p[0])&&parseInt(p[1])>2000;
-  }).sort((a,b)=>{
-    const [aM,aY]=a.split(' '),[bM,bY]=b.split(' ');
-    return (parseInt(aY)-parseInt(bY))||(monthOrder.indexOf(aM)-monthOrder.indexOf(bM)); // Ascending
-  });
+  // MoM chart (Uses the exact timeline we just filtered above, but flipped chronologically)
+  if (shMoMInst) shMoMInst.destroy();
+  const moRaw = shopify.monthly;
+  const moKeys = [...keys].reverse(); // Flips the keys left-to-right for the chart
   
   const momCtx = document.getElementById('shMoMChart');
   if (momCtx) {
