@@ -2001,7 +2001,7 @@ function buildShopify() {
   const raw = shopify.monthly;
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Get sorted keys (descending) — STRICT CUTOFF AT NOV 2025
+  // STRICT CUTOFF AT NOV 2025
   const keys = Object.keys(raw).filter(k => {
     const p = k.split(' ');
     if (p.length !== 2 || !monthOrder.includes(p[0])) return false;
@@ -2020,7 +2020,6 @@ function buildShopify() {
   const periodSelect = document.getElementById('shPeriodSelect');
   const currentVal = periodSelect.value;
 
-  // Populate dropdown
   periodSelect.innerHTML = '';
   if (keys.length === 0) {
     periodSelect.innerHTML = '<option value="">No data available</option>';
@@ -2034,7 +2033,6 @@ function buildShopify() {
     periodSelect.appendChild(opt);
   });
 
-  // Restore selection or pick latest
   if (keys.includes(currentVal)) {
     periodSelect.value = currentVal;
   } else {
@@ -2072,7 +2070,7 @@ function buildShopify() {
   setB('shRTOB', d.rtoPct <= 10 ? '✓ Acceptable' : '⚠ High RTO', d.rtoPct <= 10, d.rtoPct <= 15);
   setB('shDelRateB', d.deliveryRate >= 85 ? '✓ Healthy' : '⚠ Below Target', d.deliveryRate >= 85, d.deliveryRate >= 75);
 
-  // Trend charts (last 8 months, ascending order for left-to-right timeline)
+  // Trend charts
   const trendKeys = keys.slice(0, 8).reverse();
   const trendLabels = trendKeys;
 
@@ -2082,8 +2080,8 @@ function buildShopify() {
     data: {
       labels: trendLabels,
       datasets: [
-        { label: 'Invoice Value', data: trendKeys.map(k => raw[k]?.invoiceValue||0), backgroundColor: 'rgba(58,188,162,0.7)', borderColor: '#3ABCA2', borderWidth:1.5, borderRadius:4 },
-        { label: 'Logistics Cost', data: trendKeys.map(k => raw[k]?.logisticsCost||0), backgroundColor: 'rgba(227,92,37,0.7)', borderColor: '#E35C25', borderWidth:1.5, borderRadius:4 }
+        { label: 'Invoice Value', data: trendKeys.map(k => raw[k]?.invoiceValue||0), backgroundColor: 'rgba(94,234,212,0.7)', borderColor: '#5EEAD4', borderWidth:1.5, borderRadius:4 },
+        { label: 'Logistics Cost', data: trendKeys.map(k => raw[k]?.logisticsCost||0), backgroundColor: 'rgba(96,165,250,0.7)', borderColor: '#60A5FA', borderWidth:1.5, borderRadius:4 }
       ]
     },
     options: { responsive:true, maintainAspectRatio:false,
@@ -2098,8 +2096,8 @@ function buildShopify() {
     data: {
       labels: trendLabels,
       datasets: [
-        { label: 'Cost %', data: trendKeys.map(k => raw[k]?.logCostPct||0), borderColor:'#FBAE25', backgroundColor:'rgba(251,174,37,0.1)', fill:true, tension:0.4, borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#FBAE25' },
-        { label: 'Target (15%)', data: trendKeys.map(()=>15), borderColor:'rgba(58,188,162,0.4)', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false }
+        { label: 'Cost %', data: trendKeys.map(k => raw[k]?.logCostPct||0), borderColor:'#F59E0B', backgroundColor:'rgba(245,158,11,0.1)', fill:true, tension:0.4, borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#F59E0B' },
+        { label: 'Target (15%)', data: trendKeys.map(()=>15), borderColor:'rgba(255,255,255,0.2)', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false }
       ]
     },
     options: { responsive:true, maintainAspectRatio:false,
@@ -2123,7 +2121,7 @@ function buildShopify() {
         <div style="font-size:28px;font-weight:700;color:${clr};margin-bottom:2px;">${pct}%</div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">on time</div>
         
-        <!-- DYNAMIC METRICS GRID (AVGS, FINANCIALS, PER-ORDER METRICS) -->
+        <!-- DYNAMIC METRICS GRID -->
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; border-top:1px solid var(--divider); padding-top:12px; text-align:left; font-size:11px;">
           <div><span style="color:var(--muted);">Avg TAT:</span> <strong style="color:var(--text);">${zd.avgTAT > 0 ? zd.avgTAT + 'd' : '—'}</strong></div>
           <div><span style="color:var(--muted);">Total Cost:</span> <strong style="color:var(--brand-amber);">${fmtL(zd.logisticsCost)}</strong></div>
@@ -2180,9 +2178,8 @@ function buildShopify() {
     </tr>`).join('');
   }
 
-  // MoM chart
+  // MoM chart 
   if (shMoMInst) shMoMInst.destroy();
-  const moRaw = shopify.monthly;
   const moKeys = [...keys].reverse();
   
   const momCtx = document.getElementById('shMoMChart');
@@ -2192,8 +2189,8 @@ function buildShopify() {
       data: {
         labels: moKeys,
         datasets: [
-          { label: 'Invoice Value', data: moKeys.map(k=>moRaw[k]?.invoiceValue||0), backgroundColor:'rgba(58,188,162,0.7)', borderColor:'#3ABCA2', borderWidth:1.5, borderRadius:4 },
-          { label: 'Logistics Cost', data: moKeys.map(k=>moRaw[k]?.logisticsCost||0), backgroundColor:'rgba(227,92,37,0.7)', borderColor:'#E35C25', borderWidth:1.5, borderRadius:4 }
+          { label: 'Invoice Value', data: moKeys.map(k=>raw[k]?.invoiceValue||0), backgroundColor:'rgba(94,234,212,0.7)', borderColor:'#5EEAD4', borderWidth:1.5, borderRadius:4 },
+          { label: 'Logistics Cost', data: moKeys.map(k=>raw[k]?.logisticsCost||0), backgroundColor:'rgba(96,165,250,0.7)', borderColor:'#60A5FA', borderWidth:1.5, borderRadius:4 }
         ]
       },
       options: { responsive:true, maintainAspectRatio:false,
@@ -2203,7 +2200,7 @@ function buildShopify() {
     });
   }
 }
-function buildDelivered() {
+  function buildDelivered() {
   const allList = TIME_DATA.delivered_log || [];
   const mode = document.getElementById('delModeSelect')?.value || 'weekly';
   const periodSelect = document.getElementById('delPeriodSelect');
