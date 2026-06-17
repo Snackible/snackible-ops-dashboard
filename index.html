@@ -1351,7 +1351,7 @@ function buildTrendChart(selWk){
       fill:true,tension:.4,borderWidth:2.5,
       pointBackgroundColor:slice.map(w=>w===selWk?'#F8FAFC':'#5EEAD4'),
       pointRadius:slice.map(w=>w===selWk?7:4),pointHoverRadius:7,
-    }]
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtL(c.raw)}}},
       scales:{
