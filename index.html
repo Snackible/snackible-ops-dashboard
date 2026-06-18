@@ -109,7 +109,7 @@ body {
     0 14px 34px rgba(0,0,0,.28);
 }
 .kpi-label { font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-bottom: 14px; }
-.kpi-value { font-size: 46px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 10px; letter-spacing: -0.025em; }(--text); line-height: 1; margin-bottom: 8px; letter-spacing: -0.02em; }
+.kpi-value { font-size: 46px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 10px; letter-spacing: -0.025em; }
 .kpi-sub { font-size: 11px; color: var(--sub-muted); font-weight: 500; }
 
 /* BADGES */
@@ -1182,6 +1182,12 @@ async function initDashboard() {
     TIME_DATA = rawData;
     switchView('weekly');
     setTimeout(() => buildPOTracker(Object.keys(TIME_DATA.weekly || {}).sort().reverse()[0]), 300);
+    setTimeout(() => {
+      fetch(API_URL + '?action=shopify')
+        .then(r => r.json())
+        .then(data => { if (!data.error) TIME_DATA.shopify = data; })
+        .catch(() => {});
+    }, 1500);
 
   } catch (error) {
     bn.style.cssText = 'background:rgba(227,92,37,0.15);border-color:var(--brand-orange);';
@@ -2578,7 +2584,6 @@ function updateDashboard(){
   buildStatus(wk);
   buildCourier(wk);
   if(typeof buildTATBreakdowns === 'function') buildTATBreakdowns(wk); // Add this line!
-  if(typeof buildDeepDive === 'function') buildDeepDive(wk);
   if(typeof buildDeepDive === 'function') buildDeepDive(wk);
   if(typeof buildTATKPIs === 'function') buildTATKPIs(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
