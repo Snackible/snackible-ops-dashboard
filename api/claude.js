@@ -22,8 +22,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        // 2. Use the frontend model, or fallback to the correct real model
-        model: model || 'claude-3-5-sonnet-20240620',
+        model: 'claude-3-5-sonnet-20240620', // <-- HARDCODED: ignores frontend cache
         max_tokens: max_tokens || 1000,
         system: system || '',
         messages: messages
