@@ -2461,8 +2461,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
     const response = await fetch(CLAUDE_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20240620', // FIXED MODEL NAME
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
@@ -2470,92 +2470,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
     });
 
     const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-    clearInterval(loadInterval);
-
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch { parsed = { performance: text, anomalies: '—', recommendations: '—', channels: '—', states: '—' }; }
-
-    const fmt = (s) => s.split('•').filter(t => t.trim()).map(t => '<div style="margin-bottom:8px;">• ' + t.trim() + '</div>').join('');
-
-    document.getElementById('aiPerf').innerHTML = fmt(parsed.performance || '—');
-    document.getElementById('aiAnomalies').innerHTML = fmt(parsed.anomalies || '—');
-    document.getElementById('aiRecs').innerHTML = fmt(parsed.recommendations || '—');
-    document.getElementById('aiChannels').innerHTML = fmt(parsed.channels || '—');
-    document.getElementById('aiStates').innerHTML = fmt(parsed.states || '—');
-
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiCardsRow').style.display = 'block';
-    document.getElementById('aiChatSection').style.display = 'block';
-
-    // Seed chat history with context
-    aiChatHistory = [{
-      role: 'user',
-      content: `Here is the current ops data context:\n${userPrompt}`
-    }, {
-      role: 'assistant',
-      content: text
-    }];
-
-    // Suggested follow-up questions
-    const suggestions = [
-      'Which channel needs urgent attention?',
-      'Why might RTO be high?',
-      'What\'s dragging down fill rate?',
-      'Which state should we prioritize?'
-    ];
-    document.getElementById('aiSuggestions').innerHTML = suggestions.map(q =>
-      `<button onclick="askSuggestion('${q}')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Inter,sans-serif;">${q}</button>`
-    ).join('');
-
-  } catch(e) {
-    clearInterval(loadInterval);
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiPerf').textContent = 'Error generating insights. Check your API key.';
-    document.getElementById('aiCardsRow').style.display = 'block';
-    console.error(e);
-  }
-
-  document.getElementById('aiGenBtn').textContent = '✦ Regenerate';
-  document.getElementById('aiGenBtn').disabled = false;
-}
-
-function askSuggestion(q) {
-  document.getElementById('aiChatInput').value = q;
-  sendAIChat();
-}
-
-async function sendAIChat() {
-  const input = document.getElementById('aiChatInput');
-  const q = input.value.trim();
-  if (!q) return;
-  input.value = '';
-
-  const history = document.getElementById('aiChatHistory');
-
-  // Add user bubble
-  history.innerHTML += `<div style="align-self:flex-end;background:var(--brand-green-deep);border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:75%;font-size:13px;line-height:1.5;">${q}</div>`;
-  history.innerHTML += `<div id="aiTyping" style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:13px;color:var(--muted);">Thinking...</div>`;
-  history.scrollTop = history.scrollHeight;
-
-  aiChatHistory.push({ role: 'user', content: q });
-
-  try {
-    const response = await fetch(CLAUDE_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620', // CORRECTED MODEL NAME
-        max_tokens: 500,
-        system: `You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.`,
-        messages: aiChatHistory
-      })
-    });
-
-    const data = await response.json();
     
-    // NEW: Catch API errors so they don't turn into blank dashes
+    // Catch API errors explicitly
     if (!response.ok || data.error) {
       throw new Error(data.error?.message || "Anthropic API rejected the request.");
     }
@@ -2579,7 +2495,6 @@ async function sendAIChat() {
     document.getElementById('aiCardsRow').style.display = 'block';
     document.getElementById('aiChatSection').style.display = 'block';
 
-    // Seed chat history with context
     aiChatHistory = [{
       role: 'user',
       content: `Here is the current ops data context:\n${userPrompt}`
@@ -2588,7 +2503,6 @@ async function sendAIChat() {
       content: text
     }];
 
-    // Suggested follow-up questions
     const suggestions = [
       'Which channel needs urgent attention?',
       'Why might RTO be high?',
@@ -2602,12 +2516,64 @@ async function sendAIChat() {
   } catch(e) {
     clearInterval(loadInterval);
     document.getElementById('aiLoading').style.display = 'none';
-    // NEW: Will display the actual error on the dashboard so you know what's wrong
-    document.getElementById('aiPerf').textContent = `Error: ${e.message}. Check Vercel logs or API key.`;
+    document.getElementById('aiPerf').textContent = `Error: ${e.message}`;
     document.getElementById('aiCardsRow').style.display = 'block';
     console.error(e);
   }
 
+  document.getElementById('aiGenBtn').textContent = '✦ Regenerate';
+  document.getElementById('aiGenBtn').disabled = false;
+}
+
+function askSuggestion(q) {
+  document.getElementById('aiChatInput').value = q;
+  sendAIChat();
+}
+
+async function sendAIChat() {
+  const input = document.getElementById('aiChatInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+
+  const history = document.getElementById('aiChatHistory');
+
+  history.innerHTML += `<div style="align-self:flex-end;background:var(--brand-green-deep);border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:75%;font-size:13px;line-height:1.5;">${q}</div>`;
+  history.innerHTML += `<div id="aiTyping" style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:13px;color:var(--muted);">Thinking...</div>`;
+  history.scrollTop = history.scrollHeight;
+
+  aiChatHistory.push({ role: 'user', content: q });
+
+  try {
+    const response = await fetch(CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20240620', // FIXED MODEL NAME
+        max_tokens: 500,
+        system: `You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.`,
+        messages: aiChatHistory
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok || data.error) {
+      throw new Error(data.error?.message || "Anthropic API rejected the request.");
+    }
+
+    const reply = data.content?.[0]?.text || 'Could not get a response.';
+    aiChatHistory.push({ role: 'assistant', content: reply });
+
+    const typing = document.getElementById('aiTyping');
+    if (typing) typing.outerHTML = `<div style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px 12px 12px 2px;padding:10px 14px;max-width:80%;font-size:13px;color:var(--text);line-height:1.6;">${reply}</div>`;
+    history.scrollTop = history.scrollHeight;
+
+  } catch(e) {
+    const typing = document.getElementById('aiTyping');
+    if (typing) typing.outerHTML = `<div style="align-self:flex-start;background:rgba(255,255,255,0.05);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--brand-orange);">Error: ${e.message}</div>`;
+  }
+}
 // Add spin animation to CSS
 const spinStyle = document.createElement('style');
 spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
