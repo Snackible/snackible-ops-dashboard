@@ -11,7 +11,8 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
 
   try {
-    const { messages, system, max_tokens } = req.body;
+    // 1. We extract the model name sent by the frontend
+    const { messages, system, max_tokens, model } = req.body;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -21,7 +22,8 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        // 2. Use the frontend model, or fallback to the correct real model
+        model: model || 'claude-3-5-sonnet-20240620',
         max_tokens: max_tokens || 1000,
         system: system || '',
         messages: messages
