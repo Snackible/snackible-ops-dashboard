@@ -2556,8 +2556,8 @@ async function sendAIChat() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620', // FIXED MODEL NAME
-        max_tokens: 500,
+         model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
         system: `You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.`,
         messages: aiChatHistory
       })
