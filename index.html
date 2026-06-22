@@ -2286,7 +2286,6 @@ function buildShopify() {
 
   // Filter by PO week (item.week maps to week number)
   let filtered = [];
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const parseDelivDate = (item) => {
     if (!item.date) return null;
     const d = new Date(item.date + 'T00:00:00');
@@ -2470,7 +2469,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620', // FIXED MODEL NAME
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
