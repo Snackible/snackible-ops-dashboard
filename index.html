@@ -935,7 +935,12 @@ function openTab(tabId, btn) {
   document.getElementById(tabId).classList.add('active');
   btn.classList.add('active');
   Object.values(Chart.instances).forEach(chart => chart.resize());
-  if (tabId === 'tab-delivered') buildDelivered();
+  if (tabId === 'tab-delivered') {
+    const globalMode = document.getElementById('modeSelect').value;
+    const delModeSelect = document.getElementById('delModeSelect');
+    if (['weekly','monthly','daily'].includes(globalMode)) delModeSelect.value = globalMode;
+    buildDelivered();
+  }
   if (tabId === 'tab-shopify') buildShopify();
   if (tabId === 'tab-po') {
     setTimeout(() => {
@@ -2216,25 +2221,28 @@ function buildShopify() {
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Collect unique periods from po_date/_time
+  REPLACE:
   let periodMap = {};
   allList.forEach(item => {
-    if (!item._time) return;
-    const d = new Date(item._time);
+    if (!item.date) return;
+    // Parse delivery date from item.date (e.g. "21 Jun")
+    const parts = item.date.split(' ');
+    if (parts.length < 2) return;
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const mo = monthNames.indexOf(parts[1]);
+    if (mo === -1) return;
+    const yr = new Date().getFullYear();
+    const delivDate = new Date(yr, mo, parseInt(parts[0]));
     let key;
     if (mode === 'weekly') {
-      // Use week number stored in item.week to get week start date
-      const wk = parseInt(item.week);
-      if (!isNaN(wk) && wk > 0) {
-        const wStart = new Date("2025-12-29T00:00:00");
-        wStart.setDate(wStart.getDate() + (wk - 1) * 7);
-        key = wStart.toISOString().split('T')[0]; // yyyy-MM-dd
-      }
+      const day = delivDate.getDay();
+      const weekStart = new Date(delivDate);
+      weekStart.setDate(delivDate.getDate() - ((day + 6) % 7)); // Monday
+      key = weekStart.toISOString().split('T')[0];
     } else if (mode === 'monthly') {
-      const mo = d.toLocaleString('en-GB', {month:'short'});
-      const yr = d.getFullYear();
-      key = mo + ' ' + yr;
+      key = parts[1] + ' ' + yr;
     } else if (mode === 'daily') {
-      key = d.toISOString().split('T')[0];
+      key = delivDate.toISOString().split('T')[0];
     }
     if (key) periodMap[key] = true;
   });
@@ -2285,24 +2293,34 @@ function buildShopify() {
 
   // Filter by PO week (item.week maps to week number)
   let filtered = [];
+  REPLACE:
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const parseDelivDate = (item) => {
+    if (!item.date) return null;
+    const parts = item.date.split(' ');
+    if (parts.length < 2) return null;
+    const mo = monthNames.indexOf(parts[1]);
+    if (mo === -1) return null;
+    return new Date(new Date().getFullYear(), mo, parseInt(parts[0]));
+  };
   if (mode === 'weekly') {
     const wStart = new Date(selectedPeriod + 'T00:00:00');
     const wEnd = new Date(wStart); wEnd.setDate(wEnd.getDate() + 6);
-    // match by week field
-    const wk = getWeekNumFromDate(wStart);
-    filtered = allList.filter(item => item.week && parseInt(item.week) === wk);
+    filtered = allList.filter(item => {
+      const d = parseDelivDate(item);
+      return d && d >= wStart && d <= wEnd;
+    });
   } else if (mode === 'monthly') {
     filtered = allList.filter(item => {
-      if (!item._time) return false;
-      const d = new Date(item._time);
-      const mo = d.toLocaleString('en-GB', {month:'short'});
-      const yr = d.getFullYear();
-      return (mo + ' ' + yr) === selectedPeriod;
+      const d = parseDelivDate(item);
+      if (!d) return false;
+      return (monthNames[d.getMonth()] + ' ' + d.getFullYear()) === selectedPeriod;
     });
   } else if (mode === 'daily') {
     filtered = allList.filter(item => {
-      if (!item._time) return false;
-      return new Date(item._time).toISOString().split('T')[0] === selectedPeriod;
+      const d = parseDelivDate(item);
+      if (!d) return false;
+      return d.toISOString().split('T')[0] === selectedPeriod;
     });
   }
 
@@ -2314,7 +2332,7 @@ function buildShopify() {
   document.getElementById('delInvTotal').textContent = fmtL(totalVal);
   document.getElementById('delAvgVal').textContent = fmtL(Math.round(avgVal));
   document.getElementById('delPeriodSub').textContent = periodSelect.options[periodSelect.selectedIndex]?.text || selectedPeriod;
-  document.getElementById('delLogSub').textContent = 'Filtered by PO Date · ' + count + ' orders';
+  document.getElementById('delLogSub').textContent = 'Filtered by Delivery Date · ' + count + ' orders';
 
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No delivered orders for this period.</td></tr>';
@@ -2595,7 +2613,12 @@ function updateDashboard(){
   if(typeof buildTATKPIs === 'function') buildTATKPIs(wk);
   if(typeof buildStateFillTable === 'function') buildStateFillTable(wk);
   if(typeof buildPOTracker === 'function') buildPOTracker(wk);
-  if(document.getElementById('tab-delivered').classList.contains('active')) buildDelivered();
+  if(document.getElementById('tab-delivered').classList.contains('active')) {
+    const globalMode = document.getElementById('modeSelect').value;
+    const delModeSelect = document.getElementById('delModeSelect');
+    if (['weekly','monthly','daily'].includes(globalMode)) delModeSelect.value = globalMode;
+    buildDelivered();
+  }
 }
 
 window.onload = initDashboard;
