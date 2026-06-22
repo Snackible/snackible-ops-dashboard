@@ -2222,30 +2222,24 @@ function buildShopify() {
 
   // Collect unique periods from po_date/_time
   let periodMap = {};
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   allList.forEach(item => {
     if (!item.date) return;
-    // Parse delivery date from item.date (e.g. "21 Jun")
-    const parts = item.date.split(' ');
-    if (parts.length < 2) return;
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const mo = monthNames.indexOf(parts[1]);
-    if (mo === -1) return;
-    const yr = new Date().getFullYear();
-    const delivDate = new Date(yr, mo, parseInt(parts[0]));
+    const delivDate = new Date(item.date + 'T00:00:00');
+    if (isNaN(delivDate.getTime())) return;
     let key;
     if (mode === 'weekly') {
       const day = delivDate.getDay();
       const weekStart = new Date(delivDate);
-      weekStart.setDate(delivDate.getDate() - ((day + 6) % 7)); // Monday
+      weekStart.setDate(delivDate.getDate() - ((day + 6) % 7));
       key = weekStart.toISOString().split('T')[0];
     } else if (mode === 'monthly') {
-      key = parts[1] + ' ' + yr;
+      key = monthNames[delivDate.getMonth()] + ' ' + delivDate.getFullYear();
     } else if (mode === 'daily') {
       key = delivDate.toISOString().split('T')[0];
     }
     if (key) periodMap[key] = true;
   });
-
   // Sort periods
   let periods = Object.keys(periodMap);
   if (mode === 'weekly' || mode === 'daily') {
@@ -2295,11 +2289,9 @@ function buildShopify() {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const parseDelivDate = (item) => {
     if (!item.date) return null;
-    const parts = item.date.split(' ');
-    if (parts.length < 2) return null;
-    const mo = monthNames.indexOf(parts[1]);
-    if (mo === -1) return null;
-    return new Date(new Date().getFullYear(), mo, parseInt(parts[0]));
+    const d = new Date(item.date + 'T00:00:00');
+    if (!isNaN(d.getTime())) return d;
+    return null;
   };
   if (mode === 'weekly') {
     const wStart = new Date(selectedPeriod + 'T00:00:00');
