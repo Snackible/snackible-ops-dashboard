@@ -2221,7 +2221,6 @@ function buildShopify() {
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Collect unique periods from po_date/_time
-  REPLACE:
   let periodMap = {};
   allList.forEach(item => {
     if (!item.date) return;
@@ -2293,7 +2292,6 @@ function buildShopify() {
 
   // Filter by PO week (item.week maps to week number)
   let filtered = [];
-  REPLACE:
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const parseDelivDate = (item) => {
     if (!item.date) return null;
