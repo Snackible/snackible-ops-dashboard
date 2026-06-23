@@ -2814,7 +2814,8 @@ function buildSKUAnalysis() {
   let declining = 0;
   skuList.forEach(s => { if (getSkuTotal(dataB,s)>0 && getSkuTotal(dataA,s)<getSkuTotal(dataB,s)) declining++; });
 
-  document.getElementById('skuTotalUnits').textContent  = fmtU(totalA);
+  const isVal = document.getElementById('skuViewToggle')?.value === 'value';
+  document.getElementById('skuTotalUnits').textContent  = skuFmt(totalA);
   document.getElementById('skuTotalUnitsSub').textContent = `vs ${fmtU(totalB)} in ${labelB}`;
   const tb = document.getElementById('skuTotalUnitsB');
   if (totalB > 0) {
