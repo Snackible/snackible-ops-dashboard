@@ -2749,8 +2749,17 @@ function buildSKUAnalysis() {
   if (statusEl) statusEl.textContent = 'SKU data ready';
 
   const mode = document.getElementById('skuModeSelect').value;
-  const bucket = mode === 'monthly' ? sa.monthly : sa.weekly;
-  if (!bucket) return;
+  const bucket = getSkuBucket(sa);
+  if (!bucket) {
+    if (document.getElementById('skuViewToggle')?.value === 'value') {
+      document.getElementById('skuTotalUnits').textContent = '—';
+      document.getElementById('skuTotalUnitsSub').textContent = 'Value data not available yet';
+      document.getElementById('skuTotalUnitsB').textContent = 'Needs Apps Script update';
+      document.getElementById('skuTotalUnitsB').className = 'kpi-badge badge-warn';
+      return;
+    }
+    return;
+  }
 
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const allPeriods = Object.keys(bucket).sort((a, b) => {
