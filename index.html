@@ -2556,6 +2556,9 @@ ${ctx.courierSummary}
 
 TOP 5 SKUs: ${ctx.skuTop5}
 
+SKU PERFORMANCE COMPARISON:
+${ctx.skuComparisonContext}
+
 PRIOR PERIOD: ${ctx.prevSummary}
 
 Respond ONLY in this exact JSON format (no markdown, no backticks):
@@ -2564,7 +2567,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
   "anomalies": "2-4 bullet points on anomalies, drops or spikes vs prior period. Each bullet on new line starting with •",
   "recommendations": "3 specific actionable recommendations ranked by priority. Each on new line starting with •",
   "channels": "2-4 bullets on channel-level commentary — which channels are over/underperforming and why. Each bullet on new line starting with •",
-  "states": "2-4 bullets on geo performance — top states, states with low fill rate, any concerns. Each bullet on new line starting with •"
+  "states": "2-4 bullets on geo performance — top states, states with low fill rate, any concerns. Each bullet on new line starting with •",
+  "skus": "2-4 bullets analyzing the SKU Performance Comparison (growing vs declining products). Point out notable shifts. Each bullet on new line starting with •"
 }`;
 
   try {
@@ -2572,7 +2576,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
@@ -2591,7 +2595,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
 
     let parsed;
     try { parsed = JSON.parse(text); }
-    catch { parsed = { performance: text, anomalies: '—', recommendations: '—', channels: '—', states: '—' }; }
+    catch { parsed = { performance: text, anomalies: '—', recommendations: '—', channels: '—', states: '—', skus: '—' }; }
 
     const fmt = (s) => s.split('•').filter(t => t.trim()).map(t => '<div style="margin-bottom:8px;">• ' + t.trim() + '</div>').join('');
 
@@ -2600,6 +2604,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
     document.getElementById('aiRecs').innerHTML = fmt(parsed.recommendations || '—');
     document.getElementById('aiChannels').innerHTML = fmt(parsed.channels || '—');
     document.getElementById('aiStates').innerHTML = fmt(parsed.states || '—');
+    document.getElementById('aiSKUs').innerHTML = fmt(parsed.skus || '—'); 
 
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiCardsRow').style.display = 'block';
@@ -2634,7 +2639,6 @@ Respond ONLY in this exact JSON format (no markdown, no backticks):
   document.getElementById('aiGenBtn').textContent = '✦ Regenerate';
   document.getElementById('aiGenBtn').disabled = false;
 }
-
 function askSuggestion(q) {
   document.getElementById('aiChatInput').value = q;
   sendAIChat();
