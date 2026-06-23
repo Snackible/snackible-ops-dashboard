@@ -109,7 +109,7 @@ body {
     0 14px 34px rgba(0,0,0,.28);
 }
 .kpi-label { font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); margin-bottom: 14px; }
-.kpi-value { font-size: 46px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 10px; letter-spacing: -0.025em; }
+.kpi-value { font-size: 36px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 10px; letter-spacing: -0.025em; }
 .kpi-sub { font-size: 11px; color: var(--sub-muted); font-weight: 500; }
 
 /* BADGES */
@@ -770,7 +770,7 @@ body {
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Top channel</div>
-      <div class="kpi-value" id="skuTopChan">—</div>
+      <div class="kpi-value" id="skuTopChan" style="font-size:28px;">—</div>
       <div class="kpi-sub" id="skuTopChanSub">—</div>
     </div>
     <div class="kpi-card">
@@ -2845,8 +2845,8 @@ function buildSKUAnalysis() {
         <div style="width:${share}%;height:100%;background:${color};border-radius:2px;"></div>
       </div>
       <div style="font-size:10px;color:var(--muted);">${share}% of ${labelA} total · was ${priorShare}% in ${labelB}</div>
-      <div style="border-top:1px solid var(--divider);margin:8px 0;"></div>
-      <div style="font-size:11px;color:var(--muted);">Top SKU &nbsp;<strong style="color:var(--text);">${skuShortName(topSkuOnCh,20)}</strong> · ${fmtU(topSkuOnChNow)} (was ${fmtU(topSkuOnChPrior)})</div>
+      <div style="border-top:1px solid var(--divider);margin:10px 0;"></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px;">Top SKU &nbsp;<strong style="color:var(--text);">${skuShortName(topSkuOnCh,20)}</strong> · ${fmtU(topSkuOnChNow)} (was ${fmtU(topSkuOnChPrior)})</div>
       ${bdPct<0?`<div style="font-size:11px;color:var(--muted);margin-top:3px;">Biggest drop &nbsp;<strong style="color:#EF4444;">${skuShortName(biggestDrop,16)} ▼ ${Math.abs(bdPct)}%</strong></div>`:''}
       <div style="margin-top:8px;font-size:11px;color:var(--brand-amber);">Drill in →</div>
     </div>`;
