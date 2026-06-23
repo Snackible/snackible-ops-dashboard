@@ -736,6 +736,10 @@ body {
 <div id="tab-sku" class="tab-content">
 
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <select id="skuViewToggle" onchange="buildSKUAnalysis()" style="background:rgba(255,255,255,0.05);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;">
+      <option value="units">📦 Units</option>
+      <option value="value">💰 Invoice Value</option>
+    </select>
     <select id="skuModeSelect" onchange="buildSKUAnalysis()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;">
       <option value="monthly">Monthly</option>
       <option value="weekly">Weekly</option>
@@ -2688,7 +2692,15 @@ document.head.appendChild(spinStyle);
 // ─── SKU ANALYSIS TAB ───
 const SKU_CH_COLORS = { Blinkit:'#E35C25', Zepto:'#6566AE', Swiggy:'#3ABCA2', BB:'#4C94D0', Amazon:'#FBAE25' };
 const SKU_CH_ORDER  = ['Blinkit','Zepto','Swiggy','BB','Amazon'];
-
+function skuFmt(v) {
+  return document.getElementById('skuViewToggle')?.value === 'value' ? fmtL(v) : fmtU(v);
+}
+function getSkuBucket(sa) {
+  const mode = document.getElementById('skuModeSelect').value;
+  const view = document.getElementById('skuViewToggle')?.value || 'units';
+  if (view === 'value') return sa[mode === 'monthly' ? 'monthly_value' : 'weekly_value'] || null;
+  return sa[mode === 'monthly' ? 'monthly' : 'weekly'];
+}
 let skuCurrentLevel = 'l1';
 let skuDrillChannel = null;
 let skuDrillSKU     = null;
@@ -2878,7 +2890,7 @@ function buildSKUAnalysis() {
       const v = getChanTotal(d, ch);
       const grand = getGrandTotal(d);
       const h = grand > 0 ? Math.round((v/grand)*52) : 0;
-      return `<div style="height:${h}px;background:${SKU_CH_COLORS[ch]||'#888'};"></div>`;
+      return `<div style="height:${h}px;background:${SKU_CH_COLORS[ch]||'#888'};cursor:default;" title="${ch}: ${fmtU(v)} units (${grand>0?((v/grand)*100).toFixed(1):0}%)"></div>`;
     });
     const lbl = mode==='weekly' ? timeLabel(p).split(' - ')[0] : p.split(' ')[0];
     const isCurrent = pi === trendPeriods.length-1;
