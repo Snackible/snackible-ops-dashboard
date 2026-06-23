@@ -2327,8 +2327,8 @@ function buildShopify() {
   let periodMap = {};
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   allList.forEach(item => {
-    if (!item.date) return;
-    const delivDate = new Date(item.date + 'T00:00:00');
+    if (!item._time || item._time === 0) return;
+    const delivDate = new Date(item._time);
     if (isNaN(delivDate.getTime())) return;
     let key;
     if (mode === 'weekly') {
@@ -2390,8 +2390,8 @@ function buildShopify() {
   // Filter by PO week (item.week maps to week number)
   let filtered = [];
   const parseDelivDate = (item) => {
-    if (!item.date) return null;
-    const d = new Date(item.date + 'T00:00:00');
+    if (!item._time || item._time === 0) return null;
+    const d = new Date(item._time);
     if (!isNaN(d.getTime())) return d;
     return null;
   };
