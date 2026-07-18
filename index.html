@@ -62,7 +62,6 @@
     <button class="tab-btn" onclick="openTab('tab-delivered', this)">Delivered Data</button>
     <button class="tab-btn" onclick="openTab('tab-shopify', this)">🛍 Shopify B2C</button>
      <button class="tab-btn" onclick="openTab('tab-sku', this)">⬡ SKU Analysis</button>
-    <button class="tab-btn" onclick="openTab('tab-ai', this)">✦ AI Insights</button>
   </div>
 
   <div id="tab-sales" class="tab-content active">
@@ -707,73 +706,6 @@
   </div>
 
 </div>
-<div id="tab-ai" class="tab-content">
-
-    <!-- Generate button -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-      <div>
-        <div style="font-size:18px;font-weight:600;color:var(--text);">AI Insights</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="aiPeriodLabel">Powered by Claude · Current period analysis</div>
-      </div>
-      <button onclick="generateInsights()" id="aiGenBtn"
-        style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:8px;">
-        ✦ Generate Insights
-      </button>
-    </div>
-
-    <!-- Insight cards row -->
-    <div id="aiCardsRow" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
-        <div class="chart-card" style="border-top:3px solid var(--brand-green-mid);">
-          <div class="kpi-label" style="margin-bottom:12px;">📊 Performance Summary</div>
-          <div id="aiPerf" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
-        </div>
-        <div class="chart-card" style="border-top:3px solid var(--brand-orange);">
-          <div class="kpi-label" style="margin-bottom:12px;">⚠️ Anomalies Detected</div>
-          <div id="aiAnomalies" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
-        </div>
-        <div class="chart-card" style="border-top:3px solid var(--brand-amber);">
-          <div class="kpi-label" style="margin-bottom:12px;">✅ Recommendations</div>
-          <div id="aiRecs" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
-        </div>
-      </div>
-
-      <!-- Channel & State commentary -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-        <div class="chart-card">
-          <div class="kpi-label" style="margin-bottom:12px;">📦 Channel Commentary</div>
-          <div id="aiChannels" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
-        </div>
-        <div class="chart-card">
-          <div class="kpi-label" style="margin-bottom:12px;">📍 State & Geo Commentary</div>
-          <div id="aiStates" style="font-size:13px;color:var(--text);line-height:1.7;">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Loading state -->
-    <div id="aiLoading" style="display:none;text-align:center;padding:60px 0;">
-      <div style="font-size:32px;margin-bottom:16px;animation:spin 1.5s linear infinite;display:inline-block;">✦</div>
-      <div style="font-size:14px;color:var(--muted);" id="aiLoadingText">Analyzing your operations data...</div>
-    </div>
-
-    <!-- Chat interface -->
-    <div id="aiChatSection" style="display:none;">
-      <div class="chart-card" style="margin-bottom:0;">
-        <div class="kpi-label" style="margin-bottom:16px;">💬 Ask About Your Data</div>
-        <div id="aiChatHistory" style="max-height:360px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:12px;"></div>
-        <div style="display:flex;gap:10px;">
-          <input id="aiChatInput" type="text" placeholder="e.g. Why is fill rate low for Zepto? Which state has the most RTO?"
-            style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:#fff;font-size:13px;outline:none;font-family:Inter,sans-serif;"
-            onkeydown="if(event.key==='Enter')sendAIChat()">
-          <button onclick="sendAIChat()" 
-            style="background:var(--brand-green-mid);color:#0E1A1A;border:none;border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:Inter,sans-serif;">
-            Ask →
-          </button>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="aiSuggestions"></div>
-      </div>
-    </div>
 
   </div>
 
