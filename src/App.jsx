@@ -112,6 +112,11 @@ export default function App() {
   } else {
     body = (
       <>
+        {data?.issues?.futurePo > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <Banner tone="info" title={`${data.issues.futurePo} rows left out: PO date is in the future`} text="These orders have a PO date after today, which is usually a typo in the sheet. They are excluded from the period views until the dates are corrected." />
+          </div>
+        )}
         {range.error && <div style={{ marginBottom: 18 }}><Banner tone="bad" title="That range didn't load" text={range.error} /></div>}
         <Active ctx={ctx} />
       </>

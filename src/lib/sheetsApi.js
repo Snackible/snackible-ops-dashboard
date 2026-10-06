@@ -21,12 +21,14 @@ export function parseDate(v) {
   return isNaN(d) ? null : d;
 }
 
-// PO dates more than 60 days ahead (e.g. 2027 typos) or before 2024 are treated as missing so they
-// don't create phantom months; those rows simply fall out of the period views.
-function saneFuture(d) {
+// PO dates after today (e.g. a mistyped month) or before 2024 are treated as missing so they don't create
+// phantom weeks or months. Those rows fall out of the period views and are counted in rows.issues.
+// A day and a half of slack covers time zones.
+function sanePoDate(d, issues) {
   if (!d) return null;
   const t = d.getTime();
-  return t > Date.now() + 60 * 864e5 || t < Date.UTC(2024, 0, 1) ? null : d;
+  if (t > Date.now() + 36 * 36e5) { issues.futurePo += 1; return null; }
+  return t < Date.UTC(2024, 0, 1) ? null : d;
 }
 
 export async function fetchSheetRows() {
@@ -62,6 +64,7 @@ export function toRows(values) {
   const skuCols = wIdx >= 0 ? header.map((h, i) => [h, i]).filter(([h, i]) => i > wIdx && h) : [];
 
   const rows = [];
+  const issues = { futurePo: 0 };
   for (let r = 1; r < values.length; r++) {
     const v = values[r];
     const g = (k) => (c[k] == null ? '' : v[c[k]]);
@@ -80,7 +83,7 @@ export function toRows(values) {
       location,
       city: deriveCity(location),
       state: deriveState(g('state'), location),
-      poDate: saneFuture(parseDate(g('poDate'))),
+      poDate: sanePoDate(parseDate(g('poDate')), issues),
       actDispatch: parseDate(g('actDispatch')),
       actDel: parseDate(g('actDel')),
       orderValue: num(g('orderValue')),
@@ -93,5 +96,6 @@ export function toRows(values) {
       skus,
     });
   }
+  rows.issues = issues;
   return rows;
 }

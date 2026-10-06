@@ -134,7 +134,7 @@ export function buildTimeData(rows) {
     (groups.weekly[weekKey(r.poDate)] ||= []).push(r);
     (groups.monthly[monthKey(r.poDate)] ||= []).push(r);
   });
-  const td = { rows, shopify: null, delivered_log: deliveredLog(rows), sku_analysis: skuAnalysis(dated) };
+  const td = { rows, issues: rows.issues || {}, shopify: null, delivered_log: deliveredLog(rows), sku_analysis: skuAnalysis(dated) };
   Object.entries(groups).forEach(([mode, g]) => {
     td[mode] = Object.fromEntries(Object.entries(g).map(([k, v]) => [k, buildBlock(v)]));
   });
