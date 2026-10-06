@@ -82,7 +82,7 @@ export default function Sales({ ctx }) {
                 <CartesianGrid stroke={chartTheme.grid} vertical={false} />
                 <XAxis dataKey="name" {...axis} interval={0} />
                 <YAxis {...axis} tickFormatter={fmtL} />
-                <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtL(v)} labelFormatter={(_, p) => p?.[0]?.payload?.full} />
+                <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtL(v)} labelFormatter={(_, p) => p?.[0]?.payload?.full} />
                 <Bar isAnimationActive={false} dataKey="v" radius={[6, 6, 0, 0]}>
                   {channels.map((c) => <Cell key={c.full} fill={CHANNEL_COLORS[c.full] || CHANNEL_COLORS.Others} />)}
                 </Bar>
@@ -98,7 +98,7 @@ export default function Sales({ ctx }) {
               <YAxis {...axis} tickFormatter={fmtL} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => fmtL(v)} />
               <Line isAnimationActive={false} type="monotone" dataKey="gmv" stroke={chartTheme.accent} strokeWidth={2.5} dot={{ r: 3, fill: chartTheme.accent, strokeWidth: 0 }} />
-              {trend.find((t) => t.p === period) && <ReferenceDot x={trend.find((t) => t.p === period).name} y={trend.find((t) => t.p === period).gmv} r={6} fill="#eceee8" stroke={chartTheme.accent} strokeWidth={2} />}
+              {trend.find((t) => t.p === period) && <ReferenceDot x={trend.find((t) => t.p === period).name} y={trend.find((t) => t.p === period).gmv} r={6} fill="var(--text)" stroke={chartTheme.accent} strokeWidth={2} />}
             </LineChart>
           </ResponsiveContainer></div>
         </Card>

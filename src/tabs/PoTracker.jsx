@@ -40,7 +40,7 @@ export default function PoTracker({ ctx }) {
       <BarChart data={data_} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
         <CartesianGrid stroke={chartTheme.grid} vertical={false} />
         <XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={fmtN} />
-        <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtN(v)} />
+        <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtN(v)} />
         {legend}
         <Bar isAnimationActive={false} dataKey="po" name="PO qty" fill="#E2B14A" radius={[5, 5, 0, 0]} />
         <Bar isAnimationActive={false} dataKey="inv" name="Invoice qty" fill="#4FB59E" radius={[5, 5, 0, 0]} />

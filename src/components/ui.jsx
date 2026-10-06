@@ -119,3 +119,16 @@ export function Spark({ values, color }) {
     </div>
   );
 }
+
+export function ThemeSelect({ value, onChange, className = '' }) {
+  return (
+    <label className={`theme-pick ${className}`}>
+      <span className="sr-only">Colour theme</span>
+      <select className="field mini" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Colour theme">
+        <option value="system">System theme</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+  );
+}

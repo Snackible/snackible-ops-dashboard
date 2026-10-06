@@ -33,7 +33,7 @@ export default function Inventory({ ctx }) {
                   <CartesianGrid stroke={chartTheme.grid} vertical={false} />
                   <XAxis dataKey="name" {...axis} />
                   <YAxis {...axis} tickFormatter={fmtN} />
-                  <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v, n) => [fmtN(v) + ' units', n]} />
+                  <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v, n) => [fmtN(v) + ' units', n]} />
                   {active.map((ch) => <Bar isAnimationActive={false} key={ch} dataKey={ch} stackId="s" fill={CHANNEL_COLORS[ch]} />)}
                 </BarChart>
               </ResponsiveContainer></div>

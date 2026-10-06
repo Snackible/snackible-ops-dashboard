@@ -43,7 +43,7 @@ export default function Shopify({ ctx }) {
     <div className="chart-box"><ResponsiveContainer>
       <BarChart data={rows} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
         <CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={fmtL} />
-        <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtL(v)} />
+        <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtL(v)} />
         {legend}
         <Bar isAnimationActive={false} dataKey="inv" name="Invoice value" fill="#4FB59E" radius={[5, 5, 0, 0]} />
         <Bar isAnimationActive={false} dataKey="cost" name="Logistics cost" fill="#5E9FD0" radius={[5, 5, 0, 0]} />
@@ -73,7 +73,7 @@ export default function Shopify({ ctx }) {
             <LineChart data={money(trendKeys)} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
               <CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={(v) => v + '%'} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => v + '%'} />
-              <ReferenceLine y={15} stroke="#9aa79f" strokeDasharray="5 4" strokeOpacity={0.5} />
+              <ReferenceLine y={15} stroke="var(--muted)" strokeDasharray="5 4" strokeOpacity={0.5} />
               <Line isAnimationActive={false} type="monotone" dataKey="pct" name="Cost %" stroke="#E2B14A" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#E2B14A' }} />
             </LineChart>
           </ResponsiveContainer></div>

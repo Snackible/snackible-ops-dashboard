@@ -7,7 +7,7 @@ export const CHANNEL_COLORS = {
   Amazon: '#E2B14A',
   BB: '#5E9FD0',
   B2B: '#3E8F86',
-  GT: '#B9C779',
+  GT: '#98AD4A',
   MT: '#7C86B8',
   FC: '#D9604C',
   FKM: '#C28FB0',
@@ -15,7 +15,7 @@ export const CHANNEL_COLORS = {
 };
 export const CHANNEL_ORDER = ['Hot - Blinkit', 'KK - Zepto', 'Scootsy - Swiggy', 'Amazon', 'BB', 'B2B', 'GT', 'MT', 'FC', 'FKM'];
 export const PLATFORM_COLORS = {
-  Blinkit: '#E0773F', Zepto: '#8688C9', Swiggy: '#4FB59E', B2B: '#3E8F86', GT: '#B9C779',
+  Blinkit: '#E0773F', Zepto: '#8688C9', Swiggy: '#4FB59E', B2B: '#3E8F86', GT: '#98AD4A',
   MT: '#7C86B8', 'Big Basket': '#E2B14A', Ecom: '#C28FB0', Other: '#8E9C94',
 };
 export const SKU_CHANNEL_COLORS = { Blinkit: '#E0773F', Zepto: '#8688C9', Swiggy: '#4FB59E', BB: '#5E9FD0', Amazon: '#E2B14A' };
@@ -27,12 +27,14 @@ export const STATUS_TONE = {
 };
 export const STATUS_ORDER = ['Delivered', 'In-Transit', 'Pending', 'Hold', 'Cancelled', 'RTO', 'Kunafa', 'Duplicate', 'Other'];
 
+// Chart chrome reads CSS variables so it follows the light/dark theme without re-rendering.
 export const chartTheme = {
-  grid: 'rgba(222,232,224,0.07)',
-  tick: '#8a978f',
-  accent: '#4FB59E',
-  accent2: '#E2B14A',
-  good: '#6DBE8B',
-  bad: '#E0705A',
-  tooltip: { background: '#19221e', border: '1px solid rgba(222,232,224,0.13)', borderRadius: 10, fontSize: 12, color: '#eceee8' },
+  grid: 'var(--chart-grid)',
+  tick: 'var(--chart-tick)',
+  accent: 'var(--accent)',
+  accent2: 'var(--warn)',
+  good: 'var(--good)',
+  bad: 'var(--bad)',
+  cursor: { fill: 'var(--hover)' },
+  tooltip: { background: 'var(--tooltip-bg)', border: '1px solid var(--line-strong)', borderRadius: 10, fontSize: 12, color: 'var(--text)' },
 };

@@ -15,7 +15,7 @@ function TopBars({ entries, color, empty }) {
         <CartesianGrid stroke={chartTheme.grid} horizontal={false} />
         <XAxis type="number" {...axis} tickFormatter={fmtL} />
         <YAxis type="category" dataKey="name" width={80} {...axis} />
-        <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtL(v)} />
+        <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtL(v)} />
         <Bar isAnimationActive={false} dataKey="v" fill={color} radius={[0, 6, 6, 0]} barSize={16} />
       </BarChart>
     </ResponsiveContainer></div>

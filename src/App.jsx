@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Banner, DashboardSkeleton, Empty } from './components/ui.jsx';
+import { Banner, DashboardSkeleton, Empty, ThemeSelect } from './components/ui.jsx';
 import { DATA_SOURCE } from './config.js';
 import { useDashboardData } from './hooks/useDashboardData.js';
+import { useTheme } from './hooks/useTheme.js';
 import { isMonthKey, monthKeySort, periodLabel } from './lib/format.js';
 import Sales from './tabs/Sales.jsx';
 import DeepDive from './tabs/DeepDive.jsx';
@@ -27,6 +28,7 @@ const tabFromHash = () => (TABS.find(([id]) => '#' + id === window.location.hash
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default function App() {
+  const [theme, setTheme] = useTheme();
   const [auto, setAuto] = useState(() => {
     try { return localStorage.getItem('auto-refresh') === 'off' ? 0 : 5; } catch { return 5; }
   });
@@ -174,6 +176,7 @@ export default function App() {
                 {isRange && range.loading && <span className="c-faint">Loading…</span>}
               </div>
             )}
+            <ThemeSelect className="theme-header" value={theme} onChange={setTheme} />
             {status === 'ready' && (
               <button type="button" className={`icon-btn ${refreshing ? 'spinning' : ''}`} onClick={refresh} disabled={refreshing} aria-label="Refresh data" title={refreshing ? 'Refreshing…' : 'Refresh data'}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -195,6 +198,7 @@ export default function App() {
           {refreshError && <span className="c-bad"> · Last refresh failed, showing earlier data</span>}
         </span>
         <span className="footer-actions">
+          <ThemeSelect className="theme-footer" value={theme} onChange={setTheme} />
           <label>
             Auto-refresh{' '}
             <select className="field mini" value={auto} onChange={(e) => changeAuto(+e.target.value)} aria-label="Auto-refresh">
