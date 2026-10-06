@@ -112,7 +112,7 @@ input.field { background-image: none; padding-right: 12px; }
 .badge.neutral { background: var(--surface-3); color: var(--muted); }
 .c-good { color: var(--good); } .c-warn { color: var(--warn); } .c-bad { color: var(--bad); } .c-muted { color: var(--muted); } .c-faint { color: var(--faint); }
 
-.banner { display: flex; gap: 14px; padding: 14px 18px; border-radius: var(--radius-md); align-items: flex-start; border-left: 3px solid var(--line-strong); background: var(--surface); }
+.banner { position: relative; display: flex; gap: 14px; padding: 14px 18px; border-radius: var(--radius-md); align-items: flex-start; border-left: 3px solid var(--line-strong); background: var(--surface); }
 .banner.good { border-color: var(--good); background: var(--good-bg); }
 .banner.warn { border-color: var(--warn); background: var(--warn-bg); }
 .banner.bad { border-color: var(--bad); background: var(--bad-bg); }
@@ -225,3 +225,7 @@ tbody tr:hover { background: var(--surface-2); }
 .spinner { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--warn); animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 640px) { .toast { bottom: 14px; gap: 10px; padding: 11px 13px; } }
+
+.banner-close { flex: none; align-self: flex-start; width: 26px; height: 26px; margin: -4px -6px 0 0; display: grid; place-items: center; background: none; border: 0; border-radius: 7px; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.15s; }
+.banner-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.banner-close:active { transform: scale(0.92); }

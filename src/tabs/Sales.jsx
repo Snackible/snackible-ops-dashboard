@@ -7,14 +7,14 @@ import AiInsights from './AiInsights.jsx';
 
 const BADGE = { good: 'good', warn: 'warn', bad: 'bad' };
 
-export function StatusBanner({ d, isLatest }) {
+export function StatusBanner({ d, isLatest, resetKey }) {
   const bad = Object.entries(d.channel_fill || {}).filter(([, v]) => v.po > 0 && v.rate < 0.9).sort((a, b) => a[1].rate - b[1].rate);
   if (isLatest && d.orders < 50) {
-    return <Banner tone="info" title="Open period, data incomplete" text="Orders in this period are still being fulfilled, so fill and TAT will move." />;
+    return <Banner dismissible resetKey={resetKey} tone="info" title="Open period, data incomplete" text="Orders in this period are still being fulfilled, so fill and TAT will move." />;
   }
-  if (!bad.length) return <Banner tone="good" title="All channels above 90% fill" text="Every active channel is meeting its fill-rate floor this period." />;
+  if (!bad.length) return <Banner dismissible resetKey={resetKey} tone="good" title="All channels above 90% fill" text="Every active channel is meeting its fill-rate floor this period." />;
   return (
-    <Banner tone="warn" title="Short supply on some channels" text={bad.map(([ch, v]) => `${ch} at ${fmtPct(v.rate)}`).join(', ') + '.'}>
+    <Banner dismissible resetKey={resetKey} tone="warn" title="Short supply on some channels" text={bad.map(([ch, v]) => `${ch} at ${fmtPct(v.rate)}`).join(', ') + '.'}>
       <div className="chips">
         {bad.map(([ch, v]) => <Badge key={ch} tone="warn">{ch}: {fmtN(v.short)} units short</Badge>)}
       </div>
@@ -72,7 +72,7 @@ export default function Sales({ ctx }) {
 
   return (
     <div className="stack fade-in">
-      <StatusBanner d={d} isLatest={isLatest} />
+      <StatusBanner d={d} isLatest={isLatest} resetKey={`${mode}:${period}`} />
       <SalesKpis d={d} prev={prev} />
       <div className="grid g-1-1">
         <Card title="GMV by channel" sub={`${label} · invoice value`}>

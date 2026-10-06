@@ -77,7 +77,10 @@ export function Segmented({ value, options, onChange, label }) {
   );
 }
 
-export function Banner({ tone = 'info', title, text, children }) {
+// dismissible banners hide until `resetKey` changes (e.g. a new period), so a fresh issue still shows.
+export function Banner({ tone = 'info', title, text, children, dismissible = false, resetKey = '' }) {
+  const [hiddenFor, setHiddenFor] = useState(null);
+  if (dismissible && hiddenFor === String(resetKey)) return null;
   return (
     <div className={`banner ${tone}`} role={tone === 'bad' ? 'alert' : 'status'}>
       <div style={{ flex: 1 }}>
@@ -85,6 +88,11 @@ export function Banner({ tone = 'info', title, text, children }) {
         {text && <div className="banner-text">{text}</div>}
         {children}
       </div>
+      {dismissible && (
+        <button type="button" className="banner-close" aria-label="Dismiss notice" onClick={() => setHiddenFor(String(resetKey))}>
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" /></svg>
+        </button>
+      )}
     </div>
   );
 }
