@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Banner, DashboardSkeleton, Empty } from './components/ui.jsx';
 import { DATA_SOURCE } from './config.js';
 import { useDashboardData } from './hooks/useDashboardData.js';
@@ -27,7 +27,14 @@ const tabFromHash = () => (TABS.find(([id]) => '#' + id === window.location.hash
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default function App() {
-  const { data, extras, status, error, reload, fetchMtd, fetchCustom } = useDashboardData();
+  const [auto, setAuto] = useState(() => {
+    try { return localStorage.getItem('auto-refresh') === 'off' ? 0 : 5; } catch { return 5; }
+  });
+  const changeAuto = (v) => {
+    setAuto(v);
+    try { localStorage.setItem('auto-refresh', v ? 'on' : 'off'); } catch { /* storage unavailable */ }
+  };
+  const { data, extras, status, error, reload, refresh, refreshing, refreshError, updatedAt, fetchMtd, fetchCustom } = useDashboardData(auto);
   const [tab, setTab] = useState(tabFromHash);
   const [mode, setMode] = useState('weekly');
   const [picked, setPicked] = useState('');
@@ -62,6 +69,20 @@ export default function App() {
       setRange({ key: '', block: null, loading: false, error: e.message });
     }
   }
+  // After a data refresh, quietly update an MTD / custom range that is currently on screen.
+  const firstRefresh = useRef(true);
+  useEffect(() => {
+    if (firstRefresh.current) { firstRefresh.current = false; return; }
+    if (!updatedAt || !range.key) return;
+    const swap = (block) => setRange((r) => (r.key === range.key ? { ...r, block } : r));
+    if (mode === 'mtd') fetchMtd().then(swap).catch(() => {});
+    else if (mode === 'custom') {
+      const [a, b] = range.key.split(' → ');
+      fetchCustom(a, b).then(swap).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updatedAt]);
+
   function changeMode(m) {
     setMode(m);
     setPicked('');
@@ -153,6 +174,11 @@ export default function App() {
                 {isRange && range.loading && <span className="c-faint">Loading…</span>}
               </div>
             )}
+            {status === 'ready' && (
+              <button type="button" className={`icon-btn ${refreshing ? 'spinning' : ''}`} onClick={refresh} disabled={refreshing} aria-label="Refresh data" title={refreshing ? 'Refreshing…' : 'Refresh data'}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </button>
+            )}
           </div>
           <nav className="tabs" role="tablist" aria-label="Dashboard sections">
             {TABS.map(([id, text]) => (
@@ -163,8 +189,21 @@ export default function App() {
       </header>
       <main id="main" className="page">{body}</main>
       <footer className="page footer" style={{ paddingTop: 18, paddingBottom: 32 }}>
-        <span>Source: {DATA_SOURCE === 'sheets' ? 'Google Sheets API, calculated in the browser' : 'Apps Script feed'} · period buckets use PO date</span>
-        <button className="link-btn" onClick={reload}>Refresh data</button>
+        <span>
+          Source: {DATA_SOURCE === 'sheets' ? 'Google Sheets API, calculated in the browser' : 'Apps Script feed'} · period buckets use PO date
+          {updatedAt && <> · Updated {updatedAt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</>}
+          {refreshError && <span className="c-bad"> · Last refresh failed, showing earlier data</span>}
+        </span>
+        <span className="footer-actions">
+          <label>
+            Auto-refresh{' '}
+            <select className="field mini" value={auto} onChange={(e) => changeAuto(+e.target.value)} aria-label="Auto-refresh">
+              <option value={5}>Every 5 min</option>
+              <option value={0}>Manual only</option>
+            </select>
+          </label>
+          <button className="link-btn" onClick={refresh} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh now'}</button>
+        </span>
       </footer>
     </>
   );
