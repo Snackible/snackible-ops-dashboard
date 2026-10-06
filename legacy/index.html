@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snackible — Operations Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-area">
+    <div class="logo-badge">S</div>
+    <div>
+      <div class="header-title">Snackible</div>
+      <div class="header-sub">Operations Dashboard</div>
+    </div>
+  </div>
+  <div class="week-selector">
+    <select id="modeSelect" onchange="switchView(this.value)" style="background:var(--brand-amber); color:var(--brand-green-deep); border:none; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">
+      <option value="daily">Daily</option>
+      <option value="weekly" selected>Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="mtd">MTD</option>
+      <option value="custom">Custom Range</option>
+    </select>
+    <select id="weekSelect" onchange="updateDashboard()">
+      <option value="loading">Loading Live Data...</option>
+    </select>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Custom date range picker (hidden by default) -->
+  <div id="customRangeBar" style="display:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 20px; margin-bottom:16px; display:none; align-items:center; gap:12px; flex-wrap:wrap;">
+    <span style="font-size:12px; color:var(--muted); font-weight:500;">Custom Range (PO Date):</span>
+    <input type="date" id="customStart" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
+    <span style="color:var(--muted);">→</span>
+    <input type="date" id="customEnd" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none;">
+    <button onclick="applyCustomRange()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Apply</button>
+    <span id="customRangeStatus" style="font-size:11px;color:var(--muted);"></span>
+  </div>
+
+  <div class="alert-banner" id="alertBanner">
+    <div class="alert-icon" id="alertIcon">🔄</div>
+    <div style="flex:1">
+      <div class="alert-title" id="alertTitle">Initializing Dashboard...</div>
+      <div class="alert-text" id="alertText">Preparing secure connection.</div>
+      <div class="alert-chips" id="alertChips"></div>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="openTab('tab-sales', this)">Sales Overview</button>
+    <button class="tab-btn" onclick="openTab('tab-deepdive', this)">Sales Deep Dive</button>
+    <button class="tab-btn" onclick="openTab('tab-inventory', this)">Inventory & Supply</button>
+    <button class="tab-btn" onclick="openTab('tab-ops', this)">Fulfillment & TAT</button>
+    <button class="tab-btn" onclick="openTab('tab-po', this)">PO Tracker</button>
+    <button class="tab-btn" onclick="openTab('tab-delivered', this)">Delivered Data</button>
+    <button class="tab-btn" onclick="openTab('tab-shopify', this)">🛍 Shopify B2C</button>
+     <button class="tab-btn" onclick="openTab('tab-sku', this)">⬡ SKU Analysis</button>
+  </div>
+
+  <div id="tab-sales" class="tab-content active">
+    
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Invoice Value</div>
+        <div class="kpi-value" id="kGMV">—</div>
+        <div class="kpi-sub">Marketplace channels</div>
+        <span class="kpi-badge" id="kGMVb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total Orders</div>
+        <div class="kpi-value" id="kOrders">—</div>
+        <div class="kpi-sub">Excl. Duplicates</div>
+        <span class="kpi-badge" id="kOrdersb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Fill Rate</div>
+        <div class="kpi-value" id="kFill">—</div>
+        <div class="kpi-sub">Avg across channels</div>
+        <span class="kpi-badge" id="kFillb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-green-deep)">
+        <div class="kpi-label">Average TAT (Days)</div>
+        <div class="kpi-value" id="kTAT">—</div>
+        <div class="kpi-sub">Pending Data</div>
+        <span class="kpi-badge badge-warn">Waiting for Deliveries</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-orange)">
+        <div class="kpi-label">RTO %</div>
+        <div class="kpi-value" id="kRTO">—</div>
+        <div class="kpi-sub">of non-dup orders</div>
+        <span class="kpi-badge" id="kRTOb">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-red)">
+        <div class="kpi-label">DN / Discrepancy</div>
+        <div class="kpi-value" id="kDN">—</div>
+        <div class="kpi-sub">Value Leaked</div>
+        <span class="kpi-badge" id="kDNb">—</span>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="card-title">GMV by Channel</div>
+        <div class="card-sub" id="channelSub">—</div>
+        <div class="chart-wrap"><canvas id="channelChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <div class="card-title">GMV Trend</div>
+            <div class="card-sub" style="margin-bottom:0" id="trendSub">Weekly GMV</div>
+          </div>
+          <div class="trend-tabs">
+            <button class="t-tab" onclick="setTrend(4)" id="t4">4W</button>
+            <button class="t-tab active" onclick="setTrend(8)" id="t8">8W</button>
+            <button class="t-tab" onclick="setTrend(99)" id="tall">All</button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:195px;"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-deepdive" class="tab-content">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px;">
+      
+      <div class="chart-card">
+        <div class="card-title">Revenue by Order Type</div>
+        <div class="card-sub" id="typeSub">Breakdown of active period</div>
+        <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-title">Top States (GMV)</div>
+        <div class="card-sub" id="stateSub">Highest performing states</div>
+        <div class="chart-wrap"><canvas id="stateChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-title">Top Cities (GMV)</div>
+        <div class="card-sub" id="locSub">Highest performing cities</div>
+        <div class="chart-wrap"><canvas id="locChart"></canvas></div>
+      </div>
+
+    </div>
+<div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:28px;">
+          <div class="chart-card" style="overflow-x:auto; width:100%;">
+            <div class="card-title">State vs Top SKUs (Units Ordered)</div>
+    <div class="card-sub" id="matrixSub">Regional volume distribution</div>
+        <div style="max-height: 350px; overflow-y: auto;">
+          <table class="data-table">
+            <thead id="matrixHead"></thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="chart-card" style="overflow-x:auto; margin-bottom:28px;">
+      <div class="card-title">Channel × Top SKUs (Units Ordered)</div>
+      <div class="card-sub" id="channelMatrixSub">Volume by channel and product</div>
+      <div style="max-height:350px; overflow-y:auto;">
+        <table class="data-table">
+          <thead id="channelMatrixHead"></thead>
+          <tbody id="channelMatrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div id="tab-inventory" class="tab-content">
+    
+    <div class="full-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="card-title">Daily Dispatched Quantities — Channel Breakdown</div>
+          <div class="card-sub" id="dailySub">Dispatch date · Invoice qty by channel</div>
+        </div>
+        <div class="legend" id="dailyLegend"></div>
+      </div>
+      <div class="full-chart-wrap"><canvas id="dailyChart"></canvas></div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="chart-card">
+        <div class="card-title">Fill Rate by Channel</div>
+        <div class="card-sub" id="fillSub">PO vs Invoice Quantities</div>
+        <table class="data-table">
+          <thead><tr><th>Channel</th><th>PO Qty</th><th style="min-width:110px">Fill Rate</th><th>Short</th></tr></thead>
+          <tbody id="fillBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="chart-card" style="overflow-x:auto; margin-bottom:28px;">
+      <div class="card-title">Fill Rate by State & City</div>
+      <div class="card-sub" id="stateFillSub">PO vs Invoice Qty — click a state to expand cities</div>
+      <div style="max-height:420px; overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr><th style="min-width:140px;">Location</th><th>PO Qty</th><th>Invoice Qty</th><th style="min-width:120px;">Fill Rate</th><th>Short</th></tr></thead>
+          <tbody id="stateFillBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-ops" class="tab-content">
+
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">PO → Dispatch</div>
+        <div class="kpi-value" id="tatProc">—</div>
+        <div class="kpi-sub">Processing time</div>
+        <span class="kpi-badge" id="tatProcB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Dispatch → Delivery</div>
+        <div class="kpi-value" id="tatTran">—</div>
+        <div class="kpi-sub">Transit time</div>
+        <span class="kpi-badge" id="tatTranB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total TAT</div>
+        <div class="kpi-value" id="tatTotal">—</div>
+        <div class="kpi-sub">End to end</div>
+        <span class="kpi-badge" id="tatTotalB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-red)">
+        <div class="kpi-label">RTO %</div>
+        <div class="kpi-value" id="tatRTO">—</div>
+        <div class="kpi-sub">Return to origin</div>
+        <span class="kpi-badge" id="tatRTOB">—</span>
+      </div>
+    </div>
+
+    <div class="bottom-grid" style="margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">Order Status Breakdown</div>
+        <div class="card-sub" id="statusSub">—</div>
+        <ul class="status-list" id="statusList"></ul>
+        <div class="sum-strip">
+          <div class="ss-label">Delivery Rate</div>
+          <div style="font-size:20px; font-weight:600;" id="delRate">—</div>
+          <div class="dr-bar-bg"><div class="dr-bar-fill" id="drBar" style="width:0%;"></div></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Courier TAT Breakdown</div>
+        <div class="card-sub" id="courierSub">—</div>
+        <div id="courierList"></div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">TAT by Channel</div>
+        <div class="card-sub" id="tatChanSub">—</div>
+        <div id="tatChanList"></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">TAT by State</div>
+        <div class="card-sub" id="tatStateSub">—</div>
+        <div id="tatStateList"></div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-po" class="tab-content">
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Total PO Qty</div>
+        <div class="kpi-value" id="poPOQty">—</div>
+        <div class="kpi-sub">Units ordered</div>
+        <span class="kpi-badge" id="poPOQtyB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Total Invoice Qty</div>
+        <div class="kpi-value" id="poInvQty">—</div>
+        <div class="kpi-sub">Units fulfilled</div>
+        <span class="kpi-badge" id="poInvQtyB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Overall Fill Rate</div>
+        <div class="kpi-value" id="poFillRate">—</div>
+        <div class="kpi-sub">Invoice / PO</div>
+        <span class="kpi-badge" id="poFillRateB">—</span>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-orange)">
+        <div class="kpi-label">Total Short</div>
+        <div class="kpi-value" id="poShort">—</div>
+        <div class="kpi-sub">Units unfulfilled</div>
+        <span class="kpi-badge" id="poShortB">—</span>
+      </div>
+      </div>
+
+    <!-- Value Fulfillment expanded tile -->
+    <div class="chart-card" style="margin-bottom:28px; border-top:3px solid var(--brand-purple);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div>
+          <div class="kpi-label">Value Fulfillment</div>
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <div class="kpi-value" id="poValRate">—</div>
+            <span class="kpi-badge" id="poValRateB">—</span>
+          </div>
+          <div class="kpi-sub">Invoice Value / Order Value</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">vs prior week</div>
+          <div style="font-size:16px; font-weight:600;" id="poValChg">—</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:12px 16px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Order Value</div>
+          <div style="font-size:20px; font-weight:600; color:var(--text);" id="poTotalOrderVal">—</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border-radius:8px; padding:12px 16px;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Invoice Value</div>
+          <div style="font-size:20px; font-weight:600; color:var(--brand-green-mid);" id="poTotalInvVal">—</div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-size:11px; color:var(--muted);">Value Short</span>
+          <span style="font-size:11px; font-weight:600; color:var(--brand-orange);" id="poValShort">—</span>
+        </div>
+        <div class="bar-bg" style="height:8px;">
+          <div id="poValBar" class="bar-fill" style="width:0%; background:var(--brand-orange);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+          <span style="font-size:10px; color:var(--muted);">Invoiced</span>
+          <span style="font-size:10px; color:var(--muted);">Target 95%</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row" style="margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">PO vs Invoice Qty — Weekly Trend</div>
+        <div class="card-sub" id="poTrendWoWSub" style="margin-bottom:0;">Week on Week</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="poTrendWoW"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Fill Rate % — Weekly Trend</div>
+        <div class="card-sub" id="poFillTrendSub" style="margin-bottom:0;">Week on Week</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="poFillTrend"></canvas></div>
+      </div>
+    </div>
+    <div class="full-card" style="margin-bottom:28px;">
+      <div class="card-title">PO vs Invoice Qty — Monthly Trend</div>
+      <div class="card-sub" id="poTrendMoMSub">Month on Month</div>
+      <div class="full-chart-wrap" style="height:220px;"><canvas id="poTrendMoM"></canvas></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:16px; margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="card-title">SKU Volume Tracker</div>
+        <div class="card-sub" id="skuSub">Units Ordered (PO Qty per SKU)</div>
+        <div style="max-height:350px; overflow-y:auto; padding-right:8px;">
+          <table class="data-table">
+            <thead><tr><th>Product (SKU)</th><th style="text-align:right">Units Ordered</th></tr></thead>
+            <tbody id="skuBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0;">
+        <div class="card-title">PO vs Invoice by Channel</div>
+      <div class="card-sub" id="poChanSub">Current period breakdown</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>Channel</th>
+          <th style="text-align:right">PO Qty</th>
+          <th style="text-align:right">Invoice Qty</th>
+          <th style="min-width:130px;">Fill Rate</th>
+          <th style="text-align:right">Short</th>
+          <th style="text-align:right">Short %</th>
+        </tr></thead>
+        <tbody id="poChanBody"></tbody>
+      </table>
+    </div>
+      </div>
+    </div>
+  </div>
+<div id="tab-delivered" class="tab-content">
+    <!-- Delivered Tab own filter bar -->
+    <div style="display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+      <select id="delModeSelect" onchange="buildDelivered()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;">
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="daily">Daily</option>
+      </select>
+      <select id="delPeriodSelect" onchange="buildDelivered()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;min-width:180px;">
+        <option value="">— Select Period —</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+        <div class="kpi-label">Delivered Orders</div>
+        <div class="kpi-value" id="delCount">—</div>
+        <div class="kpi-sub" id="delPeriodSub">Select a period above</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-amber)">
+        <div class="kpi-label">Invoice Value</div>
+        <div class="kpi-value" id="delInvTotal">—</div>
+        <div class="kpi-sub">Delivered orders only</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--brand-blue)">
+        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-value" id="delAvgVal">—</div>
+        <div class="kpi-sub">Per delivered order</div>
+      </div>
+    </div>
+
+    <div class="full-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div>
+          <div class="card-title">Delivered Orders Log</div>
+          <div class="card-sub" style="margin-bottom:0;" id="delLogSub">Filtered by PO Date</div>
+        </div>
+      </div>
+      <div style="max-height:600px; overflow-y:auto;">
+        <table class="data-table">
+          <thead style="position:sticky; top:0; background:var(--card); z-index:10;">
+            <tr>
+              <th style="min-width:90px;">PO Date</th>
+              <th style="min-width:100px;">Delivery Date</th>
+              <th>Ref No.</th>
+              <th>PO Name</th>
+              <th>Channel</th>
+              <th style="text-align:right">Invoice Value</th>
+            </tr>
+          </thead>
+          <tbody id="deliveredBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>  
+
+<div id="tab-shopify" class="tab-content">
+<div style="display:flex; gap:15px; align-items:center; margin-bottom:24px; padding:16px 20px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px;">
+    <div style="font-size:15px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:8px;">
+      🛍 Shopify B2C (Monthly View)
+    </div>
+    <select id="shPeriodSelect" onchange="buildShopify()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;outline:none;min-width:200px;">
+      <option value="">— Loading Months —</option>
+    </select>
+    <div style="font-size:11px; color:var(--muted);">Independent from global timeline</div>
+  </div>
+  <!-- KPI Row -->
+  <div class="kpi-grid" style="margin-bottom:28px;">
+    <div class="kpi-card" style="--accent:var(--brand-green-mid)">
+      <div class="kpi-label">Invoice Value (Delivered)</div>
+      <div class="kpi-value" id="shInvVal">—</div>
+      <div class="kpi-sub">Shopify B2C</div>
+      <span class="kpi-badge" id="shInvValB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-orange)">
+      <div class="kpi-label">Logistics Cost</div>
+      <div class="kpi-value" id="shLogCost">—</div>
+      <div class="kpi-sub" id="shLogCostPctSub">% of Invoice Value</div>
+      <span class="kpi-badge" id="shLogCostB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-blue)">
+      <div class="kpi-label">Avg TAT (Days)</div>
+      <div class="kpi-value" id="shAvgTAT">—</div>
+      <div class="kpi-sub">Delivered orders only</div>
+      <span class="kpi-badge" id="shAvgTATB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-amber)">
+      <div class="kpi-label">Total Shipments</div>
+      <div class="kpi-value" id="shShipments">—</div>
+      <div class="kpi-sub">Shopify orders</div>
+      <span class="kpi-badge" id="shShipmentsB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-red)">
+      <div class="kpi-label">RTO %</div>
+      <div class="kpi-value" id="shRTO">—</div>
+      <div class="kpi-sub">Return to origin rate</div>
+      <span class="kpi-badge" id="shRTOB">—</span>
+    </div>
+    <div class="kpi-card" style="--accent:var(--brand-purple)">
+      <div class="kpi-label">Delivery Rate</div>
+      <div class="kpi-value" id="shDelRate">—</div>
+      <div class="kpi-sub">Successful deliveries</div>
+      <span class="kpi-badge" id="shDelRateB">—</span>
+    </div>
+  </div>
+
+  <!-- Trend Charts -->
+  <div class="charts-row" style="margin-bottom:28px;">
+    <div class="chart-card">
+      <div class="card-title">Invoice Value & Logistics Cost — Weekly Trend</div>
+      <div class="card-sub" id="shTrendSub">Week on Week</div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="shTrendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Logistics Cost % of GMV — Trend</div>
+      <div class="card-sub" id="shCostPctSub">Target: under 15%</div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="shCostPctChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Zone Performance -->
+  <div class="full-card" style="margin-bottom:28px;">
+    <div class="card-title">Zone-wise TAT Performance</div>
+    <div class="card-sub" id="shZoneSub">Before TAT vs After TAT per zone — SLA: A=2d, B=3d, C=5d, D=7d, E=10d</div>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-top:16px;" id="shZoneCards"></div>
+  </div>
+
+  <!-- Courier + Vendor -->
+  <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:16px; margin-bottom:28px;">
+    <div class="chart-card">
+      <div class="card-title">Courier Performance</div>
+      <div class="card-sub" id="shCourierSub">Avg TAT · Delivery Rate · RTO% · Avg Cost</div>
+      <div style="max-height:380px; overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr>
+            <th>Courier</th>
+            <th style="text-align:right">Orders</th>
+            <th style="text-align:right">Avg TAT</th>
+            <th style="min-width:100px;">Del Rate</th>
+            <th style="text-align:right">RTO%</th>
+            <th style="text-align:right">Avg Cost</th>
+          </tr></thead>
+          <tbody id="shCourierBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Vendor Performance</div>
+      <div class="card-sub" id="shVendorSub">Fulfillment partner breakdown</div>
+      <table class="data-table">
+        <thead><tr>
+          <th>Vendor</th>
+          <th style="text-align:right">Orders</th>
+          <th style="text-align:right">Invoice Val</th>
+          <th style="text-align:right">Log Cost</th>
+          <th style="text-align:right">RTO%</th>
+        </tr></thead>
+        <tbody id="shVendorBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Monthly MoM Chart -->
+  <div class="full-card" style="margin-bottom:28px;">
+    <div class="card-title">Monthly B2C Performance — Invoice Value vs Logistics Cost</div>
+    <div class="card-sub" id="shMoMSub">All months</div>
+    <div class="full-chart-wrap" style="height:240px;"><canvas id="shMoMChart"></canvas></div>
+  </div>
+
+</div>
+
+<div id="tab-sku" class="tab-content">
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <select id="skuViewToggle" onchange="buildSKUAnalysis()" style="background:rgba(255,255,255,0.05);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;">
+      <option value="units">📦 Units</option>
+      <option value="value">💰 Invoice Value</option>
+    </select>
+    <select id="skuModeSelect" onchange="buildSKUAnalysis()" style="background:var(--brand-amber);color:var(--brand-green-deep);border:none;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;">
+      <option value="monthly">Monthly</option>
+      <option value="weekly">Weekly</option>
+    </select>
+    <select id="skuPeriodA" onchange="buildSKUAnalysis()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;min-width:160px;">
+      <option value="">— Current —</option>
+    </select>
+    <span style="font-size:11px;color:var(--sub-muted);">vs</span>
+    <select id="skuPeriodB" onchange="buildSKUAnalysis()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;outline:none;min-width:160px;">
+      <option value="">— Prior —</option>
+    </select>
+    <select id="skuTopN" onchange="buildSKUAnalysis()" style="background:var(--card);color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;outline:none;">
+      <option value="10">Top 10 SKUs</option>
+      <option value="20">Top 20 SKUs</option>
+      <option value="999">All SKUs</option>
+    </select>
+    <div style="flex:1;"></div>
+    <span style="font-size:11px;color:var(--muted);" id="skuDataStatus">Loading SKU data...</span>
+  </div>
+
+  <div class="kpi-grid" style="margin-bottom:20px;">
+    <div class="kpi-card">
+      <div class="kpi-label">Total units — current</div>
+      <div class="kpi-value" id="skuTotalUnits">—</div>
+      <div class="kpi-sub" id="skuTotalUnitsSub">—</div>
+      <span class="kpi-badge" id="skuTotalUnitsB">—</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Top SKU</div>
+      <div class="kpi-value" style="font-size:16px;line-height:1.3;margin-top:4px;" id="skuTopSKU">—</div>
+      <div class="kpi-sub" id="skuTopSKUSub">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Top channel</div>
+      <div class="kpi-value" id="skuTopChan" style="font-size:28px;">—</div>
+      <div class="kpi-sub" id="skuTopChanSub">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">SKUs declining</div>
+      <div class="kpi-value" id="skuDeclining">—</div>
+      <div class="kpi-sub" id="skuDecliningSub">vs prior period</div>
+    </div>
+  </div>
+
+  <div id="skuL1Section">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div class="card-title">Channel overview</div>
+          <div class="card-sub" id="skuChanOverviewSub">Click a channel to drill down into its SKUs</div>
+        </div>
+      </div>
+      <div id="skuChannelCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Channel mix — prior vs current</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-size:10px;color:var(--muted);min-width:36px;" id="skuMixLabelB">Prior</span>
+            <div id="skuMixBarB" style="flex:1;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;display:flex;"></div>
+            <span style="font-size:10px;color:var(--muted);" id="skuMixTotalB">—</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;color:var(--muted);min-width:36px;" id="skuMixLabelA">Current</span>
+            <div id="skuMixBarA" style="flex:1;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;display:flex;"></div>
+            <span style="font-size:10px;color:var(--muted);" id="skuMixTotalA">—</span>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;" id="skuMixLegend"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">6-period stacked trend</div>
+          <div id="skuStackedTrend" style="display:flex;align-items:flex-end;gap:4px;height:52px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="skuL2Section" style="display:none;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;">
+      <span style="cursor:pointer;color:var(--brand-amber);" onclick="skuNav('l1')">All channels</span>
+      <span>›</span>
+      <span id="skuL2ChanName" style="color:var(--text);font-weight:500;">—</span>
+      <div style="flex:1;"></div>
+      <button onclick="skuNav('l1')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Inter,sans-serif;">← All channels</button>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px;" id="skuL2KPIs"></div>
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="card-title" id="skuL2TableTitle">SKU performance</div>
+      <div class="card-sub">Click a SKU to see how it performs across all channels</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table class="data-table" style="table-layout:fixed;min-width:560px;">
+          <thead id="skuL2Head"></thead>
+          <tbody id="skuL2Body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="skuL3Section" style="display:none;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;">
+      <span style="cursor:pointer;color:var(--brand-amber);" onclick="skuNav('l1')">All channels</span>
+      <span>›</span>
+      <span style="cursor:pointer;color:var(--brand-amber);" id="skuL3ChanCrumb" onclick="skuNav('l2')">—</span>
+      <span>›</span>
+      <span id="skuL3SKUName" style="color:var(--text);font-weight:500;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+      <div style="flex:1;"></div>
+      <button onclick="skuNav('l2')" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:Inter,sans-serif;">← Back to channel</button>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px;" id="skuL3KPIs"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="chart-card">
+        <div class="card-title">Per channel — current vs prior</div>
+        <div class="card-sub" id="skuL3TableSub">Units ordered · this SKU only</div>
+        <div style="overflow-x:auto;margin-top:8px;">
+          <table class="data-table" style="table-layout:fixed;">
+            <thead id="skuL3ChanHead"></thead>
+            <tbody id="skuL3ChanBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Trend per channel</div>
+        <div class="card-sub">Last 6 periods · this SKU only</div>
+        <div id="skuL3Sparks" style="margin-top:8px;"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title" id="skuL3CompTitle">How this SKU compares to others</div>
+      <div class="card-sub" id="skuL3CompSub">Same channel · current vs prior</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table class="data-table" style="table-layout:fixed;min-width:480px;">
+          <thead id="skuL3CompHead"></thead>
+          <tbody id="skuL3CompBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+  </div>
+
+</div>
+
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
