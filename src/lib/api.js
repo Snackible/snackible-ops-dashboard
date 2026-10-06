@@ -88,8 +88,34 @@ export async function loadCustom(data, start, end) {
   return applyNameMap(unwrap(res, ['custom.Custom Range', `custom.${start} → ${end}`, 'Custom Range']));
 }
 
+// A Gemini key pasted into the AI panel lives in sessionStorage only (gone when the tab closes).
+const SESSION_KEY = 'gemini-session-key';
+export const getSessionGeminiKey = () => { try { return sessionStorage.getItem(SESSION_KEY) || ''; } catch { return ''; } };
+export const setSessionGeminiKey = (k) => { try { k ? sessionStorage.setItem(SESSION_KEY, k.trim()) : sessionStorage.removeItem(SESSION_KEY); } catch { /* storage unavailable */ } };
+
+// Calls Gemini straight from the browser with the user's own session key.
+async function askGeminiDirect({ key, system, messages, max_tokens, json }) {
+  const body = {
+    contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content ?? '') }] })),
+    generationConfig: { maxOutputTokens: max_tokens, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 }, ...(json ? { responseMimeType: 'application/json' } : {}) },
+  };
+  if (system) body.systemInstruction = { parts: [{ text: system }] };
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(data.error?.message || 'Gemini rejected the request. Check the key.');
+  const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
+  if (!text) throw new Error(data.promptFeedback?.blockReason ? `Blocked by Gemini: ${data.promptFeedback.blockReason}` : 'Gemini returned an empty reply.');
+  return text;
+}
+
 // provider: 'claude' | 'gemini'. Both proxies take the same body and return { content: [{ text }] }.
 export async function askAi({ provider = 'claude', system, messages, max_tokens = 1000, json = false }) {
+  const sessionKey = provider === 'gemini' ? getSessionGeminiKey() : '';
+  if (sessionKey) return askGeminiDirect({ key: sessionKey, system, messages, max_tokens, json });
   const res = await fetch(provider === 'gemini' ? GEMINI_PROXY_URL : CLAUDE_PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

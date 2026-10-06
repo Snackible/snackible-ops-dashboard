@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, Banner, Segmented } from '../components/ui.jsx';
-import { askAi } from '../lib/api.js';
+import { askAi, getSessionGeminiKey, setSessionGeminiKey } from '../lib/api.js';
 import { fmtL, fmtN } from '../lib/format.js';
 
 const SYSTEM =
@@ -75,6 +75,10 @@ const loadProvider = () => {
 
 export default function AiInsights({ ctx }) {
   const [provider, setProvider] = useState(loadProvider);
+  const [hasKey, setHasKey] = useState(() => !!getSessionGeminiKey());
+  const [keyInput, setKeyInput] = useState('');
+  const saveKey = (e) => { e.preventDefault(); setSessionGeminiKey(keyInput); setKeyInput(''); setHasKey(!!keyInput.trim()); };
+  const clearKey = () => { setSessionGeminiKey(''); setHasKey(false); };
   const pickProvider = (p) => {
     setProvider(p);
     try { localStorage.setItem('ai-provider', p); } catch { /* storage unavailable */ }
@@ -136,6 +140,22 @@ export default function AiInsights({ ctx }) {
         </div>
       }
     >
+      {provider === 'gemini' && (
+        <form onSubmit={saveKey} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+          {hasKey ? (
+            <>
+              <span className="badge good">Using your Gemini key for this session</span>
+              <button type="button" className="link-btn" onClick={clearKey}>Remove key</button>
+            </>
+          ) : (
+            <>
+              <input className="field" type="password" autoComplete="off" spellCheck={false} style={{ flex: '1 1 260px', maxWidth: 380 }} value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="Paste a Gemini API key (optional, this session only)" aria-label="Gemini API key" />
+              <button className="btn" disabled={!keyInput.trim()}>Use key</button>
+              <span className="c-faint" style={{ fontSize: 12 }}>Kept in this tab only. Without one, the server key is used.</span>
+            </>
+          )}
+        </form>
+      )}
       {state.status === 'idle' && <p className="c-muted" style={{ maxWidth: '60ch' }}>Generate a written read on this period: what moved, what looks off, and what to do first. You can ask follow-up questions afterwards.</p>}
       {state.status === 'loading' && <div className="ai-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}</div>}
       {state.status === 'error' && <Banner tone="bad" title="Insights failed" text={state.error} />}
