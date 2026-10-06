@@ -41,11 +41,33 @@ ${couriers}
 TOP 5 SKUs: ${skus}
 PRIOR PERIOD: ${prev ? `GMV ${fmtL(prev.gmv)}, fill ${prev.avg_fill}%, orders ${prev.orders}` : 'none'}
 
-Respond ONLY with JSON (no markdown, no backticks) with these string keys, each holding 2-4 bullet points separated by newlines and starting with "•":
-performance, anomalies, recommendations (3, ranked), channels, states, skus (movement in top SKUs vs prior period).`;
+Respond ONLY with one JSON object (no markdown, no backticks). Each of these keys holds an array of 2-4 short strings, one bullet each, under 25 words, no line breaks inside a string:
+performance, anomalies, recommendations (exactly 3, ranked), channels, states, skus (movement in top SKUs vs prior period).
+Keep the whole reply compact.`;
 }
 
-const bullets = (s) => String(s || '—').split('•').map((t) => t.trim()).filter(Boolean);
+// Models sometimes wrap JSON in fences, add stray text, or get cut off mid-reply. Recover whatever sections we can.
+function parseInsights(text) {
+  const clean = String(text || '').replace(/```(?:json)?/gi, '').trim();
+  const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+  if (s >= 0 && e > s) {
+    try { return JSON.parse(clean.slice(s, e + 1)); } catch { /* fall through to per-key recovery */ }
+  }
+  const out = {};
+  const at = SECTIONS.map(([k]) => [k, clean.indexOf(`"${k}"`)]).filter(([, i]) => i >= 0).sort((a, b) => a[1] - b[1]);
+  at.forEach(([k, i], n) => {
+    const seg = clean.slice(i + k.length + 2, n + 1 < at.length ? at[n + 1][1] : undefined);
+    const items = [...seg.matchAll(/"((?:[^"\\]|\\.)+)"/g)].map((m) => m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'));
+    if (items.length) out[k] = items;
+  });
+  return Object.keys(out).length ? out : { performance: clean };
+}
+
+const bullets = (v) => {
+  const items = (Array.isArray(v) ? v : [v || '']).flatMap((x) => String(x).split(/•|\n/));
+  const out = items.map((t) => String(t).replace(/^\s*[•\-–]\s*/, '').trim()).filter(Boolean);
+  return out.length ? out : ['—'];
+};
 
 export default function AiInsights({ ctx }) {
   const [state, setState] = useState({ status: 'idle', result: null, error: '' });
@@ -63,9 +85,8 @@ export default function AiInsights({ ctx }) {
     setState({ status: 'loading', result: null, error: '' });
     const prompt = buildPrompt(ctx);
     try {
-      const text = await askClaude({ system: SYSTEM, messages: [{ role: 'user', content: prompt }] });
-      let result;
-      try { result = JSON.parse(text); } catch { result = { performance: text }; }
+      const text = await askClaude({ system: SYSTEM, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] });
+      const result = parseInsights(text);
       history.current = [{ role: 'user', content: `Current ops data context:\n${prompt}` }, { role: 'assistant', content: text }];
       setState({ status: 'ready', result, error: '' });
     } catch (e) {

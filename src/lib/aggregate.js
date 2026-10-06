@@ -54,9 +54,12 @@ export function buildBlock(all) {
     b.total_order_val += r.orderValue;
     b.total_inv_val += r.invValue;
     b.dn_value += r.dnValue;
-    po += r.poQty; inv += r.invQty;
+    // Fill compares invoiced to ordered units, so rows without a PO quantity (B2B, GT, MT, Amazon have none)
+    // are left out; otherwise their invoiced units count against zero ordered and fill exceeds 100%.
+    const fq = r.poQty > 0 ? r.invQty : 0;
+    po += r.poQty; inv += fq;
     add(b.channels, ch, r.invValue);
-    const cf = nested(b.channel_fill, ch); cf.po = (cf.po || 0) + r.poQty; cf.inv = (cf.inv || 0) + r.invQty;
+    const cf = nested(b.channel_fill, ch); cf.po = (cf.po || 0) + r.poQty; cf.inv = (cf.inv || 0) + fq;
     const cv = nested(b.channel_val, ch); cv.po_val = (cv.po_val || 0) + r.orderValue; cv.inv_val = (cv.inv_val || 0) + r.invValue;
     add(b.order_types, platformOf(ch), r.invValue);
     if (r.actDispatch && r.invQty > 0) add(nested(b.daily_inv, isoDay(r.actDispatch)), ch, r.invQty);
@@ -65,8 +68,8 @@ export function buildBlock(all) {
     add(b.locations, st, r.invValue);
     add(b.cities, city, r.invValue);
     add(nested(b.city_gmv, st), city, r.invValue);
-    const sf = nested(b.state_fill, st); sf.po = (sf.po || 0) + r.poQty; sf.inv = (sf.inv || 0) + r.invQty;
-    const cfc = nested(nested(b.city_fill, st), city); cfc.po = (cfc.po || 0) + r.poQty; cfc.inv = (cfc.inv || 0) + r.invQty;
+    const sf = nested(b.state_fill, st); sf.po = (sf.po || 0) + r.poQty; sf.inv = (sf.inv || 0) + fq;
+    const cfc = nested(nested(b.city_fill, st), city); cfc.po = (cfc.po || 0) + r.poQty; cfc.inv = (cfc.inv || 0) + fq;
 
     Object.entries(r.skus).forEach(([sku, q]) => {
       add(b.skus, sku, q);
