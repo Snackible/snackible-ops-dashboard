@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Banner, DashboardSkeleton, Empty, ThemeSelect } from './components/ui.jsx';
+import { Banner, DashboardSkeleton, Empty, Logo, ThemeSelect } from './components/ui.jsx';
 import { DATA_SOURCE } from './config.js';
 import { useDashboardData } from './hooks/useDashboardData.js';
 import { useTheme } from './hooks/useTheme.js';
@@ -153,7 +153,7 @@ export default function App() {
         <div className="topbar-inner">
           <div className="topbar-row">
             <div className="brand">
-              <div className="brand-mark" aria-hidden="true">S</div>
+              <Logo />
               <div><div className="brand-name">Snackible</div><div className="brand-sub">Operations</div></div>
             </div>
             {status === 'ready' && needsPeriod && (

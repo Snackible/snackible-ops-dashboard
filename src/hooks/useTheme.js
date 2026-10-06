@@ -11,7 +11,7 @@ export function useTheme() {
     const apply = () => {
       const eff = pref === 'system' ? (query().matches ? 'light' : 'dark') : pref;
       document.documentElement.setAttribute('data-theme', eff);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', eff === 'light' ? '#f3f4ee' : '#0d1210');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', eff === 'light' ? '#e6e8dd' : '#0d1210');
     };
     apply();
     if (pref !== 'system') return undefined;

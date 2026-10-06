@@ -132,3 +132,14 @@ export function ThemeSelect({ value, onChange, className = '' }) {
     </label>
   );
 }
+
+// Brand mark: a line-drawn S with a golden grain. Fixed colours so it reads in both themes.
+export function Logo({ className = 'brand-mark' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" role="img" aria-label="Snackible">
+      <rect width="32" height="32" rx="8" fill="#14352C" />
+      <path d="M21.2 10.6C20.1 8.9 18.2 8 16.1 8c-2.9 0-4.9 1.4-4.9 3.6 0 2 1.6 2.9 4.4 3.5l1.9.5c2.6.6 4.2 1.6 4.2 3.8 0 2.3-2.1 3.9-5.1 3.9-2.3 0-4.3-.9-5.5-2.9" fill="none" stroke="#F1EEDF" strokeWidth="2.6" strokeLinecap="round" />
+      <circle cx="23.6" cy="7.6" r="2.3" fill="#E2B14A" />
+    </svg>
+  );
+}
