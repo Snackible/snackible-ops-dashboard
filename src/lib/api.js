@@ -1,4 +1,4 @@
-import { APPS_SCRIPT_URL, CLAUDE_PROXY_URL, DATA_SOURCE } from '../config.js';
+import { APPS_SCRIPT_URL, CLAUDE_PROXY_URL, GEMINI_PROXY_URL, DATA_SOURCE } from '../config.js';
 import { fetchSheetRows } from './sheetsApi.js';
 import { buildTimeData, buildRange } from './aggregate.js';
 
@@ -88,13 +88,17 @@ export async function loadCustom(data, start, end) {
   return applyNameMap(unwrap(res, ['custom.Custom Range', `custom.${start} → ${end}`, 'Custom Range']));
 }
 
-export async function askClaude({ system, messages, max_tokens = 1000 }) {
-  const res = await fetch(CLAUDE_PROXY_URL, {
+// provider: 'claude' | 'gemini'. Both proxies take the same body and return { content: [{ text }] }.
+export async function askAi({ provider = 'claude', system, messages, max_tokens = 1000, json = false }) {
+  const res = await fetch(provider === 'gemini' ? GEMINI_PROXY_URL : CLAUDE_PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_tokens, system, messages }),
+    body: JSON.stringify({ max_tokens, system, messages, json }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.error) throw new Error(typeof data.error === 'string' ? data.error : data.error?.message || 'The AI request failed.');
+  if (!res.ok || data.error) {
+    const name = provider === 'gemini' ? 'Gemini' : 'Claude';
+    throw new Error(typeof data.error === 'string' ? data.error : data.error?.message || (res.status === 404 ? `The ${name} endpoint isn't deployed here yet.` : `The ${name} request failed.`));
+  }
   return data.content?.[0]?.text || '';
 }

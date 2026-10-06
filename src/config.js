@@ -9,6 +9,8 @@ export const APPS_SCRIPT_URL =
 
 // Vercel serverless function in /api/claude.js (proxied to production in `npm run dev`).
 export const CLAUDE_PROXY_URL = '/api/claude';
+// Vercel serverless function in /api/gemini.js (needs the Gemini_Api_Key env var).
+export const GEMINI_PROXY_URL = '/api/gemini';
 
 // ─── Google Sheets API ────────────────────────────────────────────────────
 // SETUP (one-off):

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Card, Banner } from '../components/ui.jsx';
-import { askClaude } from '../lib/api.js';
+import { Card, Banner, Segmented } from '../components/ui.jsx';
+import { askAi } from '../lib/api.js';
 import { fmtL, fmtN } from '../lib/format.js';
 
 const SYSTEM =
@@ -69,7 +69,16 @@ const bullets = (v) => {
   return out.length ? out : ['—'];
 };
 
+const loadProvider = () => {
+  try { return localStorage.getItem('ai-provider') === 'gemini' ? 'gemini' : 'claude'; } catch { return 'claude'; }
+};
+
 export default function AiInsights({ ctx }) {
+  const [provider, setProvider] = useState(loadProvider);
+  const pickProvider = (p) => {
+    setProvider(p);
+    try { localStorage.setItem('ai-provider', p); } catch { /* storage unavailable */ }
+  };
   const [state, setState] = useState({ status: 'idle', result: null, error: '' });
   const [chat, setChat] = useState([]); // visible messages
   const [input, setInput] = useState('');
@@ -78,14 +87,14 @@ export default function AiInsights({ ctx }) {
   const endRef = useRef(null);
 
   // A different period invalidates earlier insights.
-  useEffect(() => { setState({ status: 'idle', result: null, error: '' }); setChat([]); history.current = []; }, [ctx.period, ctx.mode]);
+  useEffect(() => { setState({ status: 'idle', result: null, error: '' }); setChat([]); history.current = []; }, [ctx.period, ctx.mode, provider]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [chat]);
 
   async function generate() {
     setState({ status: 'loading', result: null, error: '' });
     const prompt = buildPrompt(ctx);
     try {
-      const text = await askClaude({ system: SYSTEM, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] });
+      const text = await askAi({ provider, json: true, system: SYSTEM, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] });
       const result = parseInsights(text);
       history.current = [{ role: 'user', content: `Current ops data context:\n${prompt}` }, { role: 'assistant', content: text }];
       setState({ status: 'ready', result, error: '' });
@@ -102,7 +111,8 @@ export default function AiInsights({ ctx }) {
     setChat((c) => [...c, { role: 'user', text }]);
     history.current.push({ role: 'user', content: text });
     try {
-      const reply = await askClaude({
+      const reply = await askAi({
+        provider,
         system: 'You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.',
         messages: history.current,
       });
@@ -119,7 +129,12 @@ export default function AiInsights({ ctx }) {
     <Card
       title="AI analysis"
       sub={`Commentary on ${ctx.label}`}
-      actions={<button className="btn" onClick={generate} disabled={state.status === 'loading'}>{state.status === 'loading' ? 'Analysing…' : state.result ? 'Regenerate' : 'Generate insights'}</button>}
+      actions={
+        <div className="controls">
+          <Segmented label="AI model" value={provider} onChange={pickProvider} options={[['claude', 'Claude'], ['gemini', 'Gemini']]} />
+          <button className="btn" onClick={generate} disabled={state.status === 'loading'}>{state.status === 'loading' ? 'Analysing…' : state.result ? 'Regenerate' : 'Generate insights'}</button>
+        </div>
+      }
     >
       {state.status === 'idle' && <p className="c-muted" style={{ maxWidth: '60ch' }}>Generate a written read on this period: what moved, what looks off, and what to do first. You can ask follow-up questions afterwards.</p>}
       {state.status === 'loading' && <div className="ai-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}</div>}
