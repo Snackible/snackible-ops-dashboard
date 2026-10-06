@@ -45,8 +45,8 @@ export default function Shopify({ ctx }) {
         <CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={fmtL} />
         <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtL(v)} />
         {legend}
-        <Bar dataKey="inv" name="Invoice value" fill="#4FB59E" radius={[5, 5, 0, 0]} />
-        <Bar dataKey="cost" name="Logistics cost" fill="#5E9FD0" radius={[5, 5, 0, 0]} />
+        <Bar isAnimationActive={false} dataKey="inv" name="Invoice value" fill="#4FB59E" radius={[5, 5, 0, 0]} />
+        <Bar isAnimationActive={false} dataKey="cost" name="Logistics cost" fill="#5E9FD0" radius={[5, 5, 0, 0]} />
       </BarChart>
     </ResponsiveContainer></div>
   );
@@ -74,7 +74,7 @@ export default function Shopify({ ctx }) {
               <CartesianGrid stroke={chartTheme.grid} vertical={false} /><XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={(v) => v + '%'} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => v + '%'} />
               <ReferenceLine y={15} stroke="#9aa79f" strokeDasharray="5 4" strokeOpacity={0.5} />
-              <Line type="monotone" dataKey="pct" name="Cost %" stroke="#E2B14A" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#E2B14A' }} />
+              <Line isAnimationActive={false} type="monotone" dataKey="pct" name="Cost %" stroke="#E2B14A" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#E2B14A' }} />
             </LineChart>
           </ResponsiveContainer></div>
         </Card>

@@ -14,9 +14,9 @@ function TopBars({ entries, color, empty }) {
       <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
         <CartesianGrid stroke={chartTheme.grid} horizontal={false} />
         <XAxis type="number" {...axis} tickFormatter={fmtL} />
-        <YAxis type="category" dataKey="name" width={96} {...axis} />
+        <YAxis type="category" dataKey="name" width={80} {...axis} />
         <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtL(v)} />
-        <Bar dataKey="v" fill={color} radius={[0, 6, 6, 0]} barSize={16} />
+        <Bar isAnimationActive={false} dataKey="v" fill={color} radius={[0, 6, 6, 0]} barSize={16} />
       </BarChart>
     </ResponsiveContainer></div>
   );
@@ -44,7 +44,7 @@ export default function DeepDive({ ctx }) {
             <>
               <div className="chart-box"><ResponsiveContainer>
                 <PieChart>
-                  <Pie data={types} dataKey="v" nameKey="name" innerRadius="62%" outerRadius="88%" paddingAngle={2} stroke="none">
+                  <Pie isAnimationActive={false} data={types} dataKey="v" nameKey="name" innerRadius="62%" outerRadius="88%" paddingAngle={2} stroke="none">
                     {types.map((t) => <Cell key={t.name} fill={PLATFORM_COLORS[t.name] || PLATFORM_COLORS.Other} />)}
                   </Pie>
                   <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => fmtL(v)} />

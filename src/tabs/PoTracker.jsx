@@ -15,7 +15,7 @@ export default function PoTracker({ ctx }) {
   const last8 = weeks.slice(-8);
   const trend = last8.map((w) => {
     const t = sumFill(weekly[w]);
-    return { name: periodLabel(w, 'weekly').split(' – ')[0], po: t.po, inv: t.inv, fill: t.po > 0 ? +((t.inv / t.po) * 100).toFixed(1) : 0 };
+    return { name: periodLabel(w, 'weekly').split(' – ')[0], po: t.po, inv: t.inv, fillPct: t.po > 0 ? +((t.inv / t.po) * 100).toFixed(1) : 0 };
   });
   const months = Object.keys(data.monthly || {}).filter(isMonthKey).sort(monthKeySort).map((m) => {
     const t = sumFill(data.monthly[m]);
@@ -42,8 +42,8 @@ export default function PoTracker({ ctx }) {
         <XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={fmtN} />
         <Tooltip contentStyle={chartTheme.tooltip} cursor={{ fill: 'rgba(255,255,255,0.03)' }} formatter={(v) => fmtN(v)} />
         {legend}
-        <Bar dataKey="po" name="PO qty" fill="#E2B14A" radius={[5, 5, 0, 0]} />
-        <Bar dataKey="inv" name="Invoice qty" fill="#4FB59E" radius={[5, 5, 0, 0]} />
+        <Bar isAnimationActive={false} dataKey="po" name="PO qty" fill="#E2B14A" radius={[5, 5, 0, 0]} />
+        <Bar isAnimationActive={false} dataKey="inv" name="Invoice qty" fill="#4FB59E" radius={[5, 5, 0, 0]} />
       </BarChart>
     </ResponsiveContainer></div>
   );
@@ -57,7 +57,7 @@ export default function PoTracker({ ctx }) {
         <Kpi label="Invoice quantity" value={fmtN(t.inv)} badge={pill(invChg)} />
         <Kpi label="Fill rate (qty)" value={(fill * 100).toFixed(1) + '%'} badge={{ tone: band(fill, 0.95, 0.85), text: fill >= 0.95 ? 'Healthy' : fill >= 0.85 ? 'Moderate' : 'Below target' }} />
         <Kpi label="Short supply" value={fmtN(short)} badge={{ tone: short === 0 ? 'good' : 'warn', text: short === 0 ? 'Fully fulfilled' : 'units short' }} />
-        <Kpi label="Value fulfilment" value={(valRate * 100).toFixed(1) + '%'} sub={`${fmtL(iv)} of ${fmtL(ov)} ordered`}>
+        <Kpi label="Value fulfilment" value={(valRate * 100).toFixed(1) + '%'}>
           <span className="kpi-value num">{(valRate * 100).toFixed(1)}%</span>
           <div className="bar-track" style={{ height: 5 }}><div className="bar-fill" style={{ width: valRate * 100 + '%', background: tone[band(valRate, 0.95, 0.85)] }} /></div>
           <span className="kpi-sub">{fmtL(iv)} of {fmtL(ov)} ordered · {fmtL(Math.max(0, ov - iv))} short</span>
@@ -73,7 +73,7 @@ export default function PoTracker({ ctx }) {
               <XAxis dataKey="name" {...axis} /><YAxis {...axis} domain={[0, 110]} tickFormatter={(v) => v + '%'} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => v + '%'} />
               <ReferenceLine y={95} stroke={chartTheme.good} strokeDasharray="5 4" strokeOpacity={0.5} />
-              <Line type="monotone" dataKey="fill" name="Fill rate" stroke="#5E9FD0" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#5E9FD0' }} />
+              <Line isAnimationActive={false} type="monotone" dataKey="fillPct" name="Fill rate" stroke="#5E9FD0" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#5E9FD0' }} />
             </LineChart>
           </ResponsiveContainer></div>
         </Card>

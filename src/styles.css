@@ -173,3 +173,47 @@ tbody tr:hover { background: var(--surface-2); }
 .matrix-cell-hi { color: var(--good); }
 .footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
 .footer a { color: var(--muted); }
+
+/* ── Tablet & phone ─────────────────────────────────── */
+@media (max-width: 960px) {
+  .chart-box { height: 260px; }
+  .kpi-value { font-size: 25px; }
+}
+@media (max-width: 640px) {
+  body { font-size: 13.5px; }
+  .topbar-inner { padding: 10px 14px 0; }
+  .topbar-row { gap: 10px; }
+  .brand-mark { width: 32px; height: 32px; font-size: 15px; }
+  .brand-name { font-size: 15px; }
+  .controls { width: 100%; gap: 6px; }
+  .controls > .field, .controls > select.field { flex: 1 1 140px; min-width: 0; }
+  .controls > .btn { flex: 0 0 auto; }
+  .tabs { margin: 8px -14px 0; padding: 0 8px; scroll-snap-type: x proximity; }
+  .tab { padding: 10px 11px 12px; font-size: 12.5px; scroll-snap-align: start; }
+  .tab[aria-selected='true']::after { left: 11px; right: 11px; }
+  .page { padding: 18px 14px 48px; }
+  .stack { gap: 16px; }
+  .grid { gap: 12px; }
+  .g-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { padding: 14px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-multi { gap: 12px; flex-wrap: wrap; }
+  .card { padding: 16px 14px; border-radius: 14px; overflow-x: auto; }
+  .card-head { flex-wrap: wrap; margin-bottom: 12px; }
+  .chart-box, .chart-box.tall { height: 230px; }
+  .h1 { font-size: 21px; }
+  .banner { padding: 12px 14px; }
+  .table-wrap { margin: 0 -4px; padding: 0 4px; }
+  table { font-size: 12.5px; }
+  th, td { padding: 9px 8px; }
+  .bar { min-width: 96px; }
+  .legend { gap: 4px 10px; font-size: 11.5px; }
+  .ai-grid { grid-template-columns: minmax(0, 1fr); }
+  .bubble { max-width: 92%; }
+  .error-box { margin: 32px auto; padding: 20px; }
+  .footer { margin-top: 32px; }
+  .scroll-y { max-height: 360px; }
+}
+@media (max-width: 340px) {
+  .g-kpi { grid-template-columns: minmax(0, 1fr); }
+}
