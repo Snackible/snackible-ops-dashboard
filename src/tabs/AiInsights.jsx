@@ -88,6 +88,15 @@ export default function AiInsights({ ctx }) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const history = useRef([]);
+  const abort = useRef(null);
+  const [wait, setWait] = useState(null); // { attempt, retries, until } while backing off
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!wait) return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 500);
+    return () => clearInterval(id);
+  }, [wait]);
+  const cancel = () => abort.current?.abort();
   const endRef = useRef(null);
 
   // A different period invalidates earlier insights.
@@ -97,14 +106,16 @@ export default function AiInsights({ ctx }) {
   async function generate() {
     setState({ status: 'loading', result: null, error: '' });
     const prompt = buildPrompt(ctx);
+    abort.current = new AbortController();
     try {
-      const text = await askAi({ provider, json: true, system: SYSTEM, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] });
+      const text = await askAi({ onWait: setWait, signal: abort.current.signal, provider, json: true, system: SYSTEM, max_tokens: 2500, messages: [{ role: 'user', content: prompt }] });
       const result = parseInsights(text);
       history.current = [{ role: 'user', content: `Current ops data context:\n${prompt}` }, { role: 'assistant', content: text }];
       setState({ status: 'ready', result, error: '' });
     } catch (e) {
-      setState({ status: 'error', result: null, error: e.message });
+      setState(e.name === 'AbortError' ? { status: 'idle', result: null, error: '' } : { status: 'error', result: null, error: e.message });
     }
+    setWait(null);
   }
 
   async function send(q) {
@@ -115,8 +126,9 @@ export default function AiInsights({ ctx }) {
     setChat((c) => [...c, { role: 'user', text }]);
     history.current.push({ role: 'user', content: text });
     try {
+      abort.current = new AbortController();
       const reply = await askAi({
-        provider,
+        provider, onWait: setWait, signal: abort.current.signal,
         system: 'You are a sharp ops analyst for Snackible. Answer questions about the ops data concisely. Use numbers from the data. Max 3-4 sentences. No filler.',
         messages: history.current,
       });
@@ -124,8 +136,9 @@ export default function AiInsights({ ctx }) {
       setChat((c) => [...c, { role: 'assistant', text: reply }]);
     } catch (e) {
       history.current.pop();
-      setChat((c) => [...c, { role: 'assistant', text: `Couldn't get an answer: ${e.message}`, error: true }]);
+      if (e.name !== 'AbortError') setChat((c) => [...c, { role: 'assistant', text: `Couldn't get an answer: ${e.message}`, error: true }]);
     }
+    setWait(null);
     setBusy(false);
   }
 
@@ -157,6 +170,11 @@ export default function AiInsights({ ctx }) {
         </form>
       )}
       {state.status === 'idle' && <p className="c-muted" style={{ maxWidth: '60ch' }}>Generate a written read on this period: what moved, what looks off, and what to do first. You can ask follow-up questions afterwards.</p>}
+      {wait && (
+        <Banner tone="warn" title={`${provider === 'gemini' ? 'Gemini' : 'Claude'} is busy, retrying automatically`} text={`Retry ${wait.attempt} of ${wait.retries} in ${Math.max(0, Math.ceil((wait.until - Date.now()) / 1000))}s. Busy replies aren't billed.`}>
+          <div className="chips"><button type="button" className="link-btn" onClick={cancel}>Cancel</button></div>
+        </Banner>
+      )}
       {state.status === 'loading' && <div className="ai-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}</div>}
       {state.status === 'error' && <Banner tone="bad" title="Insights failed" text={state.error} />}
       {state.status === 'ready' && (

@@ -35,7 +35,9 @@ export default async function handler(req, res) {
     const data = await response.json();
     if (!response.ok || data.error) {
       console.error('Gemini error:', JSON.stringify(data.error || data));
-      return res.status(502).json({ error: data.error?.message || 'Gemini API error' });
+      // Pass busy/rate-limit statuses through so the app knows to retry; everything else is a hard failure.
+      const status = [429, 503, 504].includes(response.status) ? response.status : 502;
+      return res.status(status).json({ error: data.error?.message || 'Gemini API error' });
     }
     const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
     if (!text) return res.status(502).json({ error: data.promptFeedback?.blockReason ? `Blocked by Gemini: ${data.promptFeedback.blockReason}` : 'Gemini returned an empty reply.' });

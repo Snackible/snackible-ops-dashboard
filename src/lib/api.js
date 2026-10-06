@@ -88,13 +88,48 @@ export async function loadCustom(data, start, end) {
   return applyNameMap(unwrap(res, ['custom.Custom Range', `custom.${start} → ${end}`, 'Custom Range']));
 }
 
+// ── Retry with backoff ──────────────────────────────────────────────────────
+// Temporary failures (busy model, rate limits, network blips) are retried with exponential backoff and jitter.
+// Rejected requests aren't billed, so waiting costs nothing. Permanent errors (bad key, bad model) fail at once.
+const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504]);
+const TRANSIENT_CODES = new Set(['UNAVAILABLE', 'RESOURCE_EXHAUSTED', 'INTERNAL', 'DEADLINE_EXCEEDED']);
+
+function apiError(res, data, fallback) {
+  const raw = data?.error;
+  const err = new Error(typeof raw === 'string' ? raw : raw?.message || fallback);
+  err.status = res.status;
+  err.transient = TRANSIENT_STATUS.has(res.status) || TRANSIENT_CODES.has(raw?.status) || /high demand|overloaded|temporarily|try again later/i.test(err.message);
+  err.retryAfter = parseFloat(res.headers.get('retry-after')) || 0;
+  return err;
+}
+const isTransient = (e) => e?.transient === true || e instanceof TypeError; // TypeError = network failure
+
+const sleep = (ms, signal) => new Promise((resolve, reject) => {
+  const t = setTimeout(resolve, ms);
+  signal?.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Cancelled', 'AbortError')); }, { once: true });
+});
+
+export async function withRetry(fn, { retries = 5, onWait, signal } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn(signal);
+    } catch (e) {
+      if (e.name === 'AbortError' || attempt >= retries || !isTransient(e)) throw e;
+      const base = Math.min(2000 * 2 ** attempt, 30000); // 2s, 4s, 8s, 16s, 30s
+      const wait = e.retryAfter ? e.retryAfter * 1000 : base * (0.75 + Math.random() * 0.5);
+      onWait?.({ attempt: attempt + 1, retries, ms: wait, until: Date.now() + wait });
+      await sleep(wait, signal);
+    }
+  }
+}
+
 // A Gemini key pasted into the AI panel lives in sessionStorage only (gone when the tab closes).
 const SESSION_KEY = 'gemini-session-key';
 export const getSessionGeminiKey = () => { try { return sessionStorage.getItem(SESSION_KEY) || ''; } catch { return ''; } };
 export const setSessionGeminiKey = (k) => { try { k ? sessionStorage.setItem(SESSION_KEY, k.trim()) : sessionStorage.removeItem(SESSION_KEY); } catch { /* storage unavailable */ } };
 
 // Calls Gemini straight from the browser with the user's own session key.
-async function askGeminiDirect({ key, system, messages, max_tokens, json }) {
+async function askGeminiDirect({ key, system, messages, max_tokens, json, signal }) {
   const body = {
     contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content ?? '') }] })),
     generationConfig: { maxOutputTokens: Math.max(max_tokens, 4096), temperature: 0.4, ...(json ? { responseMimeType: 'application/json' } : {}) },
@@ -104,27 +139,30 @@ async function askGeminiDirect({ key, system, messages, max_tokens, json }) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify(body),
+    signal,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.error) throw new Error(data.error?.message || 'Gemini rejected the request. Check the key.');
+  if (!res.ok || data.error) throw apiError(res, data, 'Gemini rejected the request. Check the key.');
   const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
   if (!text) throw new Error(data.promptFeedback?.blockReason ? `Blocked by Gemini: ${data.promptFeedback.blockReason}` : 'Gemini returned an empty reply.');
   return text;
 }
 
 // provider: 'claude' | 'gemini'. Both proxies take the same body and return { content: [{ text }] }.
-export async function askAi({ provider = 'claude', system, messages, max_tokens = 1000, json = false }) {
+// Pass onWait / signal to retry temporary failures with a countdown and allow cancelling.
+export async function askAi({ provider = 'claude', system, messages, max_tokens = 1000, json = false, onWait, signal }) {
+  const name = provider === 'gemini' ? 'Gemini' : 'Claude';
   const sessionKey = provider === 'gemini' ? getSessionGeminiKey() : '';
-  if (sessionKey) return askGeminiDirect({ key: sessionKey, system, messages, max_tokens, json });
-  const res = await fetch(provider === 'gemini' ? GEMINI_PROXY_URL : CLAUDE_PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_tokens, system, messages, json }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.error) {
-    const name = provider === 'gemini' ? 'Gemini' : 'Claude';
-    throw new Error(typeof data.error === 'string' ? data.error : data.error?.message || (res.status === 404 ? `The ${name} endpoint isn't deployed here yet.` : `The ${name} request failed.`));
-  }
-  return data.content?.[0]?.text || '';
+  return withRetry(async (sig) => {
+    if (sessionKey) return askGeminiDirect({ key: sessionKey, system, messages, max_tokens, json, signal: sig });
+    const res = await fetch(provider === 'gemini' ? GEMINI_PROXY_URL : CLAUDE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ max_tokens, system, messages, json }),
+      signal: sig,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw apiError(res, data, res.status === 404 ? `The ${name} endpoint isn't deployed here yet.` : `The ${name} request failed.`);
+    return data.content?.[0]?.text || '';
+  }, { onWait, signal });
 }
