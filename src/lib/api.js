@@ -1,4 +1,4 @@
-import { APPS_SCRIPT_URL, CLAUDE_PROXY_URL, GEMINI_PROXY_URL, DATA_SOURCE } from '../config.js';
+import { APPS_SCRIPT_URL, CLAUDE_PROXY_URL, GEMINI_PROXY_URL, GEMINI_MODEL, DATA_SOURCE } from '../config.js';
 import { fetchSheetRows } from './sheetsApi.js';
 import { buildTimeData, buildRange } from './aggregate.js';
 
@@ -97,10 +97,10 @@ export const setSessionGeminiKey = (k) => { try { k ? sessionStorage.setItem(SES
 async function askGeminiDirect({ key, system, messages, max_tokens, json }) {
   const body = {
     contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content ?? '') }] })),
-    generationConfig: { maxOutputTokens: max_tokens, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 }, ...(json ? { responseMimeType: 'application/json' } : {}) },
+    generationConfig: { maxOutputTokens: Math.max(max_tokens, 4096), temperature: 0.4, ...(json ? { responseMimeType: 'application/json' } : {}) },
   };
   if (system) body.systemInstruction = { parts: [{ text: system }] };
-  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify(body),

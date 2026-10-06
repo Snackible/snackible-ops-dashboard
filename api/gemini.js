@@ -1,7 +1,7 @@
 // Gemini proxy for the AI panel. Accepts the same body as /api/claude ({ system, messages, max_tokens })
 // and answers in the same shape ({ content: [{ text }] }) so the front end can swap providers.
 // Reads the key from the Vercel env var "Gemini_Api_Key" (GEMINI_API_KEY / GOOGLE_API_KEY also work).
-const MODEL = 'gemini-2.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
 export default async function handler(req, res) {
   const allowedOrigins = ['https://adityasanghavi-sys.github.io', 'https://snackible-ops-dashboard.vercel.app'];
@@ -20,9 +20,8 @@ export default async function handler(req, res) {
     const body = {
       contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String(m.content ?? '') }] })),
       generationConfig: {
-        maxOutputTokens: max_tokens || 1000,
+        maxOutputTokens: Math.max(max_tokens || 1000, 4096),
         temperature: 0.4,
-        thinkingConfig: { thinkingBudget: 0 }, // keep the whole budget for the answer
         ...(json ? { responseMimeType: 'application/json' } : {}),
       },
     };

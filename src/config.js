@@ -11,6 +11,8 @@ export const APPS_SCRIPT_URL =
 export const CLAUDE_PROXY_URL = '/api/claude';
 // Vercel serverless function in /api/gemini.js (needs the Gemini_Api_Key env var).
 export const GEMINI_PROXY_URL = '/api/gemini';
+// Model used when you paste your own key in the AI panel (the server function has its own constant in api/gemini.js).
+export const GEMINI_MODEL = 'gemini-3.8-flash';
 
 // ─── Google Sheets API ────────────────────────────────────────────────────
 // SETUP (one-off):
