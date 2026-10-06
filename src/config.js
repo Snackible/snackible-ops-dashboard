@@ -1,3 +1,5 @@
+import { SHEET_ID, MAIN_TAB, RANGE } from './lib/sheetConfig.js';
+
 // ─── Data source ──────────────────────────────────────────────────────────
 // 'sheets'     : read the Google Sheet directly through the Sheets API v4 (default; needs SHEETS.apiKey).
 // 'appsscript' : the legacy Apps Script feed, kept as a fallback for comparing numbers.
@@ -24,10 +26,10 @@ export const GEMINI_MODEL = 'gemini-3.8-flash';
 //  5. The spreadsheet must be viewable by "Anyone with the link" (it currently is). If you later make it
 //     private, move these calls into /api with a service account instead; keys in browser code are public.
 export const SHEETS = {
-  spreadsheetId: '1ct1kv2f9TUknFw0eyFiI7RYpGDkZpMlroYMYlIadHM8',
+  spreadsheetId: SHEET_ID,
   apiKey: import.meta.env.VITE_GOOGLE_API_KEY || 'YOUR_GOOGLE_API_KEY_HERE',
-  mainTab: '2026', // gid 829034943, one row per PO / order line, SKU quantities in the trailing columns
-  range: 'A1:CZ',
+  mainTab: MAIN_TAB,
+  range: RANGE,
 };
 
 export const hasSheetsKey = () => SHEETS.apiKey && !SHEETS.apiKey.startsWith('YOUR_');

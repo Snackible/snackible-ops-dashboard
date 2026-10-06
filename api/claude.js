@@ -1,5 +1,11 @@
 export default async function handler(req, res) {
-  const allowedOrigins = ['https://adityasanghavi-sys.github.io', 'https://snackible-ops-dashboard.vercel.app'];
+  // Browsers on these origins may call this route. Add more with the ALLOWED_ORIGINS env var (comma-separated).
+  const allowedOrigins = [
+    'https://adityasanghavi-sys.github.io',
+    'https://snackible-ops-dashboard.vercel.app',
+    'https://snackible-ops-dashboard-new.vercel.app',
+    ...(process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
+  ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -7,8 +13,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
+  // Key from any of CLAUDE_API, CLAUDE_API_KEY or ANTHROPIC_API_KEY (case-insensitive), in that order.
+  const names = Object.keys(process.env).filter((n) => /^(claude_api(_key)?|anthropic_api_key)$/i.test(n) && process.env[n]);
+  names.sort((a, b) => /claude/i.test(b) - /claude/i.test(a));
+  const apiKey = names.length ? process.env[names[0]] : '';
+  if (!apiKey) return res.status(500).json({ error: 'No Claude API key set. Add CLAUDE_API in Vercel and redeploy.' });
 
   try {
     // 1. We extract the model name sent by the frontend

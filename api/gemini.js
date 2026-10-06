@@ -23,7 +23,13 @@ function keyProblem(status, err) {
 }
 
 export default async function handler(req, res) {
-  const allowedOrigins = ['https://adityasanghavi-sys.github.io', 'https://snackible-ops-dashboard.vercel.app'];
+  // Browsers on these origins may call this route. Add more with the ALLOWED_ORIGINS env var (comma-separated).
+  const allowedOrigins = [
+    'https://adityasanghavi-sys.github.io',
+    'https://snackible-ops-dashboard.vercel.app',
+    'https://snackible-ops-dashboard-new.vercel.app',
+    ...(process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
+  ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
