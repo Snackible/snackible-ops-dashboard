@@ -217,3 +217,11 @@ tbody tr:hover { background: var(--surface-2); }
 @media (max-width: 340px) {
   .g-kpi { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ── Toast (retry notice) ───────────────────────────── */
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: var(--z-pop); display: flex; align-items: center; gap: 14px; max-width: min(560px, calc(100vw - 28px)); padding: 13px 16px; background: var(--surface-3); border: 1px solid var(--line-strong); border-left: 3px solid var(--warn); border-radius: 12px; box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.7); animation: rise 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.toast strong { display: block; font-size: 13px; font-weight: 600; }
+.toast span:not(.spinner) { display: block; font-size: 12px; color: var(--muted); }
+.spinner { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--warn); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) { .toast { bottom: 14px; gap: 10px; padding: 11px 13px; } }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Card, Banner, Segmented } from '../components/ui.jsx';
 import { askAi, getSessionGeminiKey, setSessionGeminiKey } from '../lib/api.js';
 import { fmtL, fmtN } from '../lib/format.js';
@@ -170,11 +171,6 @@ export default function AiInsights({ ctx }) {
         </form>
       )}
       {state.status === 'idle' && <p className="c-muted" style={{ maxWidth: '60ch' }}>Generate a written read on this period: what moved, what looks off, and what to do first. You can ask follow-up questions afterwards.</p>}
-      {wait && (
-        <Banner tone="warn" title={`${provider === 'gemini' ? 'Gemini' : 'Claude'} is busy, retrying automatically`} text={`Retry ${wait.attempt} of ${wait.retries} in ${Math.max(0, Math.ceil((wait.until - Date.now()) / 1000))}s. Busy replies aren't billed.`}>
-          <div className="chips"><button type="button" className="link-btn" onClick={cancel}>Cancel</button></div>
-        </Banner>
-      )}
       {state.status === 'loading' && <div className="ai-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}</div>}
       {state.status === 'error' && <Banner tone="bad" title="Insights failed" text={state.error} />}
       {state.status === 'ready' && (
@@ -200,6 +196,18 @@ export default function AiInsights({ ctx }) {
             <button className="btn" disabled={busy || !input.trim()}>Ask</button>
           </form>
         </>
+      )}
+
+      {wait && createPortal(
+        <div className="toast" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <div>
+            <strong>Please wait, {provider === 'gemini' ? 'Gemini' : 'Claude'} is busy.</strong>
+            <span>Trying again automatically in {Math.max(0, Math.ceil((wait.until - Date.now()) / 1000))}s (retry {wait.attempt} of {wait.retries}). Busy replies aren't billed.</span>
+          </div>
+          <button type="button" className="link-btn" onClick={cancel}>Cancel</button>
+        </div>,
+        document.body,
       )}
     </Card>
   );
