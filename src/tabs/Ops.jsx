@@ -54,7 +54,7 @@ export default function Ops({ ctx }) {
           {order.length ? (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-                <span className="mini-value" style={{ fontSize: 44 }}>{(dr * 100).toFixed(1)}%</span>
+                <span className="mini-value" style={{ fontSize: 34 }}>{(dr * 100).toFixed(1)}%</span>
                 <span className="c-muted">delivered</span>
               </div>
               <div className="bar-track" style={{ height: 6, marginBottom: 14 }}>
