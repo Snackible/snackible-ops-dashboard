@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CHANNEL_COLORS, PLATFORM_COLORS } from '../theme.js';
 
 export function Card({ title, sub, actions, children, className = '', style }) {
@@ -141,5 +141,25 @@ export function Logo({ className = 'brand-mark' }) {
       <path d="M21.2 10.6C20.1 8.9 18.2 8 16.1 8c-2.9 0-4.9 1.4-4.9 3.6 0 2 1.6 2.9 4.4 3.5l1.9.5c2.6.6 4.2 1.6 4.2 3.8 0 2.3-2.1 3.9-5.1 3.9-2.3 0-4.3-.9-5.5-2.9" fill="none" stroke="#F1EEDF" strokeWidth="2.6" strokeLinecap="round" />
       <circle cx="23.6" cy="7.6" r="2.3" fill="#E2B14A" />
     </svg>
+  );
+}
+
+// Circular gauge that draws itself in on mount. value is 0 to 100.
+export function Ring({ value = 0, tone = 'good', size = 118, stroke = 9 }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => { const id = requestAnimationFrame(() => setOn(true)); return () => cancelAnimationFrame(id); }, []);
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(Number(value) || 0, 100)) / 100;
+  const color = { good: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)' }[tone] || 'var(--accent)';
+  return (
+    <div className="ring" style={{ width: size, height: size }} role="img" aria-label={`${Number(value) || 0} percent`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} />
+        <circle className="ring-bar" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} stroke={color}
+          strokeDasharray={c} strokeDashoffset={on ? c * (1 - p) : c} style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb, ${color} 55%, transparent))` }} />
+      </svg>
+      <div className="ring-num"><span>{Math.round(Number(value) || 0)}<small>%</small></span></div>
+    </div>
   );
 }

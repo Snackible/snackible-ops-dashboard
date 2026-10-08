@@ -38,7 +38,7 @@ export default function PoTracker({ ctx }) {
   const poBar = (data_) => (
     <div className="chart-box"><ResponsiveContainer>
       <BarChart data={data_} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
-        <CartesianGrid stroke={chartTheme.grid} vertical={false} />
+        <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} vertical={false} />
         <XAxis dataKey="name" {...axis} /><YAxis {...axis} tickFormatter={fmtN} />
         <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtN(v)} />
         {legend}
@@ -69,7 +69,7 @@ export default function PoTracker({ ctx }) {
         <Card title="Fill rate, weekly" sub="Last 8 weeks against 95% target">
           <div className="chart-box"><ResponsiveContainer>
             <LineChart data={trend} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
-              <CartesianGrid stroke={chartTheme.grid} vertical={false} />
+              <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} vertical={false} />
               <XAxis dataKey="name" {...axis} /><YAxis {...axis} domain={[0, 110]} tickFormatter={(v) => v + '%'} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => v + '%'} />
               <ReferenceLine y={95} stroke={chartTheme.good} strokeDasharray="5 4" strokeOpacity={0.5} />

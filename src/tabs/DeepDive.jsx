@@ -12,7 +12,7 @@ function TopBars({ entries, color, empty }) {
   return (
     <div className="chart-box"><ResponsiveContainer>
       <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
-        <CartesianGrid stroke={chartTheme.grid} horizontal={false} />
+        <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} horizontal={false} />
         <XAxis type="number" {...axis} tickFormatter={fmtL} />
         <YAxis type="category" dataKey="name" width={80} {...axis} />
         <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtL(v)} />

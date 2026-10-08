@@ -30,7 +30,7 @@ export default function Inventory({ ctx }) {
             <>
               <div className="chart-box"><ResponsiveContainer>
                 <BarChart data={dailyData} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
-                  <CartesianGrid stroke={chartTheme.grid} vertical={false} />
+                  <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} vertical={false} />
                   <XAxis dataKey="name" {...axis} />
                   <YAxis {...axis} tickFormatter={fmtN} />
                   <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v, n) => [fmtN(v) + ' units', n]} />

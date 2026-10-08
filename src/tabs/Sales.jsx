@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceDot } from 'recharts';
-import { Banner, Badge, Card, Delta, Empty, Kpi, Segmented } from '../components/ui.jsx';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceDot } from 'recharts';
+import { Banner, Badge, Card, Delta, Empty, Ring, Segmented } from '../components/ui.jsx';
+import { useCountUp } from '../hooks/useCountUp.js';
 import { band, fmtL, fmtN, fmtPct, monthKeySort, periodLabel } from '../lib/format.js';
 import { CHANNEL_COLORS, chartTheme } from '../theme.js';
 import AiInsights from './AiInsights.jsx';
-
-const BADGE = { good: 'good', warn: 'warn', bad: 'bad' };
 
 export function StatusBanner({ d, isLatest, resetKey }) {
   const bad = Object.entries(d.channel_fill || {}).filter(([, v]) => v.po > 0 && v.rate < 0.9).sort((a, b) => a[1].rate - b[1].rate);
@@ -22,38 +21,70 @@ export function StatusBanner({ d, isLatest, resetKey }) {
   );
 }
 
-function tatKpi(d) {
-  if (!(d.avg_total_tat > 0)) {
-    return <Kpi label="Average TAT (days)" value="—" sub="Waiting for deliveries" badge={{ tone: 'neutral', text: 'No data yet' }} />;
-  }
-  return (
-    <Kpi label="Average TAT (days)" sub="PO to delivery" badge={{ tone: d.avg_total_tat <= 10 ? 'good' : 'warn', text: d.avg_total_tat <= 10 ? 'Within 10 days' : 'Running slow' }}>
-      <div className="kpi-multi">
-        <div><small>Total</small><span className="kpi-value num">{d.avg_total_tat}</span></div>
-        <div><small>PO→Disp</small><span className="num" style={{ fontSize: 17, fontWeight: 600 }}>{d.avg_proc_tat}</span></div>
-        <div><small>Disp→Del</small><span className="num" style={{ fontSize: 17, fontWeight: 600 }}>{d.avg_tran_tat}</span></div>
-      </div>
-    </Kpi>
-  );
-}
-
-export function SalesKpis({ d, prev }) {
+function SalesHero({ d, prev, label, mode, isLatest, trend }) {
+  const gmv = useCountUp(d.gmv);
   const dup = d.statuses?.Duplicate || 0;
-  const fill = band(d.avg_fill, 95, 85);
+  const fillTone = band(d.avg_fill, 95, 85);
   const rto = d.rto_pct <= 3 ? 'good' : d.rto_pct <= 5 ? 'warn' : 'bad';
   const dn = d.dn_value === 0 ? 'good' : d.dn_value < 50000 ? 'warn' : 'bad';
+  const unit = { weekly: 'week', monthly: 'month', daily: 'day' }[mode] || 'period';
+  const hasTat = d.avg_total_tat > 0;
   return (
-    <div className="grid g-kpi">
-      <Kpi label="GMV (invoiced)" value={fmtL(d.gmv)}>
-        <span className="kpi-value num">{fmtL(d.gmv)}</span>
-        {prev ? <Delta now={d.gmv} prior={prev.gmv} /> : <Badge tone="neutral">First period</Badge>}
-      </Kpi>
-      <Kpi label="Orders" value={fmtN(d.orders)} sub={dup ? `${dup} duplicates excluded` : 'No duplicates'} />
-      <Kpi label="Fill rate" value={d.avg_fill + '%'} badge={{ tone: BADGE[fill], text: d.avg_fill >= 95 ? 'Healthy' : d.avg_fill >= 85 ? 'Moderate' : 'Below target' }} />
-      {tatKpi(d)}
-      <Kpi label="RTO" value={d.rto_pct + '%'} badge={{ tone: rto, text: d.rto_pct === 0 ? 'No RTOs' : d.rto_pct <= 3 ? 'Acceptable' : 'High' }} />
-      <Kpi label="Discrepancy (DN) value" value={fmtL(d.dn_value)} badge={{ tone: dn, text: d.dn_value === 0 ? 'None' : d.dn_value < 50000 ? 'Low exposure' : 'Review needed' }} />
-    </div>
+    <section className="hero" aria-label="Headline numbers">
+      <div className="hero-main">
+        <div className="hero-eyebrow"><span>{label}</span>{isLatest && <span className="tag">Latest</span>}</div>
+        <div className="hero-label">Invoiced revenue (GMV)</div>
+        <div className="hero-value">{fmtL(gmv)}</div>
+        <div className="hero-delta">
+          {prev ? <><Delta now={d.gmv} prior={prev.gmv} suffix="%" /><span>vs the previous {unit}</span></> : <Badge tone="neutral">First period</Badge>}
+        </div>
+        {trend.length > 1 && (
+          <div className="hero-spark" aria-hidden="true">
+            <ResponsiveContainer>
+              <AreaChart data={trend} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="var(--gold)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <Area isAnimationActive={false} type="monotone" dataKey="gmv" stroke="var(--gold)" strokeWidth={2.5} fill="url(#heroFill)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+      <div className="hero-side">
+        <div className="mini-stat ring-tile">
+          <Ring value={d.avg_fill} tone={fillTone} />
+          <div>
+            <div className="mini-label">Fill rate</div>
+            <div className="mini-value">{d.avg_fill}%</div>
+            <Badge tone={fillTone}>{d.avg_fill >= 95 ? 'Healthy' : d.avg_fill >= 85 ? 'Moderate' : 'Below target'}</Badge>
+          </div>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-label">Orders</span>
+          <span className="mini-value">{fmtN(d.orders)}</span>
+          <span className="mini-sub">{dup ? `${dup} duplicates excluded` : 'No duplicates'}</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-label">Days to deliver</span>
+          <span className="mini-value">{hasTat ? d.avg_total_tat : '—'}</span>
+          <span className="mini-sub">{hasTat ? ([d.avg_proc_tat > 0 && `${d.avg_proc_tat} to dispatch`, d.avg_tran_tat > 0 && `${d.avg_tran_tat} in transit`].filter(Boolean).join(' · ') || 'PO to delivery') : 'Waiting for deliveries'}</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-label">Returned (RTO)</span>
+          <span className="mini-value">{d.rto_pct}%</span>
+          <Badge tone={rto}>{d.rto_pct === 0 ? 'No RTOs' : d.rto_pct <= 3 ? 'Acceptable' : 'High'}</Badge>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-label">Discrepancies (DN)</span>
+          <span className="mini-value">{fmtL(d.dn_value)}</span>
+          <Badge tone={dn}>{d.dn_value === 0 ? 'None' : d.dn_value < 50000 ? 'Low exposure' : 'Review needed'}</Badge>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -73,17 +104,17 @@ export default function Sales({ ctx }) {
   return (
     <div className="stack fade-in">
       <StatusBanner d={d} isLatest={isLatest} resetKey={`${mode}:${period}`} />
-      <SalesKpis d={d} prev={prev} />
+      <SalesHero d={d} prev={prev} label={label} mode={mode} isLatest={isLatest} trend={trend} />
       <div className="grid g-1-1">
         <Card title="GMV by channel" sub={`${label} · invoice value`}>
           {channels.length ? (
             <div className="chart-box"><ResponsiveContainer>
               <BarChart data={channels} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
-                <CartesianGrid stroke={chartTheme.grid} vertical={false} />
+                <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} vertical={false} />
                 <XAxis dataKey="name" {...axis} interval={0} />
                 <YAxis {...axis} tickFormatter={fmtL} />
                 <Tooltip contentStyle={chartTheme.tooltip} cursor={chartTheme.cursor} formatter={(v) => fmtL(v)} labelFormatter={(_, p) => p?.[0]?.payload?.full} />
-                <Bar isAnimationActive={false} dataKey="v" radius={[6, 6, 0, 0]}>
+                <Bar isAnimationActive={false} dataKey="v" radius={[10, 10, 3, 3]} maxBarSize={64}>
                   {channels.map((c) => <Cell key={c.full} fill={CHANNEL_COLORS[c.full] || CHANNEL_COLORS.Others} />)}
                 </Bar>
               </BarChart>
@@ -92,14 +123,20 @@ export default function Sales({ ctx }) {
         </Card>
         <Card title="GMV trend" sub={`Last ${win === 99 ? 'all' : win} periods`} actions={<Segmented label="Trend window" value={win} onChange={setWin} options={[[4, '4'], [8, '8'], [99, 'All']]} />}>
           <div className="chart-box"><ResponsiveContainer>
-            <LineChart data={trend} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
-              <CartesianGrid stroke={chartTheme.grid} vertical={false} />
+            <AreaChart data={trend} margin={{ top: 8, right: 8, left: -6, bottom: 0 }}>
+              <defs>
+                <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="2 7" stroke={chartTheme.grid} vertical={false} />
               <XAxis dataKey="name" {...axis} />
               <YAxis {...axis} tickFormatter={fmtL} />
               <Tooltip contentStyle={chartTheme.tooltip} formatter={(v) => fmtL(v)} />
-              <Line isAnimationActive={false} type="monotone" dataKey="gmv" stroke={chartTheme.accent} strokeWidth={2.5} dot={{ r: 3, fill: chartTheme.accent, strokeWidth: 0 }} />
+              <Area isAnimationActive={false} type="monotone" dataKey="gmv" stroke={chartTheme.accent} strokeWidth={2.5} fill="url(#trendFill)" dot={{ r: 3, fill: chartTheme.accent, strokeWidth: 0 }} />
               {trend.find((t) => t.p === period) && <ReferenceDot x={trend.find((t) => t.p === period).name} y={trend.find((t) => t.p === period).gmv} r={6} fill="var(--text)" stroke={chartTheme.accent} strokeWidth={2} />}
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer></div>
         </Card>
       </div>

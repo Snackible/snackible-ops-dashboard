@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Banner, DashboardSkeleton, Empty, Logo, ThemeSelect } from './components/ui.jsx';
 import { DATA_SOURCE } from './config.js';
 import { useDashboardData } from './hooks/useDashboardData.js';
@@ -14,14 +14,14 @@ import Shopify from './tabs/Shopify.jsx';
 import SkuAnalysis from './tabs/SkuAnalysis.jsx';
 
 const TABS = [
-  ['sales', 'Sales overview', Sales],
-  ['deep-dive', 'Sales deep dive', DeepDive],
-  ['inventory', 'Inventory and supply', Inventory],
-  ['fulfilment', 'Fulfilment and TAT', Ops],
-  ['po', 'PO tracker', PoTracker],
-  ['delivered', 'Delivered', Delivered],
-  ['shopify', 'Shopify B2C', Shopify],
-  ['sku', 'SKU analysis', SkuAnalysis],
+  ['sales', 'Sales overview', Sales, 'How much was invoiced, how well orders were filled, and how fast they moved.'],
+  ['deep-dive', 'Sales deep dive', DeepDive, 'Where revenue comes from: platforms, states, cities and the SKUs behind them.'],
+  ['inventory', 'Inventory and supply', Inventory, 'Dispatch volume and fill rate by channel, state and city.'],
+  ['fulfilment', 'Fulfilment and TAT', Ops, 'Delivery speed, order outcomes and courier performance.'],
+  ['po', 'PO tracker', PoTracker, 'Purchase orders against what was invoiced, week by week and month by month.'],
+  ['delivered', 'Delivered', Delivered, 'Every delivered order, grouped by the day it arrived.'],
+  ['shopify', 'Shopify B2C', Shopify, 'Direct-to-consumer shipments, logistics cost and courier results.'],
+  ['sku', 'SKU analysis', SkuAnalysis, 'What is selling, on which channel, and what is slipping.'],
 ];
 const MODES = [['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly'], ['mtd', 'Month to date'], ['custom', 'Custom range']];
 const tabFromHash = () => (TABS.find(([id]) => '#' + id === window.location.hash) || TABS[0])[0];
@@ -49,6 +49,36 @@ export default function App() {
     return () => window.removeEventListener('hashchange', on);
   }, []);
   const go = (id) => { window.location.hash = id; setTab(id); };
+
+  // Sliding highlight behind the active tab in the dock.
+  const dockRef = useRef(null);
+  const [ind, setInd] = useState({ x: 0, w: 0 });
+  useLayoutEffect(() => {
+    const nav = dockRef.current;
+    if (!nav) return undefined;
+    const measure = () => {
+      const el = nav.querySelector('[aria-selected="true"]');
+      if (el) setInd({ x: el.offsetLeft, w: el.offsetWidth });
+    };
+    measure();
+    nav.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    window.addEventListener('resize', measure);
+    document.fonts?.ready.then(measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [tab]);
+
+  // Cursor spotlight: cards light up where the pointer is.
+  useEffect(() => {
+    const on = (e) => {
+      const el = e.target.closest?.('.card, .kpi, .mini-stat, .hero-main');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--my', `${e.clientY - r.top}px`);
+    };
+    document.addEventListener('pointermove', on, { passive: true });
+    return () => document.removeEventListener('pointermove', on);
+  }, []);
 
   // Start on the first period type that actually has data (the Apps Script feed can return an empty weekly bucket).
   const [modeChosen, setModeChosen] = useState(false);
@@ -109,6 +139,9 @@ export default function App() {
 
   const Active = TABS.find(([id]) => id === tab)[2];
   const needsPeriod = !['delivered', 'shopify', 'sku'].includes(tab);
+  const activeTab = TABS.find(([id]) => id === tab);
+  const pageTitle = activeTab[1].split(' ');
+  const pageBlurb = activeTab[3];
   const isRange = mode === 'mtd' || mode === 'custom';
 
   let body;
@@ -183,14 +216,22 @@ export default function App() {
               </button>
             )}
           </div>
-          <nav className="tabs" role="tablist" aria-label="Dashboard sections">
+          <nav ref={dockRef} className="tabs" role="tablist" aria-label="Dashboard sections">
+            <span className="tab-ind" aria-hidden="true" style={{ transform: `translateX(${ind.x}px)`, width: ind.w }} />
             {TABS.map(([id, text]) => (
               <button key={id} role="tab" className="tab" aria-selected={tab === id} onClick={() => go(id)}>{text}</button>
             ))}
           </nav>
         </div>
       </header>
-      <main id="main" className="page">{body}</main>
+      <main id="main" className="page">
+        <div className="page-head" key={tab}>
+          <span className="eyebrow"><i />{needsPeriod && ctx?.label ? ctx.label : 'Snackible operations'}</span>
+          <h1 className="display">{pageTitle.slice(0, -1).join(' ')}{pageTitle.length > 1 ? ' ' : ''}<em>{pageTitle[pageTitle.length - 1]}</em></h1>
+          <p className="lede">{pageBlurb}</p>
+        </div>
+        {body}
+      </main>
       <footer className="page footer" style={{ paddingTop: 18, paddingBottom: 32 }}>
         <span>
           Source: {DATA_SOURCE === 'sheets' ? 'Google Sheets API, calculated in the browser' : 'Apps Script feed'} · period buckets use PO date

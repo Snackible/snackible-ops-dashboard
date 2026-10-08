@@ -36,5 +36,5 @@ export const chartTheme = {
   good: 'var(--good)',
   bad: 'var(--bad)',
   cursor: { fill: 'var(--hover)' },
-  tooltip: { background: 'var(--tooltip-bg)', border: '1px solid var(--line-strong)', borderRadius: 10, fontSize: 12, color: 'var(--text)' },
+  tooltip: { background: 'var(--tooltip-bg)', border: '1px solid var(--line-strong)', borderRadius: 14, fontSize: 12, color: 'var(--text)', padding: '10px 14px', boxShadow: 'var(--shadow-pop)' },
 };
